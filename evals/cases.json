@@ -183,6 +183,34 @@
     ]
   },
   {
+    "id": "real-09-embed-dashboard-email",
+    "source": "real",
+    "contextType": "email",
+    "doNotChange": [
+      "Quick",
+      "OrbitIQ"
+    ],
+    "text": "Hello everyone, \n\nToday we had a conversation with Laura and Pria about possible ways to embed OrbitIQ dashboard to the agent's portal. Please find the summary of our discussion and solution proposal attached. Priya, you will find references and tech details about Quick in the second part of the document.  I also attached dashboards sketches to get an idea about data volume and layout, they are draft and might me adjusted. \n\nPlease validate if we are on the same page about the outcome. \n\nPriya, while the dashboards are under agent's review, I believe we can use the current version in the dev environment to validate the technical solution. Let me know please when you will be able to take this task.",
+    "expect": {
+      "mustContain": [
+        "Laura",
+        "Priya",
+        "OrbitIQ",
+        "Quick",
+        "dashboard sketches",
+        "the OrbitIQ dashboard"
+      ],
+      "mustNotContain": [
+        "Pria ",
+        "might me",
+        "dashboards sketches",
+        "dashboard to the",
+        ", they are draft"
+      ]
+    },
+    "notes": "Name typo (Pria → Priya, the name appears later in the email). 'Quick' is Amazon's current product name (former QuickSight) and must stay as is. 'Agents' are people, the users of the portal; agent's vs agents' is a nuance and is not checked. 'embed … in' and 'embed … into' are both fine. 'Let me know when you will be able to' is grammatical (noun clause), so it is not checked. Reference fix: '...possible ways to embed the OrbitIQ dashboard into the agent portal... I've also attached dashboard sketches to give you an idea of the data volume and layout. They are drafts and may be adjusted... Please let me know when you'll be able to take on this task.'"
+  },
+  {
     "id": "syn-01-basic-errors",
     "source": "synthetic",
     "contextType": "message",
