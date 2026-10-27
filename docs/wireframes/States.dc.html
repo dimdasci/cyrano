@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Panel states</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#0B63CE}a:hover{color:#084C9E}
+button{font:inherit}
+</style>
+</helmet>
+<div style="width: 1180px; height: 820px; box-sizing: border-box; padding: 40px; background: #D9DCE1; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; color: #1D1D1F; font-size: 13px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px">
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="font-weight: 600; color: #3A3A3C">1 · Checking (text streams in)</div>
+    <div style="background: #F6F6F6; border: 1px solid #D1D1D6; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.18)">
+      <div style="height: 28px; border-bottom: 1px solid #D1D1D6; text-align: center; line-height: 28px; font-weight: 600">Proofreading</div>
+      <div style="height: 3px; background: #E5E5EA"><div style="width: 45%; height: 3px; background: #0B63CE"></div></div>
+      <div style="padding: 14px 16px; font-size: 14px; line-height: 1.6">Hi Ravi, yes, I noticed this. Sorry, these PRs actually weren't related to the<span style="color: #5E5E63"> ▍</span></div>
+      <div style="padding: 0 16px 14px; color: #5E5E63">Explaining…</div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="font-weight: 600; color: #3A3A3C">2 · No changes needed</div>
+    <div style="background: #F6F6F6; border: 1px solid #D1D1D6; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.18)">
+      <div style="height: 28px; border-bottom: 1px solid #D1D1D6; text-align: center; line-height: 28px; font-weight: 600">Proofreading</div>
+      <div style="padding: 14px 16px; font-size: 14px; line-height: 1.6">Thanks, that works for me. I'll ping you tomorrow.</div>
+      <div style="padding: 10px 16px; border-top: 1px solid #D1D1D6; display: flex; gap: 8px; align-items: center"><span aria-hidden="true" style="color: #1E7B34">✓</span><span>Looks good. No changes needed.</span></div>
+      <div style="padding: 0 16px 14px"><input aria-label="Ask or tell what to change" placeholder="Ask or tell what to change…" style="width: 100%; box-sizing: border-box; font: inherit; border: 1px solid #D1D1D6; border-radius: 8px; padding: 7px 10px; background: #FFFFFF"></div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="font-weight: 600; color: #3A3A3C">3 · Nothing to check</div>
+    <div style="background: #F6F6F6; border: 1px solid #D1D1D6; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.18)">
+      <div style="height: 28px; border-bottom: 1px solid #D1D1D6; text-align: center; line-height: 28px; font-weight: 600">Proofreading</div>
+      <div style="padding: 18px 16px; display: flex; flex-direction: column; gap: 12px">
+        <div>Nothing to check. Select text or put the cursor in a text field.</div>
+        <button style="align-self: flex-start; border: 1px solid #D1D1D6; background: #FFFFFF; border-radius: 6px; padding: 4px 14px">Check Clipboard</button>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="font-weight: 600; color: #3A3A3C">4 · Network error or timeout</div>
+    <div style="background: #F6F6F6; border: 1px solid #D1D1D6; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.18)">
+      <div style="height: 28px; border-bottom: 1px solid #D1D1D6; text-align: center; line-height: 28px; font-weight: 600">Proofreading</div>
+      <div style="padding: 14px 16px; font-size: 14px; line-height: 1.6; color: #5E5E63">Hi Ravi, yes I noted this. Sorry, this PRs actually didn't relate to the code…</div>
+      <div style="padding: 10px 16px 14px; border-top: 1px solid #D1D1D6; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; gap: 8px"><span aria-hidden="true" style="font-weight: 700; color: #B25000">!</span><span>Couldn't reach OpenAI. Check your connection and try again.</span></div>
+        <div style="display: flex; gap: 8px; justify-content: flex-end">
+          <button style="border: 1px solid #D1D1D6; background: #FFFFFF; border-radius: 6px; padding: 4px 14px">Copy Original</button>
+          <button style="border: none; background: #0B63CE; color: #FFFFFF; border-radius: 6px; padding: 4px 14px">Try Again</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="font-weight: 600; color: #3A3A3C">5 · Plan limit reached</div>
+    <div style="background: #F6F6F6; border: 1px solid #D1D1D6; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.18)">
+      <div style="height: 28px; border-bottom: 1px solid #D1D1D6; text-align: center; line-height: 28px; font-weight: 600">Proofreading</div>
+      <div style="padding: 14px 16px; display: flex; flex-direction: column; gap: 10px">
+        <div style="display: flex; gap: 8px"><span aria-hidden="true" style="font-weight: 700; color: #B25000">!</span><span>Your ChatGPT plan limit for this app is reached.</span></div>
+        <a href="https://chatgpt.com">Manage app usage limit</a>
+        <div style="display: flex; justify-content: flex-end"><button style="border: 1px solid #D1D1D6; background: #FFFFFF; border-radius: 6px; padding: 4px 14px">Copy Original</button></div>
+      </div>
+      <div style="padding: 8px 16px; border-top: 1px solid #D1D1D6; display: flex; justify-content: flex-end"><span style="color: #B3261E; font-weight: 500">Plan limit reached</span></div>
+    </div>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="font-weight: 600; color: #3A3A3C">6 · Signed out / access revoked</div>
+    <div style="background: #F6F6F6; border: 1px solid #D1D1D6; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.18)">
+      <div style="height: 28px; border-bottom: 1px solid #D1D1D6; text-align: center; line-height: 28px; font-weight: 600">Proofreading</div>
+      <div style="padding: 18px 16px; display: flex; flex-direction: column; gap: 12px; align-items: flex-start">
+        <div>Sign in to ChatGPT to check text.</div>
+        <button style="border: none; background: #1D1D1F; color: #FFFFFF; border-radius: 8px; padding: 7px 16px; font-weight: 500">Continue with ChatGPT</button>
+      </div>
+    </div>
+    <div style="font-weight: 600; color: #3A3A3C; margin-top: 18px">7 · No Accessibility permission</div>
+    <div style="background: #F6F6F6; border: 1px solid #D1D1D6; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.18)">
+      <div style="height: 28px; border-bottom: 1px solid #D1D1D6; display: flex; align-items: center; justify-content: center; gap: 6px; font-weight: 600">Proofreading <span title="Grant Accessibility to read and insert text directly" aria-label="Accessibility not granted" style="color: #B25000">⚠︎</span></div>
+      <div style="padding: 12px 16px; color: #5E5E63">Text taken from the clipboard. Result will be copied — paste with ⌘V.</div>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1180,"height":820}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

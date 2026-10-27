@@ -1,0 +1,82 @@
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "About.dc.html": {
+      "h": 560,
+      "title": "About window",
+      "w": 560,
+      "x": 2340,
+      "y": 940
+    },
+    "Main.dc.html": {
+      "h": 860,
+      "is_interactive": true,
+      "title": "Proofreading panel (interactive)",
+      "w": 1000,
+      "x": 0,
+      "y": 0
+    },
+    "MenuBar.dc.html": {
+      "h": 560,
+      "title": "Menu bar extra",
+      "w": 680,
+      "x": 760,
+      "y": 940
+    },
+    "Onboarding.dc.html": {
+      "h": 560,
+      "is_interactive": true,
+      "title": "Onboarding (interactive)",
+      "w": 680,
+      "x": 0,
+      "y": 940
+    },
+    "Settings.dc.html": {
+      "h": 560,
+      "is_interactive": true,
+      "title": "Settings (interactive)",
+      "w": 740,
+      "x": 1520,
+      "y": 940
+    },
+    "States.dc.html": {
+      "h": 820,
+      "title": "Panel states",
+      "w": 1180,
+      "x": 1080,
+      "y": 0
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-10-27T16:30:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "noteOrder": [
+    "title"
+  ],
+  "notes": {
+    "title": {
+      "kind": "title1",
+      "maxW": 2260,
+      "text": "Grammar — UI wireframes (specs/05-ui.md)",
+      "w": 240,
+      "x": 0,
+      "y": -300
+    }
+  },
+  "order": [
+    "Main.dc.html",
+    "States.dc.html",
+    "Onboarding.dc.html",
+    "MenuBar.dc.html",
+    "Settings.dc.html",
+    "About.dc.html"
+  ],
+  "pages": [],
+  "title": "Grammar UI wireframes"
+}

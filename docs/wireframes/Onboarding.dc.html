@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Onboarding</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#0B63CE}a:hover{color:#084C9E}
+button{font:inherit}
+</style>
+</helmet>
+<div style="width: 680px; height: 560px; box-sizing: border-box; padding: 40px 60px; background: #D9DCE1; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; color: #1D1D1F; font-size: 13px">
+  <div style="width: 560px; height: 460px; background: #F6F6F6; border: 1px solid #C7C7CC; border-radius: 12px; box-shadow: 0 14px 40px rgba(0,0,0,0.2); display: flex; flex-direction: column; box-sizing: border-box">
+    <div style="height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border-bottom: 1px solid #D1D1D6; position: relative">
+      <span style="width: 12px; height: 12px; border-radius: 6px; background: #FF5F57"></span>
+      <span style="width: 12px; height: 12px; border-radius: 6px; background: #D1D1D6"></span>
+      <span style="width: 12px; height: 12px; border-radius: 6px; background: #D1D1D6"></span>
+      <span style="position: absolute; left: 0; right: 0; text-align: center; font-weight: 600; pointer-events: none">Welcome to Grammar</span>
+    </div>
+
+    <div style="display: flex; justify-content: center; gap: 24px; padding: 18px 0 8px">
+      <sc-for list="{{steps}}" as="s" hint-placeholder-count="3">
+        <span style="{{s.style}}">{{s.label}}</span>
+      </sc-for>
+    </div>
+
+    <div style="flex-grow: 1; padding: 20px 44px; display: flex; flex-direction: column; gap: 16px">
+      <sc-if value="{{isSignIn}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center">
+          <div style="font-size: 20px; font-weight: 600">Sign in with your ChatGPT plan</div>
+          <div style="color: #5E5E63; max-width: 380px">Grammar uses your ChatGPT Plus or Pro plan to check your messages.</div>
+          <button onClick="{{signIn}}" style="border: none; background: #1D1D1F; color: #FFFFFF; border-radius: 8px; padding: 9px 22px; font-weight: 500; font-size: 14px">Continue with ChatGPT</button>
+          <sc-if value="{{signedIn}}" hint-placeholder-val="{{ false }}"><div style="color: #1E7B34">✓ Signed in as name@…</div></sc-if>
+          <div style="color: #5E5E63; font-size: 12px; max-width: 400px">Your text is sent to OpenAI only when you run a check. It isn't stored.</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{isAx}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center">
+          <div style="font-size: 20px; font-weight: 600">Allow Accessibility</div>
+          <div style="color: #5E5E63; max-width: 400px">Grammar reads the text in the field you're typing in and puts the corrected version back.</div>
+          <button onClick="{{grant}}" style="border: 1px solid #C7C7CC; background: #FFFFFF; border-radius: 6px; padding: 5px 16px">Open System Settings…</button>
+          <div style="{{axStyle}}">{{axStatus}}</div>
+        </div>
+      </sc-if>
+      <sc-if value="{{isShortcut}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 14px; align-items: center; text-align: center">
+          <div style="font-size: 20px; font-weight: 600">Your shortcut</div>
+          <div style="display: flex; gap: 10px; align-items: center">
+            <label for="hk">Check text</label>
+            <input id="hk" value="⌥⌘G" style="font: inherit; width: 90px; text-align: center; border: 1px solid #C7C7CC; border-radius: 6px; padding: 5px; background: #FFFFFF">
+          </div>
+          <div style="color: #5E5E63; max-width: 400px">Select text or put the cursor in a text field, then press the shortcut.</div>
+          <label style="display: flex; gap: 8px; align-items: center"><input type="checkbox" checked> Show in menu bar</label>
+        </div>
+      </sc-if>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; padding: 14px 18px; border-top: 1px solid #D1D1D6">
+      <button onClick="{{back}}" style="border: 1px solid #C7C7CC; background: #FFFFFF; border-radius: 6px; padding: 4px 14px">Back</button>
+      <div style="display: flex; gap: 8px">
+        <sc-if value="{{isAx}}" hint-placeholder-val="{{ false }}"><button onClick="{{next}}" style="border: 1px solid #C7C7CC; background: #FFFFFF; border-radius: 6px; padding: 4px 14px">Skip</button></sc-if>
+        <button onClick="{{next}}" style="border: none; background: #0B63CE; color: #FFFFFF; border-radius: 6px; padding: 4px 16px">{{nextLabel}}</button>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":680,"height":560}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { step: 1, signedIn: false, granted: false };
+  }
+  renderVals() {
+    const step = this.state.step;
+    const names = ['Sign In', 'Accessibility', 'Shortcut'];
+    const steps = names.map((n, i) => ({
+      label: (i + 1 === step ? '● ' : '○ ') + (i + 1) + ' ' + n,
+      style: i + 1 === step ? 'font-weight: 600' : 'color: #5E5E63'
+    }));
+    return {
+      steps,
+      isSignIn: step === 1, isAx: step === 2, isShortcut: step === 3,
+      signedIn: this.state.signedIn,
+      axStatus: this.state.granted ? '✓ Granted' : 'Not granted yet — the status updates by itself.',
+      axStyle: this.state.granted ? 'color: #1E7B34' : 'color: #5E5E63',
+      nextLabel: step === 3 ? 'Done' : 'Continue',
+      signIn: () => this.setState({ signedIn: true }),
+      grant: () => this.setState({ granted: true }),
+      next: () => this.setState({ step: Math.min(3, step + 1) }),
+      back: () => this.setState({ step: Math.max(1, step - 1) })
+    };
+  }
+}
+</script>
+</body>
+</html>

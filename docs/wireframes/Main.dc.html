@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Proofreading panel</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<style>
+body{margin:0}
+a{color:#0B63CE}a:hover{color:#084C9E}
+button,input,textarea{font:inherit}
+button{white-space:nowrap;flex-shrink:0}
+</style>
+</helmet>
+<div style="width: 1000px; height: 860px; box-sizing: border-box; position: relative; overflow: hidden; font-family: -apple-system, 'SF Pro Text', system-ui, sans-serif; background: {{t.desk}}; color: {{t.text}}">
+
+  <div style="position: absolute; left: 40px; top: 30px; width: 920px; height: 180px; border-radius: 10px; background: {{t.app}}; border: 1px solid {{t.sep}}; box-sizing: border-box; display: flex; flex-direction: column">
+    <div style="height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid {{t.sep}}">
+      <span style="width: 12px; height: 12px; border-radius: 6px; background: #FF5F57"></span>
+      <span style="width: 12px; height: 12px; border-radius: 6px; background: #FEBC2E"></span>
+      <span style="width: 12px; height: 12px; border-radius: 6px; background: #28C840"></span>
+      <span style="margin-left: 12px; font-size: 13px; color: {{t.secondary}}">Chat app · #release</span>
+    </div>
+    <div style="flex-grow: 1; padding: 12px 20px; font-size: 13px; display: flex; gap: 10px"><strong>Ravi</strong><span style="color: {{t.secondary}}">Hi Alex, when you were off last week, I have deployed couple PRs, I used the cherry pick so I did not touch PR 412 and PR413 that you merged in the dev.</span></div>
+    <div style="margin: 0 20px 14px; border: 2px solid {{t.accent}}; border-radius: 8px; padding: 8px 12px; font-size: 13px">Hi Ravi, yes I noted this. Sorry, this PRs actually didn't relate to the code and I left them untagged. I deployed 412 and 413 with my today today 420 to have PRs clean.</div>
+  </div>
+
+  <div role="dialog" aria-label="Proofreading" style="position: absolute; left: 220px; top: 120px; width: 560px; border-radius: 12px; background: {{t.panel}}; border: 1px solid {{t.sep}}; box-shadow: 0 18px 50px rgba(0,0,0,0.28); box-sizing: border-box; display: flex; flex-direction: column; font-size: 13px">
+
+    <div style="height: 28px; display: flex; align-items: center; padding: 0 10px; border-bottom: 1px solid {{t.sep}}; position: relative">
+      <button aria-label="Close" style="width: 12px; height: 12px; border-radius: 6px; background: #FF5F57; border: none; padding: 0"></button>
+      <span style="position: absolute; left: 0; right: 0; text-align: center; font-weight: 600; pointer-events: none">Proofreading</span>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 6px; padding: 7px 12px; border-bottom: 1px solid {{t.sep}}">
+      <span style="color: {{t.secondary}}">Slack ·</span>
+      <sc-for list="{{pickers}}" as="pk" hint-placeholder-count="3">
+        <button aria-haspopup="menu" aria-label="{{pk.aria}}" style="height: 22px; display: inline-flex; align-items: center; gap: 8px; border: 0.5px solid rgba(0,0,0,0.18); background: {{t.control}}; color: {{t.text}}; border-radius: 6px; padding: 0 3px 0 9px; box-shadow: 0 0.5px 1.5px rgba(0,0,0,0.18)">{{pk.label}}<span aria-hidden="true" style="display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 4px; background: {{t.accent}}"><svg width="8" height="11" viewBox="0 0 8 11" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4L4 1.5 6.5 4M1.5 7L4 9.5 6.5 7"></path></svg></span></button>
+      </sc-for>
+      <span style="flex-grow: 1"></span>
+      <div style="position: relative">
+        <button onClick="{{toggleLang}}" aria-haspopup="menu" aria-expanded="{{langOpen}}" aria-label="Output language: {{langLabel}}" title="Language of the corrected text" style="height: 22px; display: inline-flex; align-items: center; gap: 6px; border: 0.5px solid rgba(0,0,0,0.18); background: {{t.control}}; color: {{t.text}}; border-radius: 6px; padding: 0 3px 0 7px; box-shadow: 0 0.5px 1.5px rgba(0,0,0,0.18)">
+          <svg aria-hidden="true" width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.1"><circle cx="6.5" cy="6.5" r="5.5"></circle><path d="M1 6.5h11M6.5 1c1.6 1.6 2.4 3.4 2.4 5.5S8.1 10.4 6.5 12M6.5 1C4.9 2.6 4.1 4.4 4.1 6.5S4.9 10.4 6.5 12"></path></svg>
+          {{langLabel}}<span aria-hidden="true" style="display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; border-radius: 4px; background: {{t.accent}}"><svg width="8" height="11" viewBox="0 0 8 11" fill="none" stroke="#FFFFFF" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 4L4 1.5 6.5 4M1.5 7L4 9.5 6.5 7"></path></svg></span>
+        </button>
+        <sc-if value="{{langOpen}}" hint-placeholder-val="{{ false }}">
+          <div role="menu" aria-label="Output language" style="position: absolute; right: 0; top: 26px; z-index: 5; min-width: 230px; padding: 4px; border-radius: 8px; border: 1px solid {{t.sep}}; background: {{t.menu}}; box-shadow: 0 8px 24px rgba(0,0,0,0.2); display: flex; flex-direction: column">
+            <sc-for list="{{langs}}" as="lg" hint-placeholder-count="5">
+              <sc-if value="{{lg.sep}}" hint-placeholder-val="{{ false }}"><div style="height: 1px; background: {{t.sep}}; margin: 4px 6px"></div></sc-if>
+              <button role="menuitemradio" aria-checked="{{lg.on}}" onClick="{{lg.pick}}" style="{{lg.style}}">{{lg.check}} {{lg.name}}</button>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </div>
+
+    <div style="padding: 8px 12px; border-bottom: 1px solid {{t.sep}}; background: {{t.contextBg}}">
+      <sc-if value="{{ctxCollapsed}}" hint-placeholder-val="{{ true }}">
+        <div style="display: flex; align-items: center; gap: 8px; min-height: 26px">
+          <button onClick="{{openCtx}}" aria-expanded="false" style="border: none; background: transparent; color: {{t.text}}; padding: 0; font-weight: 600">▸ Context</button>
+          <button onClick="{{openCtx}}" title="Edit context" style="flex: 1 1 auto; flex-shrink: 1; min-width: 0; border: none; background: transparent; color: {{t.secondary}}; padding: 0; text-align: left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">Ravi: Hi Alex, when you were off last week, I have deployed couple PRs, I used the cherry pick…</button>
+          <sc-for list="{{shots}}" as="sh" hint-placeholder-count="2">
+            <span title="{{sh.label}}" style="flex-shrink: 0; width: 30px; height: 22px; border-radius: 4px; border: 1px solid {{t.sep}}; background: {{t.app}}; box-sizing: border-box; padding: 4px; display: flex; flex-direction: column; gap: 2px"><span aria-hidden="true" style="height: 2px; width: 70%; background: {{t.sep}}"></span><span aria-hidden="true" style="height: 2px; width: 90%; background: {{t.sep}}"></span><span aria-hidden="true" style="height: 2px; width: 50%; background: {{t.sep}}"></span></span>
+          </sc-for>
+          <button onClick="{{addShot}}" aria-label="Add screenshot of the window as context" title="Add screenshot of the window as context" style="width: 28px; height: 22px; display: flex; align-items: center; justify-content: center; border: 0.5px solid rgba(0,0,0,0.18); background: {{t.control}}; color: {{t.text}}; border-radius: 6px; padding: 0; box-shadow: 0 0.5px 1.5px rgba(0,0,0,0.18)">
+            <svg aria-hidden="true" width="15" height="13" viewBox="0 0 16 14" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1" y="3" width="14" height="10" rx="2"></rect><circle cx="8" cy="8" r="2.6"></circle><path d="M5.5 3l1-2h3l1 2"></path></svg>
+          </button>
+        </div>
+      </sc-if>
+      <sc-if value="{{ctxOpen}}" hint-placeholder-val="{{ false }}">
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="display: flex; align-items: center; gap: 8px">
+            <button onClick="{{closeCtx}}" aria-expanded="true" style="border: none; background: transparent; color: {{t.text}}; padding: 0; font-weight: 600">▾ Context</button>
+            <span style="color: {{t.secondary}}; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">What you're replying to, or notes for the model</span>
+          </div>
+          <label for="ctx" style="position: absolute; width: 1px; height: 1px; overflow: hidden">Context text</label>
+          <textarea id="ctx" rows="3" style="border: 1px solid {{t.sep}}; border-radius: 6px; background: {{t.field}}; color: {{t.text}}; padding: 6px 8px; resize: vertical">Ravi: Hi Alex, when you were off last week, I have deployed couple PRs, I used the cherry pick so I did not touch PR 412 and PR413 that you merged in the dev.</textarea>
+          <div style="display: flex; align-items: center; gap: 8px">
+            <sc-for list="{{shots}}" as="sh" hint-placeholder-count="2">
+              <div style="position: relative; flex-shrink: 0; width: 56px; height: 38px; border-radius: 5px; border: 1px solid {{t.sep}}; background: {{t.app}}; box-sizing: border-box; padding: 6px; display: flex; flex-direction: column; gap: 3px" title="{{sh.label}} · press Space to preview">
+                <span aria-hidden="true" style="height: 3px; width: 70%; background: {{t.sep}}"></span><span aria-hidden="true" style="height: 3px; width: 90%; background: {{t.sep}}"></span><span aria-hidden="true" style="height: 3px; width: 50%; background: {{t.sep}}"></span>
+                <button onClick="{{sh.remove}}" aria-label="Remove {{sh.label}}" style="position: absolute; top: -7px; right: -7px; width: 18px; height: 18px; border-radius: 9px; border: 1px solid {{t.sep}}; background: {{t.control}}; color: {{t.text}}; font-size: 10px; padding: 0">✕</button>
+              </div>
+            </sc-for>
+            <span style="color: {{t.secondary}}; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0">Paste ⌘V or drop images · {{shotCount}}</span>
+            <span style="flex-grow: 1"></span>
+            <button style="height: 22px; border: 0.5px solid rgba(0,0,0,0.18); background: {{t.control}}; color: {{t.text}}; border-radius: 6px; padding: 0 12px; box-shadow: 0 0.5px 1.5px rgba(0,0,0,0.18)">Recheck</button>
+          </div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div role="log" aria-label="Conversation" style="height: 420px; overflow-y: auto; padding: 12px; display: flex; flex-direction: column; gap: 10px; background: {{t.thread}}">
+      <sc-for list="{{items}}" as="it" hint-placeholder-count="4">
+        <sc-if value="{{it.isCard}}" hint-placeholder-val="{{ true }}">
+          <div style="border: 1px solid {{t.sep}}; border-radius: 10px; background: {{t.card}}; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px">
+            <div style="font-size: 12px; color: {{t.secondary}}">{{it.label}}</div>
+            <div style="font-size: 14px; line-height: 1.55">
+              <sc-for list="{{it.segs}}" as="s" hint-placeholder-count="8"><span onClick="{{s.pick}}" style="{{s.style}}">{{s.t}}</span></sc-for>
+            </div>
+            <sc-if value="{{it.showSelMenu}}" hint-placeholder-val="{{ false }}">
+              <div role="menu" aria-label="Selection actions" style="align-self: flex-start; display: flex; flex-direction: column; min-width: 220px; padding: 4px; border-radius: 8px; border: 1px solid {{t.sep}}; background: {{t.menu}}; box-shadow: 0 8px 24px rgba(0,0,0,0.18)">
+                <button role="menuitem" onClick="{{addTerm}}" style="text-align: left; border: none; border-radius: 4px; padding: 4px 10px; background: {{t.accent}}; color: #FFFFFF">Never Change “Bitbucket”</button>
+                <button role="menuitem" style="text-align: left; border: none; border-radius: 4px; padding: 4px 10px; background: transparent; color: {{t.text}}">Copy</button>
+                <button role="menuitem" style="text-align: left; border: none; border-radius: 4px; padding: 4px 10px; background: transparent; color: {{t.text}}">Look Up “Bitbucket”</button>
+              </div>
+            </sc-if>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <button onClick="{{it.toggle}}" aria-expanded="{{it.open}}" style="border: none; background: transparent; color: {{t.text}}; padding: 0; font-size: 12px; font-weight: 600">{{it.arrow}} {{it.summary}}</button>
+              <span style="flex-grow: 1"></span>
+              <button title="{{it.copyTip}}" style="height: 22px; min-width: 64px; border: 0.5px solid rgba(0,0,0,0.18); background: {{t.control}}; color: {{t.text}}; border-radius: 6px; padding: 0 12px; box-shadow: 0 0.5px 1.5px rgba(0,0,0,0.18)">Copy</button>
+              <button title="{{it.insertTip}}" style="{{it.insertStyle}}">Insert</button>
+            </div>
+            <sc-if value="{{it.open}}" hint-placeholder-val="{{ false }}">
+              <div style="display: flex; flex-direction: column; gap: 8px; padding-left: 2px">
+                <sc-for list="{{it.changes}}" as="e" hint-placeholder-count="3">
+                  <div style="display: grid; grid-template-columns: 14px minmax(0, 1fr) 20px; gap: 8px; align-items: baseline">
+                    <span aria-hidden="true" style="{{e.markStyle}}">{{e.mark}}</span>
+                    <div style="display: flex; flex-direction: column; gap: 1px; min-width: 0">
+                      <span style="font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 12px; overflow-wrap: anywhere">{{e.change}}</span>
+                      <span style="color: {{t.secondary}}">{{e.reason}}</span>
+                    </div>
+                    <button aria-label="Reject this change" title="Reject · right-click for Never Change" style="border: none; background: transparent; color: {{t.secondary}}; padding: 0">✕</button>
+                  </div>
+                </sc-for>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+        <sc-if value="{{it.isUser}}" hint-placeholder-val="{{ false }}">
+          <div style="align-self: flex-end; max-width: 80%; border-radius: 12px; background: {{t.bubble}}; color: {{t.bubbleText}}; padding: 7px 11px; line-height: 1.45">{{it.text}}</div>
+        </sc-if>
+        <sc-if value="{{it.isAnswer}}" hint-placeholder-val="{{ false }}">
+          <div style="align-self: flex-start; max-width: 80%; border-radius: 12px; background: {{t.card}}; border: 1px solid {{t.sep}}; padding: 7px 11px; line-height: 1.45">{{it.text}}</div>
+        </sc-if>
+      </sc-for>
+    </div>
+
+    <div style="padding: 10px 12px 12px; display: flex; flex-direction: column; gap: 8px; border-top: 1px solid {{t.sep}}">
+      <div style="display: flex; align-items: flex-end; gap: 6px; border: 1px solid {{t.sep}}; border-radius: 10px; background: {{t.field}}; padding: 5px 5px 5px 10px">
+        <label for="ask" style="position: absolute; width: 1px; height: 1px; overflow: hidden">Ask or tell what to change</label>
+        <textarea id="ask" rows="{{askRows}}" value="{{ask}}" onChange="{{setAsk}}" placeholder="Ask or tell what to change… (any language)" style="flex: 1 1 auto; min-width: 0; border: none; outline: none; resize: none; background: transparent; color: {{t.text}}; padding: 3px 0; line-height: 18px; overflow-y: {{askOverflow}}"></textarea>
+        <button onClick="{{send}}" aria-label="Send" title="Send (⌘↩)" style="{{sendStyle}}">
+          <svg aria-hidden="true" width="12" height="13" viewBox="0 0 12 13" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 11.5V1.5M1.5 6L6 1.5 10.5 6"></path></svg>
+        </button>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px">
+        <span title="Select a word in a version and choose Never Change to keep it unchanged" style="color: {{t.secondary}}; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0">{{footer}}</span>
+        <sc-if value="{{justAdded}}" hint-placeholder-val="{{ false }}"><button onClick="{{undoTerm}}" style="border: none; background: transparent; color: {{t.link}}; padding: 0; font-size: 12px">Undo</button></sc-if>
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"dark":{"editor":"boolean","default":false},"$preview":{"width":1000,"height":860}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { lang: 'auto', langOpen: false, ask: '', sent: [], open: { v1: false, v2: false }, ctxOpen: false, sel: false, added: false, shots: ['Screenshot of Chat app', 'Pasted image'] };
+  }
+  renderVals() {
+    const dark = this.props.dark ?? false;
+    const t = dark ? {
+      desk: '#1C1C1E', app: '#242426', panel: '#2C2C2E', control: '#3A3A3C', field: '#1C1C1E', menu: '#3A3A3C', contextBg: '#262628',
+      thread: '#232325', card: '#2C2C2E', bubble: '#1F6FEB', bubbleText: '#FFFFFF',
+      text: '#F2F2F7', secondary: '#AEAEB2', sep: '#48484A', accent: '#1F6FEB', link: '#6CB2FF',
+      errMark: '#30D158', styleMark: '#64A8FF', sel: 'rgba(10,132,255,0.45)',
+      ins: 'rgba(48,209,88,0.28)', insStyle: 'rgba(10,132,255,0.30)', del: '#8E8E93'
+    } : {
+      desk: '#D9DCE1', app: '#FFFFFF', panel: '#F6F6F6', control: '#FFFFFF', field: '#FFFFFF', menu: '#FFFFFF', contextBg: '#EEEEF0',
+      thread: '#F0F0F2', card: '#FFFFFF', bubble: '#0B63CE', bubbleText: '#FFFFFF',
+      text: '#1D1D1F', secondary: '#5E5E63', sep: '#D1D1D6', accent: '#0B63CE', link: '#0B63CE',
+      errMark: '#1E7B34', styleMark: '#0B63CE', sel: '#B3D7FF',
+      ins: 'rgba(52,199,89,0.24)', insStyle: 'rgba(10,132,255,0.16)', del: '#6E6E73'
+    };
+    const st = {
+      eq: '',
+      del: 'text-decoration: line-through; color: ' + t.del,
+      insE: 'background: ' + t.ins + '; text-decoration: underline; text-decoration-thickness: 1.5px; text-underline-offset: 3px; border-radius: 3px',
+      insS: 'background: ' + t.insStyle + '; text-decoration: underline dotted; text-decoration-thickness: 1.5px; text-underline-offset: 3px; border-radius: 3px'
+    };
+    const toggleSel = () => this.setState({ sel: !this.state.sel });
+    const toSegs = (arr) => arr.map(([k, s]) => k === 'term'
+      ? { t: s, pick: toggleSel, style: (this.state.sel ? 'background: ' + t.sel + '; border-radius: 3px; ' : st.insE + '; ') + 'cursor: text' }
+      : { t: s, style: st[k] });
+    const err = (change, reason) => ({ change, reason, mark: '●', markStyle: 'color: ' + t.errMark });
+    const sty = (change, reason) => ({ change, reason, mark: '◇', markStyle: 'color: ' + t.styleMark });
+    const cards = {
+      v1: {
+        segs: [
+          ['eq', 'Hi Ravi, yes'], ['insE', ','], ['eq', ' I '], ['del', 'noted'], ['eq', ' '], ['insE', 'noticed'], ['eq', ' this. Sorry, '],
+          ['del', 'this'], ['eq', ' '], ['insE', 'these'], ['eq', ' PRs actually '], ['del', "didn't relate"], ['eq', ' '], ['insS', "weren't related"],
+          ['eq', ' to the code'], ['insE', ','], ['eq', ' and I left them untagged. I deployed 412 and 413 with my '],
+          ['del', 'today today 420 to have'], ['eq', ' '], ['insE', 'PR 420 today to keep the'], ['eq', ' PRs clean.']
+        ],
+        changes: [
+          err('yes → yes,', 'A comma separates “yes” from the statement.'),
+          err('noted → noticed', '“Noticed” means you became aware of it.'),
+          err('this → these', 'Plural “PRs” requires “these”.'),
+          err('code → code,', 'Comma before “and” joining two clauses.'),
+          err('today today 420 to have → PR 420 today to keep the', 'Removes the repeat and names PR 420.'),
+          sty("didn't relate → weren't related", 'Both are correct; this describes a state.')
+        ],
+        summary: '5 fixes · 1 style suggestion'
+      },
+      v2: {
+        segs: [
+          ['eq', "Hi Ravi, yes, I noticed this. Sorry, these PRs actually weren't related to the code, and I left them untagged. I deployed 412 and 413 with my PR 420 today "],
+          ['del', 'to keep the PRs clean.'], ['eq', ' '], ['insE', 'so there are no untagged PRs left in '], ['term', 'Bitbucket'], ['insE', '.']
+        ],
+        changes: [err('to keep the PRs clean. → so there are no untagged PRs left in Bitbucket.', 'Says the result you meant.')],
+        summary: '1 change'
+      }
+    };
+    const card = (id, label) => {
+      const c = cards[id];
+      const open = this.state.open[id];
+      const latest = id === 'v2';
+      const btn = 'height: 22px; min-width: 64px; border-radius: 6px; padding: 0 12px; ';
+      return {
+        isCard: true, isUser: false, isAnswer: false, label,
+        segs: toSegs(c.segs), changes: c.changes, summary: c.summary,
+        open, arrow: open ? '▾' : '▸',
+        toggle: () => this.setState({ open: Object.assign({}, this.state.open, { [id]: !open }) }),
+        copyTip: latest ? 'Copy this version (⌘C)' : 'Copy this version',
+        insertTip: latest ? 'Insert this version into the text field (⇧⌘↩)' : 'Insert this version into the text field',
+        insertStyle: latest
+          ? btn + 'border: none; background: ' + t.accent + '; color: #FFFFFF; font-weight: 500'
+          : btn + 'border: 0.5px solid rgba(0,0,0,0.18); background: ' + t.control + '; color: ' + t.text + '; box-shadow: 0 0.5px 1.5px rgba(0,0,0,0.18)',
+        showSelMenu: id === 'v2' && this.state.sel && !this.state.added
+      };
+    };
+    const msg = (kind, text) => ({ isCard: false, isUser: kind === 'user', isAnswer: kind === 'answer', text });
+    const items = [
+      card('v1', 'Version 1'),
+      msg('user', 'как точнее сказать, что теперь в битбакете не висят незатегированные PR'),
+      card('v2', 'Version 2'),
+      msg('user', 'Is this polite?'),
+      msg('answer', 'Yes. It is polite and fits an informal work chat; “Sorry” softens it without sounding formal.')
+    ].concat(this.state.sent.map((text) => msg('user', text)));
+    const ask = this.state.ask;
+    const lines = ask.split('\n').reduce((n, l) => n + Math.max(1, Math.ceil(l.length / 62)), 0);
+    const askRows = Math.min(6, Math.max(1, lines));
+    const canSend = ask.trim().length > 0;
+    const langList = [
+      ['auto', 'Same as Text (English detected)'],
+      ['en-US', 'English (US)', true], ['en-GB', 'English (UK)'],
+      ['ru', 'Russian'], ['de', 'German'], ['es', 'Spanish'],
+      ['more', 'More Languages…', true]
+    ];
+    const langNames = { auto: 'Auto', 'en-US': 'English (US)', 'en-GB': 'English (UK)', ru: 'Russian', de: 'German', es: 'Spanish', more: 'Auto' };
+    const list = this.state.shots;
+    const shots = list.map((label, i) => ({ label, remove: () => this.setState({ shots: list.filter((_, j) => j !== i) }) }));
+    return {
+      t, items, shots,
+      langOpen: this.state.langOpen,
+      langLabel: langNames[this.state.lang],
+      langs: langList.map(([id, name, sep]) => ({
+        name, sep: !!sep, on: this.state.lang === id, check: this.state.lang === id ? '✓' : ' ',
+        pick: () => this.setState({ lang: id, langOpen: false }),
+        style: 'text-align: left; border: none; border-radius: 4px; padding: 4px 10px; background: transparent; color: ' + t.text
+      })),
+      toggleLang: () => this.setState({ langOpen: !this.state.langOpen }),
+      ask, askRows, askOverflow: lines > 6 ? 'auto' : 'hidden',
+      setAsk: (e) => this.setState({ ask: e.target.value }),
+      send: () => { if (canSend) this.setState({ sent: this.state.sent.concat([ask.trim()]), ask: '' }); },
+      sendStyle: 'width: 26px; height: 26px; border-radius: 13px; border: none; padding: 0; display: flex; align-items: center; justify-content: center; background: '
+        + (canSend ? t.accent : t.sep) + '; cursor: ' + (canSend ? 'pointer' : 'default'),
+      pickers: [
+        { label: 'Message', aria: 'Text type: Message' },
+        { label: 'Neutral', aria: 'Tone: Neutral' },
+        { label: 'Fluency', aria: 'Level: Fluency' }
+      ],
+      shotCount: list.length === 1 ? '1 image' : list.length + ' images',
+      ctxOpen: this.state.ctxOpen, ctxCollapsed: !this.state.ctxOpen,
+      justAdded: this.state.added,
+      footer: this.state.added ? '“Bitbucket” added to Dictionary.' : '1.6k tokens',
+      openCtx: () => this.setState({ ctxOpen: true }),
+      closeCtx: () => this.setState({ ctxOpen: false }),
+      addShot: () => this.setState({ shots: list.concat(['Screenshot of Chat app']) }),
+      addTerm: () => this.setState({ added: true, sel: false }),
+      undoTerm: () => this.setState({ added: false })
+    };
+  }
+}
+</script>
+</body>
+</html>
