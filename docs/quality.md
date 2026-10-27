@@ -25,9 +25,9 @@ npm install -g jscpd
 | Шаг | Инструмент | Конфиг | Что ловит |
 |---|---|---|---|
 | Форматирование | `swift format lint --strict` | [.swift-format](../.swift-format) | Стиль: 2 пробела, строка до 100 символов, порядок импортов. Исправляется `--fix` |
-| Компиляция | `swift build` | [Package.swift](../Packages/GrammarCore/Package.swift) | Предупреждения — ошибки; strict concurrency (Swift 6); `ExistentialAny`, `MemberImportVisibility`, `InternalImportsByDefault`; функции и выражения, которые тайпчекаются дольше 200 мс |
-| Тесты | `swift test` | — | Поведение GrammarCore |
-| Неиспользуемый код | Periphery | [.periphery.yml](../Packages/GrammarCore/.periphery.yml) | Неиспользуемые типы, функции, свойства, параметры. Публичный API GrammarCore считается используемым: это контракт с App |
+| Компиляция | `swift build` | [Package.swift](../Packages/CyranoCore/Package.swift) | Предупреждения — ошибки; strict concurrency (Swift 6); `ExistentialAny`, `MemberImportVisibility`, `InternalImportsByDefault`; функции и выражения, которые тайпчекаются дольше 200 мс |
+| Тесты | `swift test` | — | Поведение CyranoCore |
+| Неиспользуемый код | Periphery | [.periphery.yml](../Packages/CyranoCore/.periphery.yml) | Неиспользуемые типы, функции, свойства, параметры. Публичный API CyranoCore считается используемым: это контракт с App |
 | Сложность и размеры | SwiftLint | [.swiftlint.yml](../.swiftlint.yml) | Пороги ниже; плюс `!`, `try!`, `as!`, IUO |
 | Дубликаты | jscpd | [.jscpd.json](../.jscpd.json) | Совпадающие фрагменты от 6 строк и 60 токенов; любой найденный клон — провал |
 
@@ -59,7 +59,7 @@ let head = items.first!
 
 - SwiftLint и jscpd уже смотрят в `App/`, `scripts/check` подхватит Swift-файлы оттуда автоматически.
 - В build settings Xcode-проекта: `SWIFT_TREAT_WARNINGS_AS_ERRORS = YES`, `SWIFT_STRICT_CONCURRENCY = complete`, те же upcoming features, что в `Package.swift`.
-- Periphery для приложения запускается по Xcode-проекту (`periphery scan --project App/Grammar.xcodeproj --schemes Grammar`), и тогда `retain_public` для GrammarCore можно снять: неиспользуемый публичный API тоже станет виден. Добавить шаг в `scripts/check`.
+- Periphery для приложения запускается по Xcode-проекту (`periphery scan --project App/Cyrano.xcodeproj --schemes Cyrano`), и тогда `retain_public` для CyranoCore можно снять: неиспользуемый публичный API тоже станет виден. Добавить шаг в `scripts/check`.
 
 ## Позже
 
@@ -67,6 +67,6 @@ let head = items.first!
 
 - **CRAP** — сложность × непокрытость тестами по функциям: `swift test --enable-code-coverage` + `llvm-cov export` + сложность. Либо добавить Swift в crapper.
 - **Мутационное тестирование** — по изменённым файлам перед коммитом (Muter или Swift-модуль для mutator).
-- **Разбиение GrammarCore на таргеты SPM** (Auth, OpenAI, Prompts, Diff, Settings): компилятор начнёт запрещать циклы и лишние зависимости.
+- **Разбиение CyranoCore на таргеты SPM** (Auth, OpenAI, Prompts, Diff, Settings): компилятор начнёт запрещать циклы и лишние зависимости.
 
 Предостережение из эксперимента Мартина: механическое следование метрике сложности раздуло код на 20–65% и удвоило число функций без изменения поведения. Метрика — сигнал; разбивать стоит по смыслу, а не до минимального числа.

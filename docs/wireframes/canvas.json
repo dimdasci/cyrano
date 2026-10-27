@@ -63,7 +63,7 @@
     "title": {
       "kind": "title1",
       "maxW": 2260,
-      "text": "Grammar — UI wireframes (specs/05-ui.md)",
+      "text": "Cyrano — UI wireframes (specs/05-ui.md)",
       "w": 240,
       "x": 0,
       "y": -300
@@ -78,5 +78,5 @@
     "About.dc.html"
   ],
   "pages": [],
-  "title": "Grammar UI wireframes"
+  "title": "Cyrano UI wireframes"
 }

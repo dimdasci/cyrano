@@ -11,7 +11,7 @@ enum OpenAI {
   static let port: UInt16 = 1457
   static var redirectURI: String { "http://127.0.0.1:\(port)/auth/callback" }
   static let scopes = "openid profile email offline_access resource.invoke chatgpt.tokens.use.direct"
-  static let appName = "Grammar (prototype)"
+  static let appName = "Cyrano (prototype)"
 }
 
 struct OpenAIError: Error, CustomStringConvertible {

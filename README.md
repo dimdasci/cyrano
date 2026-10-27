@@ -1,4 +1,4 @@
-# Grammar
+# Cyrano
 
 Нативное приложение для macOS, которое проверяет и улучшает короткие сообщения в любом приложении: хоткей → панель с исправленным текстом, пояснениями и диалогом с моделью → вставка обратно в поле. Работает через вашу подписку ChatGPT (Plus или Pro) по официальному «Sign in with ChatGPT».
 
@@ -8,7 +8,7 @@
 
 ```
 docs/                  спецификация, wireframes, исследования (начать с docs/README.md)
-Packages/GrammarCore/  Swift Package: клиент OpenAI, промпты, diff, настройки (тестируется без UI)
+Packages/CyranoCore/  Swift Package: клиент OpenAI, промпты, diff, настройки (тестируется без UI)
 App/                   Xcode-проект приложения — появится на первом шаге разработки
 evals/                 набор примеров и раннер для проверки промптов на моделях ChatGPT
 scripts/check          проверка качества кода: формат, сборка, тесты, линтер, дубликаты, мёртвый код
@@ -22,7 +22,7 @@ scripts/check          проверка качества кода: формат,
 ## Сборка
 
 ```bash
-cd Packages/GrammarCore && swift test
+cd Packages/CyranoCore && swift test
 ```
 
 Проверка качества перед коммитом (инструменты и пороги — [docs/quality.md](docs/quality.md)):

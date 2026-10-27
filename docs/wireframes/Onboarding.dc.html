@@ -20,7 +20,7 @@ button{font:inherit}
       <span style="width: 12px; height: 12px; border-radius: 6px; background: #FF5F57"></span>
       <span style="width: 12px; height: 12px; border-radius: 6px; background: #D1D1D6"></span>
       <span style="width: 12px; height: 12px; border-radius: 6px; background: #D1D1D6"></span>
-      <span style="position: absolute; left: 0; right: 0; text-align: center; font-weight: 600; pointer-events: none">Welcome to Grammar</span>
+      <span style="position: absolute; left: 0; right: 0; text-align: center; font-weight: 600; pointer-events: none">Welcome to Cyrano</span>
     </div>
 
     <div style="display: flex; justify-content: center; gap: 24px; padding: 18px 0 8px">
@@ -33,7 +33,7 @@ button{font:inherit}
       <sc-if value="{{isSignIn}}" hint-placeholder-val="{{ true }}">
         <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center">
           <div style="font-size: 20px; font-weight: 600">Sign in with your ChatGPT plan</div>
-          <div style="color: #5E5E63; max-width: 380px">Grammar uses your ChatGPT Plus or Pro plan to check your messages.</div>
+          <div style="color: #5E5E63; max-width: 380px">Cyrano uses your ChatGPT Plus or Pro plan to check your messages.</div>
           <button onClick="{{signIn}}" style="border: none; background: #1D1D1F; color: #FFFFFF; border-radius: 8px; padding: 9px 22px; font-weight: 500; font-size: 14px">Continue with ChatGPT</button>
           <sc-if value="{{signedIn}}" hint-placeholder-val="{{ false }}"><div style="color: #1E7B34">✓ Signed in as name@…</div></sc-if>
           <div style="color: #5E5E63; font-size: 12px; max-width: 400px">Your text is sent to OpenAI only when you run a check. It isn't stored.</div>
@@ -42,7 +42,7 @@ button{font:inherit}
       <sc-if value="{{isAx}}" hint-placeholder-val="{{ false }}">
         <div style="display: flex; flex-direction: column; gap: 16px; align-items: center; text-align: center">
           <div style="font-size: 20px; font-weight: 600">Allow Accessibility</div>
-          <div style="color: #5E5E63; max-width: 400px">Grammar reads the text in the field you're typing in and puts the corrected version back.</div>
+          <div style="color: #5E5E63; max-width: 400px">Cyrano reads the text in the field you're typing in and puts the corrected version back.</div>
           <button onClick="{{grant}}" style="border: 1px solid #C7C7CC; background: #FFFFFF; border-radius: 6px; padding: 5px 16px">Open System Settings…</button>
           <div style="{{axStyle}}">{{axStatus}}</div>
         </div>

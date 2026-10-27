@@ -14,16 +14,16 @@ let strictSettings: [SwiftSetting] = [
 ]
 
 let package = Package(
-  name: "GrammarCore",
+  name: "CyranoCore",
   platforms: [.macOS("27.0")],
   products: [
-    .library(name: "GrammarCore", targets: ["GrammarCore"])
+    .library(name: "CyranoCore", targets: ["CyranoCore"])
   ],
   targets: [
-    .target(name: "GrammarCore", swiftSettings: strictSettings),
+    .target(name: "CyranoCore", swiftSettings: strictSettings),
     .testTarget(
-      name: "GrammarCoreTests",
-      dependencies: ["GrammarCore"],
+      name: "CyranoCoreTests",
+      dependencies: ["CyranoCore"],
       swiftSettings: strictSettings
     ),
   ]

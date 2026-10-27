@@ -8,13 +8,14 @@
 |---|---|---|
 | T1 | macOS 27+, Apple Silicon | Текущая система пользователя, без оглядки на старые версии |
 | T2 | Swift 6.4, strict concurrency; SwiftUI для UI, AppKit для `NSPanel`, статус-бара и AX | SwiftUI не умеет неактивируемые плавающие панели |
-| T3 | Репозиторий: `App/` — Xcode-проект приложения (UI, AX, хоткеи, окна); `Packages/GrammarCore/` — локальный Swift Package (клиент OpenAI, авторизация, промпты, diff, словарь, настройки); `docs/` — спецификация и wireframes; `evals/` — набор примеров и раннер. Приложение зависит от GrammarCore | Ядро тестируется `swift test` без UI; UI-код не смешивается с логикой |
+| T3 | Репозиторий: `App/` — Xcode-проект приложения (UI, AX, хоткеи, окна); `Packages/CyranoCore/` — локальный Swift Package (клиент OpenAI, авторизация, промпты, diff, словарь, настройки); `docs/` — спецификация и wireframes; `evals/` — набор примеров и раннер. Приложение зависит от CyranoCore | Ядро тестируется `swift test` без UI; UI-код не смешивается с логикой |
 | T4 | Без App Sandbox, распространение вне App Store (локальная сборка) | Accessibility API для чужих приложений несовместим с sandbox |
 | T5 | `LSUIElement` = агент в menu bar, без иконки в Dock | Утилита «всегда под рукой» |
 | T6 | Все сочетания клавиш — настраиваемые (SPM-пакет `KeyboardShortcuts`, sindresorhus): глобальный «Check text» и сочетания внутри панели, у каждого — сброс к умолчанию | Готовый UI записи хоткея, единственная внешняя зависимость |
 | T7 | **Движок — модели по подписке ChatGPT** через Sign in with ChatGPT ([research](../research/openai-sign-in-with-chatgpt.md)). Без API-ключа и без локальных моделей | Единственный вариант с нужным качеством: `gpt-6.1-sol` 18/21 против 16/21 у Gemma 4 12B и 13/21 у Apple on-device ([04](04-prompts.md) §3). Локальные модели исправляют ошибки, но не делают текст естественным, а это основная ценность |
-| T8 | Движок за протоколом `CorrectionEngine` в `GrammarCore`. Единственная реализация — `OpenAIEngine` | Тесты с фейковым движком, изоляция API |
-| T9 | **Открытый исходный код, лицензия MIT.** Автор — Dim Kharitonov. Репозиторий `github.com/dimdasci/grammar`, документация — README и GitHub Pages (`dimdasci.github.io/grammar`); ссылки на них в окне About | Соответствует self-serve доступу Sign in with ChatGPT для open-source и локальных приложений |
+| T8 | Движок за протоколом `CorrectionEngine` в `CyranoCore`. Единственная реализация — `OpenAIEngine` | Тесты с фейковым движком, изоляция API |
+| T9 | **Открытый исходный код, лицензия MIT.** Автор — Dim Kharitonov. Репозиторий `github.com/dimdasci/cyrano`, документация — README и GitHub Pages (`dimdasci.github.io/cyrano`); ссылки на них в окне About | Соответствует self-serve доступу Sign in with ChatGPT для open-source и локальных приложений |
+| T10 | **Название — Cyrano**, пишется как в оригинале. Отсылка к Сирано де Бержераку, который писал письма за другого. Ядро — `CyranoCore` | Помощник со стилем, который помогает сказать ясно и красиво. Имя узнаваемое, по-английски «cy» читается как «с», поэтому написание не меняем |
 
 ## Авторизация
 
@@ -68,6 +69,6 @@
 
 ## Тестирование
 
-- `GrammarCore`: юнит-тесты diff, сборки промптов, разбора SSE и ошибок, PKCE/JWT-валидации (на фикстурах).
+- `CyranoCore`: юнит-тесты diff, сборки промптов, разбора SSE и ошибок, PKCE/JWT-валидации (на фикстурах).
 - Eval-набор [evals/cases.json](../../evals/cases.json) и раннер [evals/cloud-runner](../../evals/cloud-runner) для регрессии промптов. Перед каждым изменением промптов — прогон на `gpt-6.1-sol` и `gpt-6-luna`.
 - Ручной чек-лист захвата/вставки: Safari, Chrome, Slack, Telegram, Mail, Notes, Messages.

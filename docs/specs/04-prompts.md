@@ -1,6 +1,6 @@
 # 04. Промпты
 
-Статус: **проверено на модели** 2026-10-27. Пересмотрено: язык результата больше не только английский (`{language}`); все шаблоны редактируются в Settings → Prompts, здесь — встроенные значения. Движок — `gpt-6.1-sol` / `gpt-6-luna` по подписке ChatGPT ([02](02-tech-decisions.md) T7). Актуальные шаблоны — в [evals/cloud-runner/Shared.swift](../../evals/cloud-runner/Shared.swift); при переносе в `GrammarCore` этот документ и код меняются вместе.
+Статус: **проверено на модели** 2026-10-27. Пересмотрено: язык результата больше не только английский (`{language}`); все шаблоны редактируются в Settings → Prompts, здесь — встроенные значения. Движок — `gpt-6.1-sol` / `gpt-6-luna` по подписке ChatGPT ([02](02-tech-decisions.md) T7). Актуальные шаблоны — в [evals/cloud-runner/Shared.swift](../../evals/cloud-runner/Shared.swift); при переносе в `CyranoCore` этот документ и код меняются вместе.
 
 ## 1. Принципы
 
@@ -153,4 +153,4 @@ Changes:
 - [evals/cases.json](../../evals/cases.json): `{ id, text, contextType, level?, replyTo?, doNotChange?, followUps?, expect: { mustContain[], mustNotContain[], unchanged?, kind? } }`. Проверки без учёта регистра и типографских кавычек.
 - Раннер: [evals/cloud-runner](../../evals/cloud-runner) (`login` · `models` · `run`, `MODEL=…`, `EFFORT=…`).
 - Нужно довести до ≥ 30 кейсов и ужесточить проверки: запреты на найденные порчи текста (`today's 420`, `calls`), допустимые альтернативы вместо одной строки (`Thanks for clarifying the complaint` тоже правильно).
-- В `GrammarCore` раннер становится CLI-таргетом `grammar-eval` поверх того же кода, что и приложение.
+- В `CyranoCore` раннер становится CLI-таргетом `cyrano-eval` поверх того же кода, что и приложение.

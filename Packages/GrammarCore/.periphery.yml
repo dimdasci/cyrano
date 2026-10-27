@@ -1,2 +1,0 @@
-# Periphery: unused code in GrammarCore. Public API is the App's contract, so it is retained.
-retain_public: true
