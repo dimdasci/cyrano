@@ -1,0 +1,62 @@
+#!/usr/bin/env bash
+# Quality gate: format, build (warnings are errors), tests, lint, duplication, unused code.
+# Runs every step and reports all failures. See docs/quality.md.
+#
+#   scripts/check         check everything
+#   scripts/check --fix   reformat Swift files first, then check
+
+set -uo pipefail
+cd "$(dirname "$0")/.."
+
+failed=()
+
+step() {
+  local name=$1
+  shift
+  echo "==> $name"
+  if ! "$@"; then
+    failed+=("$name")
+  fi
+}
+
+require() {
+  if ! command -v "$1" >/dev/null; then
+    echo "missing tool: $1 (install: $2)" >&2
+    exit 1
+  fi
+}
+
+require swiftlint "brew install swiftlint"
+require periphery "brew install periphery"
+require jscpd "npm install -g jscpd"
+
+# Product code only: App/ and Packages/. evals/ is a prototype runner and is not checked.
+swift_files=()
+while IFS= read -r file; do
+  swift_files+=("$file")
+done < <(git ls-files --cached --others --exclude-standard -- 'App/*.swift' 'Packages/*.swift')
+
+if [[ ${1:-} == "--fix" ]]; then
+  echo "==> swift format (fix)"
+  swift format format --in-place --parallel "${swift_files[@]}"
+fi
+
+step "swift format" swift format lint --strict --parallel "${swift_files[@]}"
+
+for package in Packages/*/; do
+  name=$(basename "$package")
+  step "$name: build" swift build --package-path "$package" --build-tests --enable-index-store
+  step "$name: test" swift test --package-path "$package" --skip-build
+  step "$name: periphery" bash -c "cd '$package' && periphery scan --strict --quiet --skip-build \
+    --index-store-path .build/out/Products/Debug/index/store"
+done
+
+step "swiftlint" swiftlint lint --strict --quiet
+step "jscpd" jscpd --silent
+
+echo
+if ((${#failed[@]})); then
+  echo "FAILED: ${failed[*]}"
+  exit 1
+fi
+echo "All checks passed."

@@ -7,6 +7,7 @@
 | [specs/03-mvp-scope.md](specs/03-mvp-scope.md) | Сценарии, настройки, критерии готовности MVP | согласовано |
 | [specs/04-prompts.md](specs/04-prompts.md) | Конвейер, встроенные промпты, выбор модели, eval | согласовано |
 | [specs/05-ui.md](specs/05-ui.md) | Экраны, панель-чат, состояния, клавиатура, Settings, сверка с HIG | согласовано |
+| [quality.md](quality.md) | Проверки качества кода: `scripts/check`, инструменты, пороги | принято |
 | [wireframes/](wireframes/) | Wireframes всех экранов и как их использовать в разработке | согласовано |
 | [research/openai-sign-in-with-chatgpt.md](research/openai-sign-in-with-chatgpt.md) | Sign in with ChatGPT: протокол, ограничения, оценка | принято |
 

@@ -1,0 +1,60 @@
+# SwiftLint: metrics and a few correctness rules. Formatting is swift format's job (.swift-format).
+# Thresholds are described in docs/quality.md. Run via scripts/check.
+included:
+  - App
+  - Packages
+excluded:
+  - "**/.build"
+  - "**/DerivedData"
+
+only_rules:
+  # Size and complexity
+  - cyclomatic_complexity
+  - function_body_length
+  - closure_body_length
+  - type_body_length
+  - file_length
+  - function_parameter_count
+  - nesting
+  - large_tuple
+  # Safety
+  - force_unwrapping
+  - force_try
+  - force_cast
+  - implicitly_unwrapped_optional
+  - fatal_error_message
+  # Leftovers
+  - unused_closure_parameter
+  - unused_enumerated
+  - unused_optional_binding
+  # Disable commands stay narrow and justified
+  - blanket_disable_command
+  - superfluous_disable_command
+  - invalid_swiftlint_command
+
+cyclomatic_complexity:
+  warning: 10
+  error: 10
+  ignores_case_statements: true
+function_body_length:
+  warning: 40
+  error: 40
+closure_body_length:
+  warning: 30
+  error: 30
+type_body_length:
+  warning: 250
+  error: 250
+file_length:
+  warning: 400
+  error: 400
+  ignore_comment_only_lines: true
+function_parameter_count:
+  warning: 5
+  error: 5
+nesting:
+  type_level: 2
+  function_level: 3
+large_tuple:
+  warning: 3
+  error: 3

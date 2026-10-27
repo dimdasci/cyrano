@@ -1,0 +1,20 @@
+{
+  "format": [
+    "swift"
+  ],
+  "path": [
+    "."
+  ],
+  "ignore": [
+    "**/.build/**",
+    "**/DerivedData/**",
+    "evals/**"
+  ],
+  "minLines": 6,
+  "minTokens": 60,
+  "reporters": [
+    "console"
+  ],
+  "exitCode": 1,
+  "gitignore": true
+}

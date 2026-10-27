@@ -11,6 +11,7 @@ docs/                  спецификация, wireframes, исследова�
 Packages/GrammarCore/  Swift Package: клиент OpenAI, промпты, diff, настройки (тестируется без UI)
 App/                   Xcode-проект приложения — появится на первом шаге разработки
 evals/                 набор примеров и раннер для проверки промптов на моделях ChatGPT
+scripts/check          проверка качества кода: формат, сборка, тесты, линтер, дубликаты, мёртвый код
 ```
 
 ## Требования
@@ -22,6 +23,13 @@ evals/                 набор примеров и раннер для про
 
 ```bash
 cd Packages/GrammarCore && swift test
+```
+
+Проверка качества перед коммитом (инструменты и пороги — [docs/quality.md](docs/quality.md)):
+
+```bash
+brew install swiftlint periphery && npm install -g jscpd
+scripts/check
 ```
 
 Раннер примеров:
