@@ -92,9 +92,17 @@ private struct PanelHeader: View {
   }
 }
 
+/// Context and the Check button. Before the first check the context is open and focused, so the
+/// user can paste what they are replying to before anything is sent.
 private struct ContextBar: View {
   @Bindable var session: ProofreadingSession
-  @State private var expanded = false
+  @State private var expanded: Bool
+  @FocusState private var editing: Bool
+
+  init(session: ProofreadingSession) {
+    self.session = session
+    _expanded = State(initialValue: session.versions.isEmpty)
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
@@ -110,19 +118,37 @@ private struct ContextBar: View {
             .onTapGesture { expanded = true }
         }
         Spacer()
-        Button("Recheck") { Task { await session.check() } }
-          .keyboardShortcut("r")
-          .disabled(session.isBusy)
+        checkButton
       }
       if expanded {
         TextEditor(text: $session.context)
           .font(.body)
           .frame(height: 64)
           .overlay(RoundedRectangle(cornerRadius: 6).stroke(.separator))
+          .focused($editing)
+          .onAppear { editing = session.versions.isEmpty }
       }
     }
     .padding(.horizontal, 12)
     .padding(.vertical, 8)
+  }
+
+  @ViewBuilder private var checkButton: some View {
+    if session.versions.isEmpty {
+      Button("Check") { start() }
+        .buttonStyle(.borderedProminent)
+        .keyboardShortcut("r")
+        .disabled(session.isBusy)
+    } else {
+      Button("Recheck") { start() }
+        .keyboardShortcut("r")
+        .disabled(session.isBusy)
+    }
+  }
+
+  private func start() {
+    expanded = false
+    Task { await session.check() }
   }
 
   private var summary: String {
@@ -153,7 +179,11 @@ private struct Composer: View {
       }
       .buttonStyle(.plain)
       .keyboardShortcut(.return, modifiers: .command)
-      .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || session.isBusy)
+      // The dialog continues a check; before the first one there is nothing to talk about.
+      .disabled(
+        draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || session.isBusy
+          || session.versions.isEmpty
+      )
       .accessibilityLabel("Send")
       .help("Send (⌘↩)")
     }

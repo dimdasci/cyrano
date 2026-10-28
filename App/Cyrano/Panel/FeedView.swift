@@ -11,6 +11,11 @@ struct FeedView: View {
     ScrollViewReader { proxy in
       ScrollView {
         LazyVStack(alignment: .leading, spacing: 10) {
+          if session.feed.isEmpty {
+            Card(title: "Text to check") {
+              Text(session.original).font(.system(size: 14)).textSelection(.enabled)
+            }
+          }
           ForEach(session.feed) { item in
             row(item)
           }

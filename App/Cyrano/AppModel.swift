@@ -65,10 +65,10 @@ final class AppModel {
     }
   }
 
+  /// Opens the panel without checking: the user adds context first, then presses Check.
   func openPanel(for captured: CapturedText) {
     let session = makeSession(for: captured)
     panel.show(PanelModel(content: .session(session, captured), app: self), near: captured.frame)
-    Task { await session.check() }
   }
 
   func makeSession(for captured: CapturedText) -> ProofreadingSession {

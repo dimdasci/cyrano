@@ -37,8 +37,10 @@ final class PanelModel {
   }
 
   /// Panel settings changed: remember them for the app and check the latest version again.
+  /// Before the first check there is nothing to recheck yet.
   func optionsChanged(_ session: ProofreadingSession, for captured: CapturedText) {
     OptionsMemory.remember(session.options, for: captured.bundleID)
+    guard !session.versions.isEmpty else { return }
     Task { await session.check() }
   }
 
