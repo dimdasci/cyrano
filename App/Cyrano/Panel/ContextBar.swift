@@ -25,7 +25,6 @@ struct ContextBar: View {
         Button(expanded ? "▾ Context" : "▸ Context") { expanded.toggle() }
           .buttonStyle(.plain)
           .fontWeight(.semibold)
-          .keyboardShortcut("k")
         if !expanded {
           collapsedSummary
         }
@@ -123,11 +122,9 @@ struct ContextBar: View {
     if session.versions.isEmpty {
       Button("Check") { start() }
         .buttonStyle(.borderedProminent)
-        .keyboardShortcut("r")
         .disabled(session.isBusy)
     } else {
       Button("Recheck") { start() }
-        .keyboardShortcut("r")
         .disabled(session.isBusy)
     }
   }

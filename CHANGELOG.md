@@ -8,6 +8,10 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Removed
+
+- Keyboard shortcuts inside the panel (⌘R, ⌘K, ⌘↩, ⇧⌘C) and ⌥⌘G next to Check Text… in the menu. Use the buttons instead; ⌥⌘G still opens the panel from any app and can be changed in Settings.
+
 ## [0.2.0] - 2026-10-28
 
 Add what you're replying to as pictures: a screenshot of the conversation helps Cyrano match

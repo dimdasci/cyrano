@@ -22,7 +22,6 @@ struct ManualCheckView: View {
             }
           }
         Button("Check", action: check)
-          .keyboardShortcut(.return, modifiers: .command)
           .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
       }
       .padding(12)
