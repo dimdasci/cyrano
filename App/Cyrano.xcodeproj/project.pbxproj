@@ -1,0 +1,301 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		C0000000000000000000B001 /* CyranoCore in Frameworks */ = {isa = PBXBuildFile; productRef = C0000000000000000000D001 /* CyranoCore */; };
+		C0000000000000000000B002 /* KeyboardShortcuts in Frameworks */ = {isa = PBXBuildFile; productRef = C0000000000000000000D002 /* KeyboardShortcuts */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		C0000000000000000000F002 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
+		C0000000000000000000F003 /* Cyrano.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Cyrano.xcconfig; sourceTree = "<group>"; };
+		C0000000000000000000F004 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
+		C0000000000000000000F001 /* Cyrano.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Cyrano.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		C0000000000000000000A002 /* Cyrano */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = Cyrano;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		C0000000000000000000E002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C0000000000000000000B001 /* CyranoCore in Frameworks */,
+				C0000000000000000000B002 /* KeyboardShortcuts in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		C0000000000000000000A001 = {
+			isa = PBXGroup;
+			children = (
+				C0000000000000000000A002 /* Cyrano */,
+				C0000000000000000000F003 /* Cyrano.xcconfig */,
+				C0000000000000000000F002 /* Signing.xcconfig */,
+				C0000000000000000000F004 /* Version.xcconfig */,
+				C0000000000000000000A003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		C0000000000000000000A003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				C0000000000000000000F001 /* Cyrano.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		C00000000000000000001001 /* Cyrano */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C00000000000000000003002 /* Build configuration list for PBXNativeTarget "Cyrano" */;
+			buildPhases = (
+				C0000000000000000000E001 /* Sources */,
+				C0000000000000000000E002 /* Frameworks */,
+				C0000000000000000000E003 /* Resources */,
+				C0000000000000000000E004 /* Set Build Number */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C0000000000000000000A002 /* Cyrano */,
+			);
+			name = Cyrano;
+			packageProductDependencies = (
+				C0000000000000000000D001 /* CyranoCore */,
+				C0000000000000000000D002 /* KeyboardShortcuts */,
+			);
+			productName = Cyrano;
+			productReference = C0000000000000000000F001 /* Cyrano.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		C00000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2700;
+				LastUpgradeCheck = 2700;
+			};
+			buildConfigurationList = C00000000000000000003001 /* Build configuration list for PBXProject "Cyrano" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = C0000000000000000000A001;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				C0000000000000000000C001 /* XCLocalSwiftPackageReference "../Packages/CyranoCore" */,
+				C0000000000000000000C002 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = C0000000000000000000A003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				C00000000000000000001001 /* Cyrano */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		C0000000000000000000E003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		C0000000000000000000E004 /* Set Build Number */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "Set Build Number";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SRCROOT/../scripts/set-build-number\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		C0000000000000000000E001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		C00000000000000000002001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		C00000000000000000002002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		C00000000000000000002003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = C0000000000000000000F003 /* Cyrano.xcconfig */;
+			buildSettings = {
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Cyrano;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Dim Kharitonov. MIT License.";
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
+				OTHER_SWIFT_FLAGS = "-enable-upcoming-feature ExistentialAny -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InternalImportsByDefault";
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.dimdasci.cyrano;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Debug;
+		};
+		C00000000000000000002004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = C0000000000000000000F003 /* Cyrano.xcconfig */;
+			buildSettings = {
+				ARCHS = arm64;
+				COMBINE_HIDPI_IMAGES = YES;
+				ENABLE_APP_SANDBOX = NO;
+				ENABLE_HARDENED_RUNTIME = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Cyrano;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Dim Kharitonov. MIT License.";
+				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
+				OTHER_SWIFT_FLAGS = "-enable-upcoming-feature ExistentialAny -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InternalImportsByDefault";
+				PRODUCT_BUNDLE_IDENTIFIER = io.github.dimdasci.cyrano;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_STRICT_CONCURRENCY = complete;
+				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
+				SWIFT_VERSION = 6.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		C00000000000000000003001 /* Build configuration list for PBXProject "Cyrano" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C00000000000000000002001 /* Debug */,
+				C00000000000000000002002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C00000000000000000003002 /* Build configuration list for PBXNativeTarget "Cyrano" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C00000000000000000002003 /* Debug */,
+				C00000000000000000002004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		C0000000000000000000C001 /* XCLocalSwiftPackageReference "../Packages/CyranoCore" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = ../Packages/CyranoCore;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		C0000000000000000000C002 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/sindresorhus/KeyboardShortcuts";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 1.10.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		C0000000000000000000D001 /* CyranoCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = CyranoCore;
+		};
+		C0000000000000000000D002 /* KeyboardShortcuts */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = C0000000000000000000C002 /* XCRemoteSwiftPackageReference "KeyboardShortcuts" */;
+			productName = KeyboardShortcuts;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = C00000000000000000000001 /* Project object */;
+}

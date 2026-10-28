@@ -15,3 +15,6 @@ DerivedData/
 /build/
 *.dSYM/
 *.app/
+
+# Local code-signing identity (scripts/make-signing-identity)
+App/Signing.local.xcconfig

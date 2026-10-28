@@ -51,6 +51,12 @@ for package in Packages/*/; do
     --index-store-path .build/out/Products/Debug/index/store"
 done
 
+# The app: Xcode project build (warnings are errors in its build settings) and unused code.
+step "Cyrano: build" xcodebuild -project App/Cyrano.xcodeproj -scheme Cyrano -configuration Debug \
+  -derivedDataPath .build/xcode -quiet build
+step "Cyrano: periphery" periphery scan --project App/Cyrano.xcodeproj --schemes Cyrano \
+  --strict --quiet --skip-build --index-store-path .build/xcode/Index.noindex/DataStore
+
 step "swiftlint" swiftlint lint --strict --quiet
 step "jscpd" jscpd --silent
 

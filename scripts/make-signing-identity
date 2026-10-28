@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Creates a self-signed code-signing identity in the login keychain and points the app at it.
+# With a stable identity, macOS keeps the Accessibility permission across rebuilds; an ad-hoc
+# signature is tied to the build's cdhash and loses it on every build. See docs/quality.md.
+#
+#   scripts/make-signing-identity
+
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+name="Cyrano Local Signing"
+keychain="$HOME/Library/Keychains/login.keychain-db"
+
+if security find-certificate -c "$name" "$keychain" >/dev/null 2>&1; then
+  echo "Identity \"$name\" already exists."
+else
+  tmp=$(mktemp -d)
+  trap 'rm -rf "$tmp"' EXIT
+  cat >"$tmp/cert.cnf" <<EOF
+[req]
+distinguished_name = dn
+x509_extensions = ext
+prompt = no
+[dn]
+CN = $name
+[ext]
+basicConstraints = critical, CA:false
+keyUsage = critical, digitalSignature
+extendedKeyUsage = critical, codeSigning
+EOF
+  # LibreSSL from macOS writes a PKCS#12 that `security import` reads.
+  /usr/bin/openssl req -x509 -newkey rsa:2048 -nodes -days 3650 -config "$tmp/cert.cnf" \
+    -keyout "$tmp/key.pem" -out "$tmp/cert.pem" 2>/dev/null
+  password=$(/usr/bin/openssl rand -hex 16)
+  /usr/bin/openssl pkcs12 -export -inkey "$tmp/key.pem" -in "$tmp/cert.pem" -name "$name" \
+    -out "$tmp/identity.p12" -passout "pass:$password"
+  security import "$tmp/identity.p12" -k "$keychain" -P "$password" -T /usr/bin/codesign
+  echo "Created identity \"$name\"."
+fi
+
+echo "CODE_SIGN_IDENTITY = $name" >App/Signing.local.xcconfig
+echo "Wrote App/Signing.local.xcconfig. Rebuild the app, then grant Accessibility once more."

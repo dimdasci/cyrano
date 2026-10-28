@@ -57,11 +57,13 @@ let head = items.first!
 
 Блочные `swiftlint:disable` без парного `enable` запрещены правилом `blanket_disable_command`.
 
-## Когда появится App/
+## Приложение (App/)
 
-- SwiftLint и jscpd уже смотрят в `App/`, `scripts/check` подхватит Swift-файлы оттуда автоматически.
-- В build settings Xcode-проекта: `SWIFT_TREAT_WARNINGS_AS_ERRORS = YES`, `SWIFT_STRICT_CONCURRENCY = complete`, те же upcoming features, что в `Package.swift`.
-- Periphery для приложения запускается по Xcode-проекту (`periphery scan --project App/Cyrano.xcodeproj --schemes Cyrano`), и тогда `retain_public` для CyranoCore можно снять: неиспользуемый публичный API тоже станет виден. Добавить шаг в `scripts/check`.
+- SwiftLint, jscpd и `swift format` проверяют `App/` вместе с пакетами.
+- В build settings Xcode-проекта: `SWIFT_TREAT_WARNINGS_AS_ERRORS = YES`, `SWIFT_STRICT_CONCURRENCY = complete`, те же upcoming features, что в `Package.swift`, изоляция по умолчанию — `MainActor`.
+- Подпись: по умолчанию ad-hoc ([App/Signing.xcconfig](../App/Signing.xcconfig)), чтобы проект собирался везде, включая CI. Локально `scripts/make-signing-identity` создаёт самоподписанный сертификат «Cyrano Local Signing» и `App/Signing.local.xcconfig` (не в git): разрешение Accessibility привязывается к сертификату и переживает пересборки.
+- `scripts/check` собирает приложение `xcodebuild` (в `.build/xcode`) и запускает Periphery по Xcode-проекту.
+- `retain_public` для CyranoCore пока оставлен: скан приложения не проверяет публичный API пакета. Снять, когда Periphery начнёт сканировать оба вместе.
 
 ## Позже
 
