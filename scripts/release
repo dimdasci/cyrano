@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
-# Releases a version: runs the quality gate, commits the version on release/<version> and
-# opens a PR into main (main takes changes only through PRs). When the PR is merged,
-# .github/workflows/tag.yml tags the main commit v<version>, so the build number (the commit
-# count) of a release only grows.
+# Releases a version: runs the quality gate, moves [Unreleased] in CHANGELOG.md into the
+# version, commits both on release/<version> and opens a PR into main whose body is the release
+# notes (main takes changes only through PRs). When the PR is merged,
+# .github/workflows/release.yml tags the main commit v<version> and publishes the GitHub
+# release, so the build number (the commit count) of a release only grows.
 #
 #   scripts/release 0.2.0
 #
@@ -35,14 +36,20 @@ newest=$(printf '%s\n%s\n' "$current" "$version" | sort -V | tail -1)
 git ls-remote --exit-code --heads origin "$branch" >/dev/null &&
   fail "Branch $branch already exists on origin: merge or close its PR first."
 
-scripts/check
-
+# On any failure before the commit, go back to a clean main.
 git switch -q -c "$branch"
+trap 'git checkout -q -- . && git switch -q main && git branch -q -D "$branch"' ERR
+scripts/changelog release "$version"
 sed -i '' "s/^MARKETING_VERSION = .*/MARKETING_VERSION = $version/" App/Version.xcconfig
-git commit -q -m "Release $version" App/Version.xcconfig
+scripts/check
+git commit -q -m "Release $version" App/Version.xcconfig CHANGELOG.md
+trap - ERR
 git push -q -u origin "$branch"
-gh pr create --base main --head "$branch" --title "Release $version" \
-  --body "Sets the app version to $version. When merged, CI tags main $tag."
+gh pr create --base main --head "$branch" --title "Release $version" --body-file <(
+  printf 'Sets the app version to %s. When merged, CI tags main %s and publishes these release notes:\n\n' \
+    "$version" "$tag"
+  scripts/changelog notes "$version"
+)
 git switch -q main
 
-echo "Merge the PR; CI then tags main $tag."
+echo "Review the notes in the PR, then merge it; CI tags main $tag and publishes the release."

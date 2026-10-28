@@ -63,10 +63,10 @@ MODEL=gpt-6.1-sol EFFORT=low /tmp/openai-runner run ../cases.json
 ## Релизы
 
 ```bash
-scripts/release 0.2.0    # на main: открывает PR с версией, после слияния CI ставит тег v0.2.0
+scripts/release 0.2.0    # на main: PR с версией и release notes, после слияния CI ставит тег и публикует релиз
 ```
 
-Версии, номер сборки, порядок выпуска и распространение — [docs/releases.md](docs/releases.md).
+Что изменилось в каждой версии — [CHANGELOG.md](CHANGELOG.md). Версии, changelog, порядок выпуска и распространение — [docs/releases.md](docs/releases.md).
 
 ## Лицензия
 
