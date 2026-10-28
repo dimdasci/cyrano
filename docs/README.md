@@ -9,6 +9,7 @@
 | [specs/05-ui.md](specs/05-ui.md) | Экраны, панель-чат, состояния, клавиатура, Settings, сверка с HIG | согласовано |
 | [plan.md](plan.md) | Декомпозиция MVP на пакеты работ, что вошло в preview | в работе |
 | [quality.md](quality.md) | Проверки качества кода: `scripts/check`, инструменты, пороги | принято |
+| [releases.md](releases.md) | Версия и номер сборки, выпуск релиза, защита `main`, распространение | принято |
 | [wireframes/](wireframes/) | Wireframes всех экранов и как их использовать в разработке | согласовано |
 | [research/openai-sign-in-with-chatgpt.md](research/openai-sign-in-with-chatgpt.md) | Sign in with ChatGPT: протокол, ограничения, оценка | принято |
 

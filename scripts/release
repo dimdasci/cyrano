@@ -1,13 +1,12 @@
 #!/usr/bin/env bash
-# Releases a version. main takes changes only through PRs, so it is the same command run twice
-# on main:
+# Releases a version: runs the quality gate, commits the version on release/<version> and
+# opens a PR into main (main takes changes only through PRs). When the PR is merged,
+# .github/workflows/tag.yml tags the main commit v<version>, so the build number (the commit
+# count) of a release only grows.
 #
-#   scripts/release 0.2.0   runs the quality gate, commits the version on release/0.2.0 and
-#                           opens a PR into main
-#   (merge the PR, then git pull)
-#   scripts/release 0.2.0   main now has version 0.2.0: tags it v0.2.0 and pushes the tag
+#   scripts/release 0.2.0
 #
-# The tag goes on main, so its build number (the commit count) only grows.
+# See docs/releases.md.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -30,16 +29,9 @@ git rev-parse -q --verify "refs/tags/$tag" >/dev/null && fail "Tag $tag already 
   fail "Local main differs from origin/main: run git pull first."
 
 current=$(sed -n 's/^MARKETING_VERSION = //p' App/Version.xcconfig)
-
-if [[ $version == "$current" ]]; then
-  git tag -a "$tag" -m "Cyrano $version"
-  git push -q origin "$tag"
-  echo "Tagged and pushed $tag: version $version, build $(git rev-list --count HEAD)."
-  exit 0
-fi
-
 newest=$(printf '%s\n%s\n' "$current" "$version" | sort -V | tail -1)
-[[ $newest == "$version" ]] || fail "Version $version is older than the current $current."
+[[ $version != "$current" && $newest == "$version" ]] ||
+  fail "Version $version is not newer than the current $current."
 git ls-remote --exit-code --heads origin "$branch" >/dev/null &&
   fail "Branch $branch already exists on origin: merge or close its PR first."
 
@@ -50,7 +42,7 @@ sed -i '' "s/^MARKETING_VERSION = .*/MARKETING_VERSION = $version/" App/Version.
 git commit -q -m "Release $version" App/Version.xcconfig
 git push -q -u origin "$branch"
 gh pr create --base main --head "$branch" --title "Release $version" \
-  --body "Sets the app version to $version. After merging, run \`git pull && scripts/release $version\` on main to tag it."
+  --body "Sets the app version to $version. When merged, CI tags main $tag."
 git switch -q main
 
-echo "After the PR is merged: git pull && scripts/release $version"
+echo "Merge the PR; CI then tags main $tag."
