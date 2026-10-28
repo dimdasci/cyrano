@@ -1,11 +1,13 @@
-# Quality gate: runs scripts/check on every push to main and every pull request.
-# See docs/quality.md.
+# Quality gate: runs scripts/check on every push to main and every pull request; a pull request
+# also needs a CHANGELOG.md entry. See docs/quality.md and docs/releases.md.
 name: check
 
 on:
   push:
     branches: [main]
   pull_request:
+    # Adding or removing the skip-changelog label checks again.
+    types: [opened, synchronize, reopened, labeled, unlabeled]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -22,6 +24,17 @@ jobs:
           # The build number is the commit count on HEAD (scripts/set-build-number); a shallow
           # clone would make it 1.
           fetch-depth: 0
+      - name: Changelog entry
+        # User-visible changes go under [Unreleased]; a PR without them (docs, CI, refactoring)
+        # carries the skip-changelog label.
+        if: >-
+          github.event_name == 'pull_request'
+          && !contains(github.event.pull_request.labels.*.name, 'skip-changelog')
+        run: |
+          git diff --name-only "origin/${{ github.base_ref }}...HEAD" | grep -qx CHANGELOG.md || {
+            echo "::error::Describe the change under [Unreleased] in CHANGELOG.md, or label the PR skip-changelog."
+            exit 1
+          }
       - name: Install tools
         run: |
           brew install swiftlint periphery

@@ -22,11 +22,11 @@
 | 12 | Редактируемые промпты: `prompts.json`, Settings → Prompts, Restore Default | Core + App | 02 M8; 05 §5 | — |
 | 13 | `cyrano-eval`: раннер eval поверх CyranoCore, ≥ 30 кейсов | `CyranoCore` | 04 §5 | — |
 | 14 | Доводка: настраиваемые сочетания внутри панели, высота панели по содержимому, TipKit, Launch at login, per-app таблица в Style, список моделей из `/v1/models` | App | 05 | — |
-| 15 | Релизный пайплайн: сборка по тегу в CI, подпись Developer ID, нотаризация, `.dmg`, GitHub Releases, автообновление (Sparkle) | CI | [releases](releases.md) | — |
+| 15 | Релизный пайплайн: сборка по тегу в CI, подпись Developer ID, нотаризация, `.dmg` в GitHub Release, автообновление (Sparkle) с теми же release notes | CI | [releases](releases.md) | частично: тег и GitHub Release с notes из `CHANGELOG.md` |
 
 ## Дальше
 
-Сделано: preview 0.1 (пакеты 1–9), выпущены v0.1.0 и v0.1.1, релизы автоматизированы ([releases.md](releases.md)); пакет 11 — изображения как контекст, выходит как 0.2.0.
+Сделано: preview 0.1 (пакеты 1–9), выпущены v0.1.0 и v0.1.1, релизы автоматизированы ([releases.md](releases.md)); пакет 11 — изображения как контекст, выпущен v0.2.0; changelog и release notes для пользователя ([CHANGELOG.md](../CHANGELOG.md)), GitHub Release публикует CI.
 
 Порядок, решён 2026-10-28:
 
@@ -40,15 +40,16 @@
 
 Спека: [02](specs/02-tech-decisions.md) M11, [03](specs/03-mvp-scope.md) (Dictionary), [04](specs/04-prompts.md) §4.2 (строка `Keep these words exactly as written`), [05](specs/05-ui.md) §2.4 («Словарь из карточки»), §2.5 (строка статуса), §5 (вкладка Dictionary).
 
-1. Если тега `v0.2.0` ещё нет (`git tag -l v0.2.0`), сначала выпусти пакет 11: `scripts/release 0.2.0` по [releases.md](releases.md). Затем `git switch main && git pull` и `git switch -c feature/dictionary`.
+1. `git switch main && git pull`, затем `git switch -c feature/dictionary`.
 2. Core, сначала тесты: словарь читается и пишется в `dictionary.json` в Application Support (`term`, `added`); поиск терминов в тексте без учёта регистра по границам слов; в первое сообщение Fix попадает строка `Keep these words exactly as written: …` только с найденными терминами; добавление термина учитывается со следующей проверки; отклонение правки с добавлением термина — одно действие.
 3. App: контекстное меню по выделению в карточке (Never Change “…” / Remove “…” from Dictionary) и по строке изменения; строка статуса «“…” added to Dictionary.» с Undo; вкладка Settings → Dictionary с поиском, добавлением, удалением, импортом и экспортом.
-4. Готово, когда: в реальном приложении термин из словаря не исправляется в следующей проверке; `scripts/check` прошёл; обновлены строка пакета 10, разделы «Что работает» и «Дальше» (следующий — пакет 14); PR открыт. После слияния — `scripts/release 0.3.0`.
+4. Готово, когда: в реальном приложении термин из словаря не исправляется в следующей проверке; `scripts/check` прошёл; в `CHANGELOG.md` под `[Unreleased]` описано, что получил пользователь; обновлены строка пакета 10, разделы «Что работает» и «Дальше» (следующий — пакет 14); PR открыт. После слияния — `scripts/release 0.3.0`.
 
 Открытые хвосты, не привязанные к пакету:
 
 - Вайрфреймы в `docs/wireframes/` показывают Insert, которого больше нет.
 - Тон почти не влияет на результат: в Fix он одна строка `Tone: friendly.`, а правила «не переписывай верные предложения» и «сохраняй слова автора» его перевешивают (проверка 2026-10-28: «Check the docs» с Friendly не изменился, пока не попросили явно). Описать тоны фрагментами и проверить на eval — пакеты 13 и 12.
+- Тексты для пользователя — на английском (CHANGELOG уже). Перевести [README](../README.md) до раздачи людям (пакет 15): это первая страница репозитория. Документация проекта в `docs/` остаётся на русском.
 - Раннер [evals/cloud-runner/Shared.swift](../evals/cloud-runner/Shared.swift) держит свою копию промптов; уйдёт с пакетом 13.
 
 ## Релизы

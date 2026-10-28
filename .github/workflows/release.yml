@@ -1,0 +1,60 @@
+# Releases a version: when a version change in App/Version.xcconfig lands on main (the merged
+# release PR from scripts/release), tags that main commit v<version> and publishes the GitHub
+# release with the version's section of CHANGELOG.md as its notes. Run by hand with a version
+# to publish or rewrite the notes of an existing tag. See docs/releases.md.
+name: release
+
+on:
+  push:
+    branches: [main]
+    paths: [App/Version.xcconfig]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version of an existing tag, e.g. 0.2.0
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # The build number is the commit count on HEAD; the summary reports it.
+          fetch-depth: 0
+      - name: Tag the version
+        if: github.event_name == 'push'
+        run: |
+          version=$(sed -n 's/^MARKETING_VERSION = //p' App/Version.xcconfig)
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+          tag="v$version"
+          if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
+            echo "Tag $tag already exists." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -a "$tag" -m "Cyrano $version"
+          git push origin "$tag"
+          echo "Tagged $tag: version $version, build $(git rev-list --count HEAD)." >> "$GITHUB_STEP_SUMMARY"
+      - name: Pick the version to publish
+        if: github.event_name == 'workflow_dispatch'
+        run: echo "VERSION=${{ inputs.version }}" >> "$GITHUB_ENV"
+      - name: Publish the release notes
+        # The notes always come from the current CHANGELOG.md on main, so fixing a section there
+        # and running this workflow again rewrites the published notes.
+        run: |
+          tag="v$VERSION"
+          scripts/changelog notes "$VERSION" > notes.md
+          if gh release view "$tag" >/dev/null 2>&1; then
+            gh release edit "$tag" --title "Cyrano $VERSION" --notes-file notes.md
+          else
+            gh release create "$tag" --verify-tag --title "Cyrano $VERSION" --notes-file notes.md
+          fi
+          echo "Published release notes for $tag." >> "$GITHUB_STEP_SUMMARY"

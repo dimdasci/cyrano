@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# CHANGELOG.md: the release notes of a version, and the move of Unreleased into a version.
+# See docs/releases.md.
+#
+#   scripts/changelog notes 0.2.0     print the GitHub release notes of 0.2.0
+#   scripts/changelog release 0.3.0   move Unreleased into 0.3.0, dated today
+
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+repo_url=https://github.com/dimdasci/cyrano
+file=CHANGELOG.md
+
+fail() {
+  echo "$1" >&2
+  exit 1
+}
+
+# The body of one section, without its heading and surrounding blank lines.
+section() {
+  awk -v heading="## [$1]" '
+    index($0, "## [") == 1 { inside = (index($0, heading) == 1); next }
+    /^\[[^]]+\]: / { inside = 0 }
+    inside { print }
+  ' "$file" | sed -e '/./,$!d' | sed -e ':a' -e '/^\n*$/{$d;N;ba' -e '}'
+}
+
+# Joins wrapped lines: GitHub shows every line break in release notes as a break.
+unwrap() {
+  awk '
+    /^$/ || /^#/ || /^- / { if (line != "") print line; line = $0; if (/^$/ || /^#/) { print; line = "" }; next }
+    { sub(/^ +/, ""); line = (line == "" ? $0 : line " " $0) }
+    END { if (line != "") print line }
+  '
+}
+
+notes() {
+  local version=$1 body compare
+  body=$(section "$version" | unwrap)
+  [[ -n $body ]] || fail "$file has no section for $version."
+  compare=$(sed -n "s|^\[$version\]: ||p" "$file")
+  printf '%s\n\n---\n\n' "$body"
+  printf '**Requirements:** macOS 27 and a ChatGPT Plus or Pro plan.\n\n'
+  printf '**Install:** signed builds come later. For now, build from source: see the [README](%s#readme).\n' "$repo_url"
+  if [[ -n $compare ]]; then printf '\n**All changes:** %s\n' "$compare"; fi
+}
+
+release() {
+  local version=$1 previous today
+  [[ -z $(section "$version") ]] || fail "$file already has a section for $version."
+  [[ -n $(section Unreleased) ]] || fail "Nothing under [Unreleased] in $file: describe the changes first."
+  previous=$(sed -n 's/^## \[\([0-9][^]]*\)\].*/\1/p' "$file" | head -1)
+  today=$(date +%Y-%m-%d)
+  awk -v version="$version" -v previous="$previous" -v today="$today" -v url="$repo_url" '
+    $0 == "## [Unreleased]" { print; print ""; print "## [" version "] - " today; next }
+    index($0, "[Unreleased]: ") == 1 {
+      print "[Unreleased]: " url "/compare/v" version "...HEAD"
+      print "[" version "]: " url "/compare/v" previous "...v" version
+      next
+    }
+    { print }
+  ' "$file" >"$file.tmp"
+  mv "$file.tmp" "$file"
+}
+
+command=${1:-}
+version=${2:-}
+[[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "Usage: scripts/changelog notes|release <major.minor.patch>"
+case $command in
+  notes) notes "$version" ;;
+  release) release "$version" ;;
+  *) fail "Usage: scripts/changelog notes|release <major.minor.patch>" ;;
+esac
