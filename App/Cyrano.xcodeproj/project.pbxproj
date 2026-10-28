@@ -13,6 +13,8 @@
 
 /* Begin PBXFileReference section */
 		C0000000000000000000F002 /* Signing.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Signing.xcconfig; sourceTree = "<group>"; };
+		C0000000000000000000F003 /* Cyrano.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Cyrano.xcconfig; sourceTree = "<group>"; };
+		C0000000000000000000F004 /* Version.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Version.xcconfig; sourceTree = "<group>"; };
 		C0000000000000000000F001 /* Cyrano.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Cyrano.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -41,7 +43,9 @@
 			isa = PBXGroup;
 			children = (
 				C0000000000000000000A002 /* Cyrano */,
+				C0000000000000000000F003 /* Cyrano.xcconfig */,
 				C0000000000000000000F002 /* Signing.xcconfig */,
+				C0000000000000000000F004 /* Version.xcconfig */,
 				C0000000000000000000A003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -64,6 +68,7 @@
 				C0000000000000000000E001 /* Sources */,
 				C0000000000000000000E002 /* Frameworks */,
 				C0000000000000000000E003 /* Resources */,
+				C0000000000000000000E004 /* Set Build Number */,
 			);
 			buildRules = (
 			);
@@ -124,6 +129,30 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		C0000000000000000000E004 /* Set Build Number */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(TARGET_BUILD_DIR)/$(INFOPLIST_PATH)",
+			);
+			name = "Set Build Number";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SRCROOT/../scripts/set-build-number\"\n";
+			showEnvVarsInLog = 0;
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		C0000000000000000000E001 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -167,11 +196,10 @@
 		};
 		C00000000000000000002003 /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C0000000000000000000F002 /* Signing.xcconfig */;
+			baseConfigurationReference = C0000000000000000000F003 /* Cyrano.xcconfig */;
 			buildSettings = {
 				ARCHS = arm64;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = NO;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -180,7 +208,6 @@
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Dim Kharitonov. MIT License.";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
-				MARKETING_VERSION = 0.1.0;
 				OTHER_SWIFT_FLAGS = "-enable-upcoming-feature ExistentialAny -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InternalImportsByDefault";
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.dimdasci.cyrano;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -194,11 +221,10 @@
 		};
 		C00000000000000000002004 /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = C0000000000000000000F002 /* Signing.xcconfig */;
+			baseConfigurationReference = C0000000000000000000F003 /* Cyrano.xcconfig */;
 			buildSettings = {
 				ARCHS = arm64;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 1;
 				ENABLE_APP_SANDBOX = NO;
 				ENABLE_HARDENED_RUNTIME = YES;
 				GENERATE_INFOPLIST_FILE = YES;
@@ -207,7 +233,6 @@
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Dim Kharitonov. MIT License.";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
-				MARKETING_VERSION = 0.1.0;
 				OTHER_SWIFT_FLAGS = "-enable-upcoming-feature ExistentialAny -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InternalImportsByDefault";
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.dimdasci.cyrano;
 				PRODUCT_NAME = "$(TARGET_NAME)";

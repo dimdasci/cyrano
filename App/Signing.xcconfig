@@ -1,4 +1,5 @@
-// Code signing. Ad-hoc by default, so the project builds anywhere (CI included).
+// Code signing, included by Cyrano.xcconfig. Ad-hoc by default, so the project builds anywhere
+// (CI included).
 // scripts/make-signing-identity creates a local identity and Signing.local.xcconfig, which
 // keeps the Accessibility permission across rebuilds. The local file is not in git.
 CODE_SIGN_IDENTITY = -

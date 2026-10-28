@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# Xcode build phase: sets CFBundleVersion of the built app to the number of commits on HEAD,
+# so every build of a commit has the same number and later commits always have larger ones.
+# Without git history (an exported source tree) the number is 0.
+
+set -euo pipefail
+
+count=$(git -C "$SRCROOT" rev-list --count HEAD 2>/dev/null || echo 0)
+plist="$TARGET_BUILD_DIR/$INFOPLIST_PATH"
+# The generated Info.plist has no CFBundleVersion, since CURRENT_PROJECT_VERSION is not set.
+/usr/libexec/PlistBuddy -c "Delete :CFBundleVersion" "$plist" 2>/dev/null || true
+/usr/libexec/PlistBuddy -c "Add :CFBundleVersion string $count" "$plist"

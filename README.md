@@ -59,6 +59,21 @@ cd evals/cloud-runner && swiftc -parse-as-library -O OpenAI.swift Shared.swift m
 MODEL=gpt-6.1-sol EFFORT=low /tmp/openai-runner run ../cases.json
 ```
 
+## Версии
+
+В About видно «Version 0.1.0 (6)»: версия и номер сборки.
+
+- **Версия** (`CFBundleShortVersionString`) — semver `major.minor.patch`, хранится в одном месте: [App/Version.xcconfig](App/Version.xcconfig). Пока идут preview, растёт `minor` (0.2.0, 0.3.0), исправления внутри preview — `patch` (0.2.1); 1.0.0 — первый релиз, который считаем готовым.
+- **Номер сборки** (`CFBundleVersion`) — число коммитов на `HEAD`. Его пишет в собранное приложение шаг сборки `scripts/set-build-number`, руками не меняется. Одна и та же версия у разных коммитов различается номером, а по номеру можно найти коммит: `git rev-list --reverse HEAD | sed -n <номер>p`. Для CI нужна полная история (`fetch-depth: 0`), иначе номер будет 1.
+
+Релиз — из чистого рабочего дерева:
+
+```bash
+scripts/release 0.2.0
+```
+
+Скрипт прогоняет `scripts/check`, записывает версию, коммитит «Release 0.2.0» и ставит тег `v0.2.0`. Пушит не он — команду он напечатает в конце.
+
 ## Лицензия
 
 MIT © 2026 Dim Kharitonov. См. [LICENSE](LICENSE).

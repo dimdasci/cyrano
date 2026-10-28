@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Releases a version: runs the quality gate, writes the version into App/Version.xcconfig,
+# commits it and puts an annotated tag v<version> on that commit. Pushing is up to you.
+#
+#   scripts/release 0.2.0
+
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+fail() {
+  echo "$1" >&2
+  exit 1
+}
+
+version=${1:-}
+[[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "Usage: scripts/release <major.minor.patch>, e.g. 0.2.0"
+tag="v$version"
+git rev-parse -q --verify "refs/tags/$tag" >/dev/null && fail "Tag $tag already exists."
+git diff --quiet && git diff --cached --quiet || fail "Commit or stash your changes first."
+
+current=$(sed -n 's/^MARKETING_VERSION = //p' App/Version.xcconfig)
+newest=$(printf '%s\n%s\n' "$current" "$version" | sort -V | tail -1)
+[[ $newest == "$version" ]] || fail "Version $version is older than the current $current."
+
+scripts/check
+
+if [[ $version != "$current" ]]; then
+  sed -i '' "s/^MARKETING_VERSION = .*/MARKETING_VERSION = $version/" App/Version.xcconfig
+  git commit -q -m "Release $version" App/Version.xcconfig
+fi
+git tag -a "$tag" -m "Cyrano $version"
+
+echo "Tagged $tag: version $version, build $(git rev-list --count HEAD)."
+echo "Publish with: git push origin HEAD $tag"
