@@ -99,7 +99,7 @@ TEXT:
 Keep these words exactly as written: {doNotChange}.                     ← только найденные в тексте
 ```
 
-Скриншот (кнопка 📷) прикладывается к этому же сообщению как `input_image` со строкой: `The image shows the conversation around this message. Use it only to understand context. DO NOT correct or quote text from the image.`
+Изображения контекста (📷, ⌘V, перетаскивание) прикладываются к этому же сообщению, каждое отдельным `input_image`, а в конец текста добавляется строка: `The attached images show the conversation around this message. Use them only to understand context. DO NOT correct or quote text from them.`
 
 ### 4.3 Ход диалога
 

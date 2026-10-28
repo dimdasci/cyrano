@@ -84,8 +84,10 @@ private struct ActivityRow: View {
         Text(partial.isEmpty ? session.latestText : partial)
           .foregroundStyle(partial.isEmpty ? .secondary : .primary)
       }
-    case .replying(let request, let partial):
+    case .classifying(let request):
       Bubble(text: request, fromUser: true)
+      Bubble(text: "…", fromUser: false)
+    case .replying(let partial):
       Bubble(text: partial.isEmpty ? "…" : partial, fromUser: false)
     case .failed(let error):
       ErrorRow(error: error, session: session) {

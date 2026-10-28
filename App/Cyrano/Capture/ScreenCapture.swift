@@ -1,4 +1,5 @@
-// Screenshot of the front window, the last way to get the text. See docs/specs/02 M10, C5.
+// Screenshot of the front window: context for a check (02 M10) and the last way to get the text
+// (02 C5).
 
 import AppKit
 import CoreGraphics
