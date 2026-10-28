@@ -12,6 +12,7 @@ Packages/CyranoCore/  Swift Package: клиент OpenAI, промпты, diff, 
 App/                   Xcode-проект приложения: UI, AX, хоткеи, окна
 evals/                 набор примеров и раннер для проверки промптов на моделях ChatGPT
 scripts/check          проверка качества кода: формат, сборка, тесты, линтер, дубликаты, мёртвый код
+scripts/release        выпуск версии, см. docs/releases.md
 ```
 
 ## Требования
@@ -59,23 +60,13 @@ cd evals/cloud-runner && swiftc -parse-as-library -O OpenAI.swift Shared.swift m
 MODEL=gpt-6.1-sol EFFORT=low /tmp/openai-runner run ../cases.json
 ```
 
-## Версии
-
-В About видно «Version 0.1.0 (6)»: версия и номер сборки.
-
-- **Версия** (`CFBundleShortVersionString`) — semver `major.minor.patch`, хранится в одном месте: [App/Version.xcconfig](App/Version.xcconfig). Пока идут preview, растёт `minor` (0.2.0, 0.3.0), исправления внутри preview — `patch` (0.2.1); 1.0.0 — первый релиз, который считаем готовым.
-- **Номер сборки** (`CFBundleVersion`) — число коммитов на `HEAD`. Его пишет в собранное приложение шаг сборки `scripts/set-build-number`, руками не меняется. Одна и та же версия у разных коммитов различается номером, а по номеру можно найти коммит: `git rev-list --reverse HEAD | sed -n <номер>p`. CI скачивает полную историю (`fetch-depth: 0` в `.github/workflows/check.yml`), иначе номер был бы 1. В pull request CI собирает merge-коммит ветки с `main`, поэтому там номер на единицу больше, чем у последнего коммита ветки.
-
-Релиз делается с `main`, тем же скриптом дважды: в `main` изменения попадают только через PR, а тег ставится на `main`.
+## Релизы
 
 ```bash
-scripts/release 0.2.0
+scripts/release 0.2.0    # на main: открывает PR с версией, после слияния CI ставит тег v0.2.0
 ```
 
-1. Первый запуск прогоняет `scripts/check`, коммитит версию в ветку `release/0.2.0` и открывает PR в `main`.
-2. После слияния PR: `git pull`, затем снова `scripts/release 0.2.0`. В `main` уже версия 0.2.0, поэтому скрипт ставит тег `v0.2.0` и пушит его.
-
-Скрипт работает только на чистом `main`, синхронизированном с `origin/main`.
+Версии, номер сборки, порядок выпуска и распространение — [docs/releases.md](docs/releases.md).
 
 ## Лицензия
 

@@ -8,6 +8,10 @@
 
 Документация на русском, код и комментарии в коде на английском. Отступ 2 пробела.
 
+## Релизы
+
+Порядок и правила: [docs/releases.md](docs/releases.md). Версию выпускает только `scripts/release <version>` на `main`; тег ставит CI после слияния release-PR. Не меняй `App/Version.xcconfig` и не ставь теги руками. В `main` — только через PR.
+
 ## Качество кода
 
 Подробности и пороги: [docs/quality.md](docs/quality.md).
