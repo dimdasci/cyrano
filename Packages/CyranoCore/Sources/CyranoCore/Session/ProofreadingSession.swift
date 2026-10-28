@@ -1,6 +1,7 @@
 // One open panel: the first check, then a dialog of versions, requests and answers.
-// The whole history is sent on every turn. See docs/specs/02 M3–M5 and 04-prompts.md §2.
+// The whole history is sent on every turn. See docs/specs/02 M3–M5, M10 and 04-prompts.md §2.
 
+public import Foundation
 public import Observation
 
 @MainActor @Observable
@@ -8,13 +9,18 @@ public final class ProofreadingSession {
   public enum Activity: Hashable, Sendable {
     case idle
     case checking(partial: String)
-    case replying(request: String, partial: String)
+    /// A dialog message waits for its kind; it is not in the feed yet.
+    case classifying(request: String)
+    /// The message is in the feed; its answer or new version streams.
+    case replying(partial: String)
     case failed(EngineError)
   }
 
   public let original: String
   /// What the user is replying to; used from the next check on.
   public var context: String
+  /// PNG images of what the user is replying to; sent with the first message (M10).
+  public var images: [Data] = []
   public var options: CheckOptions
   public private(set) var feed: [FeedItem] = []
   public private(set) var activity = Activity.idle
@@ -42,9 +48,12 @@ public final class ProofreadingSession {
 
   public var latestText: String { versions.last?.text ?? original }
 
+  /// Many images make a check slower and use more of the plan limit (M10).
+  public var hasManyImages: Bool { images.count > 10 }
+
   public var isBusy: Bool {
     switch activity {
-    case .checking, .replying: true
+    case .checking, .classifying, .replying: true
     case .idle, .failed: false
     }
   }
@@ -67,13 +76,14 @@ public final class ProofreadingSession {
     let message = message.trimmed
     guard !message.isEmpty else { return }
     retry = { await self.send(message) }
-    activity = .replying(request: message, partial: "")
+    activity = .classifying(request: message)
     do {
       let intent = try await classify(message)
       let request = FeedItem.request(id: takeID(), text: message, intent: intent)
       feed.append(request)
+      activity = .replying(partial: "")
       do {
-        let text = try await fix(prompt: nil) { .replying(request: message, partial: $0) }
+        let text = try await fix(prompt: nil) { .replying(partial: $0) }
         try await finishTurn(text, intent: intent)
       } catch {
         feed.removeAll { $0 == request }
@@ -153,9 +163,9 @@ public final class ProofreadingSession {
 
   /// Runs Fix over the history plus an optional new user prompt, streaming into `activity`.
   private func fix(
-    prompt: String?, progress: @escaping (String) -> Activity
+    prompt: ChatMessage?, progress: @escaping (String) -> Activity
   ) async throws -> String {
-    let input = history() + (prompt.map { [ChatMessage(.user, $0)] } ?? [])
+    let input = history() + (prompt.map { [$0] } ?? [])
     let call = ModelCall(
       instructions: Prompts.proofreadInstructions(options), input: input)
     let output = try await run(call, count: \.fix) { self.activity = progress($0) }
@@ -184,7 +194,7 @@ public final class ProofreadingSession {
     feed.flatMap { item -> [ChatMessage] in
       switch item {
       case .version(let version):
-        let prompt = userPrompt(for: version.origin).map { [ChatMessage(.user, $0)] } ?? []
+        let prompt = userPrompt(for: version.origin).map { [$0] } ?? []
         return prompt + [ChatMessage(.assistant, version.text)]
       case .request(_, let text, .edit):
         return [ChatMessage(.user, Prompts.revision(text, language: options.language))]
@@ -196,10 +206,14 @@ public final class ProofreadingSession {
     }
   }
 
-  private func userPrompt(for origin: Version.Origin) -> String? {
+  /// The first message always carries the current context and images, so a recheck sees them.
+  private func userPrompt(for origin: Version.Origin) -> ChatMessage? {
     switch origin {
-    case .check: Prompts.firstMessage(text: original, context: context)
-    case .recheck: Prompts.recheck
+    case .check:
+      ChatMessage(
+        .user, Prompts.firstMessage(text: original, context: context, hasImages: !images.isEmpty),
+        images: images)
+    case .recheck: ChatMessage(.user, Prompts.recheck)
     case .request, .rejection: nil
     }
   }

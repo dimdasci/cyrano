@@ -24,7 +24,7 @@ struct OnboardingView: View {
       }
       Section("2. Accessibility") {
         Text(
-          "Cyrano reads the text in the field you're typing in and puts the corrected version back."
+          "Cyrano reads the text in the field you're typing in, so you don't have to copy it."
         )
         PermissionStatus.accessibility
       }

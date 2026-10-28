@@ -3,6 +3,7 @@
 import ApplicationServices
 import CyranoCore
 import SwiftUI
+import UniformTypeIdentifiers
 
 struct ProofreadingView: View {
   let model: PanelModel
@@ -30,7 +31,7 @@ struct SessionView: View {
       PanelHeader(session: session)
         .onChange(of: session.options) { model.optionsChanged(session, for: captured) }
       Divider()
-      ContextBar(session: session)
+      ContextBar(model: model, session: session)
       Divider()
       FeedView(model: model, session: session)
       Divider()
@@ -38,8 +39,14 @@ struct SessionView: View {
       StatusLine(session: session, message: model.status)
     }
     .frame(minWidth: 480, minHeight: 360)
-    .onChange(of: session.activity) {
-      if session.activity == .failed(.notSignedIn) { model.app.markSignedOut() }
+    .background(ImagePasteMonitor { session.images += $0 })
+    .onDrop(of: [.image, .fileURL], isTargeted: nil) { providers in
+      Task { session.images += await ContextImages.load(providers) }
+      return true
+    }
+    // Only the flag: the activity itself changes on every streamed delta.
+    .onChange(of: session.activity == .failed(.notSignedIn)) { _, signedOut in
+      if signedOut { model.app.markSignedOut() }
     }
   }
 }
@@ -89,71 +96,6 @@ private struct PanelHeader: View {
     }
     .fixedSize()
     .accessibilityLabel(name)
-  }
-}
-
-/// Context and the Check button. Before the first check the context is open and focused, so the
-/// user can paste what they are replying to before anything is sent.
-private struct ContextBar: View {
-  @Bindable var session: ProofreadingSession
-  @State private var expanded: Bool
-  @FocusState private var editing: Bool
-
-  init(session: ProofreadingSession) {
-    self.session = session
-    _expanded = State(initialValue: session.versions.isEmpty)
-  }
-
-  var body: some View {
-    VStack(alignment: .leading, spacing: 8) {
-      HStack(spacing: 8) {
-        Button(expanded ? "▾ Context" : "▸ Context") { expanded.toggle() }
-          .buttonStyle(.plain)
-          .fontWeight(.semibold)
-          .keyboardShortcut("k")
-        if !expanded {
-          Text(summary)
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .onTapGesture { expanded = true }
-        }
-        Spacer()
-        checkButton
-      }
-      if expanded {
-        TextEditor(text: $session.context)
-          .font(.body)
-          .frame(height: 64)
-          .overlay(RoundedRectangle(cornerRadius: 6).stroke(.separator))
-          .focused($editing)
-          .onAppear { editing = session.versions.isEmpty }
-      }
-    }
-    .padding(.horizontal, 12)
-    .padding(.vertical, 8)
-  }
-
-  @ViewBuilder private var checkButton: some View {
-    if session.versions.isEmpty {
-      Button("Check") { start() }
-        .buttonStyle(.borderedProminent)
-        .keyboardShortcut("r")
-        .disabled(session.isBusy)
-    } else {
-      Button("Recheck") { start() }
-        .keyboardShortcut("r")
-        .disabled(session.isBusy)
-    }
-  }
-
-  private func start() {
-    expanded = false
-    Task { await session.check() }
-  }
-
-  private var summary: String {
-    let firstLine = session.context.split(whereSeparator: \.isNewline).first.map(String.init)
-    return firstLine ?? "Add what you're replying to"
   }
 }
 

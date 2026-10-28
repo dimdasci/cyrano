@@ -44,6 +44,24 @@ final class PanelModel {
     Task { await session.check() }
   }
 
+  /// 📷 needs the app the text came from; pasted text has none.
+  var canCaptureWindow: Bool {
+    guard case .session(_, let captured) = content else { return false }
+    return captured.source != nil
+  }
+
+  /// Adds a screenshot of the source app's front window to the context (M10).
+  func captureWindow(into session: ProofreadingSession) {
+    guard case .session(_, let captured) = content, let app = captured.source else { return }
+    Task {
+      guard let png = await ScreenCapture.frontWindow(of: app) else {
+        status = "Couldn't capture the window. Check Screen Recording in Settings."
+        return
+      }
+      session.images.append(png)
+    }
+  }
+
   func signInAndRetry(_ session: ProofreadingSession) {
     app.signInWithChatGPT { Task { await session.tryAgain() } }
   }

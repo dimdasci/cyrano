@@ -1,3 +1,4 @@
+import Foundation
 import Synchronization
 import Testing
 
@@ -9,6 +10,8 @@ final class FakeEngine: CorrectionEngine {
     var fixes: [String]
     var calls: [ModelCall] = []
     var failNextFix: EngineError?
+    var holdsFixes = false
+    var heldFix: (@Sendable () -> Void)?
   }
 
   private let state: Mutex<State>
@@ -20,7 +23,19 @@ final class FakeEngine: CorrectionEngine {
 
   func failNextFix(with error: EngineError) { state.withLock { $0.failNextFix = error } }
 
+  /// Keeps the next Fix answers until `releaseFix()`, to look at the session while one streams.
+  func holdFixes() { state.withLock { $0.holdsFixes = true } }
+
+  func releaseFix() {
+    let fix = state.withLock { state in
+      defer { state.heldFix = nil }
+      return state.heldFix
+    }
+    fix?()
+  }
+
   func respond(_ call: ModelCall) -> AsyncThrowingStream<ResponseUpdate, any Error> {
+    let isFix = call.instructions.hasPrefix("You are a proofreader")
     let result = state.withLock { state -> Result<String, EngineError> in
       state.calls.append(call)
       if call.instructions == Prompts.classify {
@@ -36,14 +51,22 @@ final class FakeEngine: CorrectionEngine {
       return .success(state.fixes.removeFirst())
     }
     return AsyncThrowingStream { continuation in
-      switch result {
-      case .success(let text):
-        continuation.yield(.delta(text))
-        continuation.yield(.completed(text: text, tokens: 10))
-        continuation.finish()
-      case .failure(let error):
-        continuation.finish(throwing: error)
+      let deliver: @Sendable () -> Void = {
+        switch result {
+        case .success(let text):
+          continuation.yield(.delta(text))
+          continuation.yield(.completed(text: text, tokens: 10))
+          continuation.finish()
+        case .failure(let error):
+          continuation.finish(throwing: error)
+        }
       }
+      let held = state.withLock { state in
+        guard isFix, state.holdsFixes else { return false }
+        state.heldFix = deliver
+        return true
+      }
+      if !held { deliver() }
     }
   }
 }
@@ -102,6 +125,24 @@ final class FakeEngine: CorrectionEngine {
     #expect(input[2].text.contains("make it two cats"))
   }
 
+  @Test func pendingRequestIsShownOnceWhileTheAnswerStreams() async {
+    let engine = FakeEngine(fixes: ["I have a cat.", "Yes, it is polite."])
+    let session = session(engine)
+    await session.check()
+    engine.holdFixes()
+    let turn = Task { await session.send("Is this polite?") }
+    while engine.fixCalls.count < 2 { await Task.yield() }
+
+    let requests = session.feed.filter {
+      if case .request = $0 { true } else { false }
+    }
+    #expect(requests.count == 1)
+    #expect(session.activity == .replying(partial: ""))
+    engine.releaseFix()
+    await turn.value
+    #expect(session.activity == .idle)
+  }
+
   @Test func translationIsShownWithoutCorrections() async throws {
     let original = "Привет, Анна! Я посмотрел отчёт, там всё в порядке, можно отправлять клиенту."
     let german =
@@ -155,6 +196,62 @@ final class FakeEngine: CorrectionEngine {
     #expect(call.instructions.contains("Tone: casual."))
     #expect(call.input.last?.text == Prompts.recheck)
     #expect(session.versions.last?.origin == .recheck)
+  }
+
+  @Test func checkSendsContextImagesWithTheFirstMessage() async throws {
+    let engine = FakeEngine(fixes: ["I have a cat."])
+    let session = session(engine)
+    session.images = [Data([1]), Data([2])]
+    await session.check()
+
+    let input = try #require(engine.fixCalls.first?.input)
+    #expect(input[0].images == [Data([1]), Data([2])])
+    #expect(input[0].text.hasSuffix(Prompts.imagesNote))
+  }
+
+  @Test func changingImagesDoesNotStartACheck() {
+    let engine = FakeEngine(fixes: [])
+    let session = session(engine)
+    session.images.append(Data([1]))
+    session.images.removeAll()
+    #expect(engine.calls.isEmpty)
+    #expect(session.versions.isEmpty)
+  }
+
+  @Test func recheckSendsImagesAddedAfterTheFirstCheck() async throws {
+    let engine = FakeEngine(fixes: ["I have a cat.", "I have a cat!"])
+    let session = session(engine)
+    await session.check()
+    #expect(engine.fixCalls[0].input[0].images.isEmpty)
+    #expect(!engine.fixCalls[0].input[0].text.contains(Prompts.imagesNote))
+
+    session.images = [Data([1])]
+    await session.check()
+    let input = try #require(engine.fixCalls.last?.input)
+    #expect(input.map(\.images) == [[Data([1])], [], []])
+    #expect(input.last?.text == Prompts.recheck)
+  }
+
+  @Test func dialogAndExplainDoNotRepeatImages() async throws {
+    let engine = FakeEngine(fixes: ["I have a cat.", "I have two cats."])
+    let session = session(engine)
+    session.images = [Data([1])]
+    await session.check()
+    await session.send("make it two cats")
+
+    let input = try #require(engine.fixCalls.last?.input)
+    #expect(input.map(\.images) == [[Data([1])], [], []])
+    let otherCalls = engine.calls.filter { !engine.fixCalls.contains($0) }
+    #expect(!otherCalls.isEmpty)
+    #expect(otherCalls.allSatisfy { $0.input.allSatisfy(\.images.isEmpty) })
+  }
+
+  @Test func moreThanTenImagesWarn() {
+    let session = session(FakeEngine(fixes: []))
+    session.images = Array(repeating: Data([1]), count: 10)
+    #expect(!session.hasManyImages)
+    session.images.append(Data([2]))
+    #expect(session.hasManyImages)
   }
 
   @Test func failedTurnCanBeRetriedWithoutLosingTheText() async {

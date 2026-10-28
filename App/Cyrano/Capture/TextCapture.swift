@@ -14,17 +14,23 @@ struct CapturedText {
   let bundleID: String?
   /// Field frame for placing the panel, top-left screen coordinates.
   let frame: CGRect?
+  /// The app whose window 📷 captures; nil for pasted text.
+  let source: NSRunningApplication?
 
-  init(text: String, appName: String, bundleID: String? = nil, frame: CGRect? = nil) {
+  init(text: String, appName: String, frame: CGRect? = nil) {
     self.text = text
     self.appName = appName
-    self.bundleID = bundleID
+    bundleID = nil
     self.frame = frame
+    source = nil
   }
 
   init(text: String, app: NSRunningApplication, frame: CGRect? = nil) {
-    self.init(
-      text: text, appName: app.localizedName ?? "App", bundleID: app.bundleIdentifier, frame: frame)
+    self.text = text
+    appName = app.localizedName ?? "App"
+    bundleID = app.bundleIdentifier
+    self.frame = frame
+    source = app
   }
 }
 

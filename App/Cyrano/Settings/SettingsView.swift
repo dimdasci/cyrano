@@ -109,7 +109,7 @@ struct SignInControls: View {
 struct PermissionStatus: View {
   static let accessibility = PermissionStatus(
     title: "Accessibility", pane: "Privacy_Accessibility", isGranted: { AXIsProcessTrusted() })
-  /// Only for reading text from a screenshot when nothing else works.
+  /// For 📷 in the context and for reading text from a screenshot when nothing else works.
   static let screenRecording = PermissionStatus(
     title: "Screen Recording", pane: "Privacy_ScreenCapture",
     isGranted: { CGPreflightScreenCaptureAccess() },
@@ -122,6 +122,11 @@ struct PermissionStatus: View {
   var request: () -> Void = {}
   @State private var granted = false
 
+  func openSettings() {
+    let url = "x-apple.systempreferences:com.apple.preference.security?\(pane)"
+    if let url = URL(string: url) { NSWorkspace.shared.open(url) }
+  }
+
   var body: some View {
     HStack {
       Text(title)
@@ -131,8 +136,7 @@ struct PermissionStatus: View {
       } else {
         Button("Open System Settings…") {
           request()
-          let url = "x-apple.systempreferences:com.apple.preference.security?\(pane)"
-          if let url = URL(string: url) { NSWorkspace.shared.open(url) }
+          openSettings()
         }
       }
     }

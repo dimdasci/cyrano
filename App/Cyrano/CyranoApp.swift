@@ -48,6 +48,7 @@ extension KeyboardShortcuts.Name {
 
 private struct MenuContent: View {
   let app: AppModel
+  @Environment(\.openSettings) private var openSettings
 
   var body: some View {
     Button("Check Text…") { app.showManualCheck() }
@@ -67,8 +68,13 @@ private struct MenuContent: View {
     }
     Divider()
     Button("About Cyrano") { app.showAbout() }
-    SettingsLink { Text("Settings…") }
-      .keyboardShortcut(",")
+    // SettingsLink doesn't activate a menu bar agent, so a Settings window left behind another app
+    // would stay there.
+    Button("Settings…") {
+      NSApp.activate()
+      openSettings()
+    }
+    .keyboardShortcut(",")
     Button("Quit Cyrano") { NSApp.terminate(nil) }
       .keyboardShortcut("q")
   }

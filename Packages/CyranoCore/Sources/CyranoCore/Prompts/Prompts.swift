@@ -60,15 +60,21 @@ enum Prompts {
     }
   }
 
-  /// The first user message: optional CONTEXT, then the TEXT.
-  static func firstMessage(text: String, context: String) -> String {
+  /// The first user message: optional CONTEXT, then the TEXT, then a note on attached images.
+  static func firstMessage(text: String, context: String, hasImages: Bool) -> String {
     var message = ""
     if !context.trimmed.isEmpty {
       message += "CONTEXT (the message I am replying to; DO NOT correct or repeat it):\n"
       message += quoted(context.trimmed) + "\n\n"
     }
-    return message + "TEXT:\n" + quoted(text)
+    message += "TEXT:\n" + quoted(text)
+    return hasImages ? message + "\n" + imagesNote : message
   }
+
+  static let imagesNote = """
+    The attached images show the conversation around this message. Use them only to understand \
+    context. DO NOT correct or quote text from them.
+    """
 
   static func revision(_ request: String, language: OutputLanguage) -> String {
     """
