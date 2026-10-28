@@ -1,8 +1,13 @@
 #!/usr/bin/env bash
-# Releases a version: runs the quality gate, writes the version into App/Version.xcconfig,
-# commits it and puts an annotated tag v<version> on that commit. Pushing is up to you.
+# Releases a version. main takes changes only through PRs, so it is the same command run twice
+# on main:
 #
-#   scripts/release 0.2.0
+#   scripts/release 0.2.0   runs the quality gate, commits the version on release/0.2.0 and
+#                           opens a PR into main
+#   (merge the PR, then git pull)
+#   scripts/release 0.2.0   main now has version 0.2.0: tags it v0.2.0 and pushes the tag
+#
+# The tag goes on main, so its build number (the commit count) only grows.
 
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -15,20 +20,37 @@ fail() {
 version=${1:-}
 [[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || fail "Usage: scripts/release <major.minor.patch>, e.g. 0.2.0"
 tag="v$version"
-git rev-parse -q --verify "refs/tags/$tag" >/dev/null && fail "Tag $tag already exists."
+branch="release/$version"
+
+[[ $(git branch --show-current) == main ]] || fail "Run on main."
 git diff --quiet && git diff --cached --quiet || fail "Commit or stash your changes first."
+git fetch -q origin main --tags
+git rev-parse -q --verify "refs/tags/$tag" >/dev/null && fail "Tag $tag already exists."
+[[ $(git rev-parse HEAD) == $(git rev-parse origin/main) ]] ||
+  fail "Local main differs from origin/main: run git pull first."
 
 current=$(sed -n 's/^MARKETING_VERSION = //p' App/Version.xcconfig)
+
+if [[ $version == "$current" ]]; then
+  git tag -a "$tag" -m "Cyrano $version"
+  git push -q origin "$tag"
+  echo "Tagged and pushed $tag: version $version, build $(git rev-list --count HEAD)."
+  exit 0
+fi
+
 newest=$(printf '%s\n%s\n' "$current" "$version" | sort -V | tail -1)
 [[ $newest == "$version" ]] || fail "Version $version is older than the current $current."
+git ls-remote --exit-code --heads origin "$branch" >/dev/null &&
+  fail "Branch $branch already exists on origin: merge or close its PR first."
 
 scripts/check
 
-if [[ $version != "$current" ]]; then
-  sed -i '' "s/^MARKETING_VERSION = .*/MARKETING_VERSION = $version/" App/Version.xcconfig
-  git commit -q -m "Release $version" App/Version.xcconfig
-fi
-git tag -a "$tag" -m "Cyrano $version"
+git switch -q -c "$branch"
+sed -i '' "s/^MARKETING_VERSION = .*/MARKETING_VERSION = $version/" App/Version.xcconfig
+git commit -q -m "Release $version" App/Version.xcconfig
+git push -q -u origin "$branch"
+gh pr create --base main --head "$branch" --title "Release $version" \
+  --body "Sets the app version to $version. After merging, run \`git pull && scripts/release $version\` on main to tag it."
+git switch -q main
 
-echo "Tagged $tag: version $version, build $(git rev-list --count HEAD)."
-echo "Publish with: git push origin HEAD $tag"
+echo "After the PR is merged: git pull && scripts/release $version"
