@@ -1,6 +1,6 @@
 # 04. Промпты
 
-Статус: **проверено на модели** 2026-10-27. Пересмотрено: язык результата больше не только английский (`{language}`); все шаблоны редактируются в Settings → Prompts, здесь — встроенные значения. Движок — `gpt-6.1-sol` / `gpt-6-luna` по подписке ChatGPT ([02](02-tech-decisions.md) T7). Актуальные шаблоны — в [evals/cloud-runner/Shared.swift](../../evals/cloud-runner/Shared.swift); при переносе в `CyranoCore` этот документ и код меняются вместе.
+Статус: **проверено на модели** 2026-10-27. Пересмотрено: язык результата больше не только английский (`{language}`); все шаблоны редактируются в Settings → Prompts, здесь — встроенные значения. Движок — `gpt-6.1-sol` / `gpt-6-luna` по подписке ChatGPT ([02](02-tech-decisions.md) T7). Встроенные шаблоны приложения — в [CyranoCore/Prompts/Prompts.swift](../../Packages/CyranoCore/Sources/CyranoCore/Prompts/Prompts.swift), этот документ и код меняются вместе. Раннер [evals/cloud-runner/Shared.swift](../../evals/cloud-runner/Shared.swift) пока держит свою копию.
 
 ## 1. Принципы
 
@@ -28,6 +28,7 @@
 2. **Diff** — word-level LCS, соседние правки (через ≤ 1 неизменённое слово) склеиваем. Подсветка всегда точная.
 3. **Explain** — отдельный вызов с `text.format = json_schema`. Можно запускать после показа текста: пояснения догружаются.
 4. **Ход диалога:** классификатор (вопрос / правка) → ответ или новая версия → diff и Explain относительно предыдущей версии.
+5. **Перевод.** Если основной язык новой версии отличается от языка предыдущей (NaturalLanguage, уверенность > 0,8 у обоих текстов), это перевод: diff и Explain не делаем, карточка показывает текст без подсветки и подпись «Translated to German». Пословный diff перевода пометил бы ошибкой каждое слово. Короткие и смешанные тексты без уверенного определения языка считаются правкой.
 
 ## 3. Как выбирали модель (2026-10-27)
 
@@ -114,6 +115,11 @@ Reply with exactly one word: question or edit.
 ```
 The user asks to change the latest version of the text: {message}
 The request may be in any language. Apply it and output only the full new version of the text, in {language}.
+```
+
+Перепроверка (смена типа, тона, уровня, языка или контекста, кнопка Recheck; история диалога сохраняется):
+```
+The settings or the CONTEXT changed. Check the latest version of the text again under the current rules and output only the full text.
 ```
 
 Вопрос:
