@@ -64,7 +64,7 @@ MODEL=gpt-6.1-sol EFFORT=low /tmp/openai-runner run ../cases.json
 В About видно «Version 0.1.0 (6)»: версия и номер сборки.
 
 - **Версия** (`CFBundleShortVersionString`) — semver `major.minor.patch`, хранится в одном месте: [App/Version.xcconfig](App/Version.xcconfig). Пока идут preview, растёт `minor` (0.2.0, 0.3.0), исправления внутри preview — `patch` (0.2.1); 1.0.0 — первый релиз, который считаем готовым.
-- **Номер сборки** (`CFBundleVersion`) — число коммитов на `HEAD`. Его пишет в собранное приложение шаг сборки `scripts/set-build-number`, руками не меняется. Одна и та же версия у разных коммитов различается номером, а по номеру можно найти коммит: `git rev-list --reverse HEAD | sed -n <номер>p`. Для CI нужна полная история (`fetch-depth: 0`), иначе номер будет 1.
+- **Номер сборки** (`CFBundleVersion`) — число коммитов на `HEAD`. Его пишет в собранное приложение шаг сборки `scripts/set-build-number`, руками не меняется. Одна и та же версия у разных коммитов различается номером, а по номеру можно найти коммит: `git rev-list --reverse HEAD | sed -n <номер>p`. CI скачивает полную историю (`fetch-depth: 0` в `.github/workflows/check.yml`), иначе номер был бы 1. В pull request CI собирает merge-коммит ветки с `main`, поэтому там номер на единицу больше, чем у последнего коммита ветки.
 
 Релиз — из чистого рабочего дерева:
 
