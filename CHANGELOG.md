@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-10-29
+
 ### Added
 
 - Cyrano fills in Context for you. When you press ⌥⌘G in an app, it takes a screenshot of the
@@ -95,7 +97,8 @@ The first preview: check a short text in any app with your ChatGPT plan.
 - Sign in with ChatGPT (Plus or Pro). Text goes only to OpenAI and isn't stored there.
 - Menu bar menu: Check Text…, Check Clipboard, model choice, account, Settings.
 
-[Unreleased]: https://github.com/dimdasci/cyrano/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/dimdasci/cyrano/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/dimdasci/cyrano/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/dimdasci/cyrano/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/dimdasci/cyrano/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/dimdasci/cyrano/releases/tag/v0.1.0
