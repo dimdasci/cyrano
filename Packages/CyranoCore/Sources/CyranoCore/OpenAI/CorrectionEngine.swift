@@ -21,15 +21,20 @@ public struct ChatMessage: Hashable, Sendable {
 }
 
 /// One model call: instructions, the whole dialog as input, and an optional JSON output schema.
+/// A call may name its model; otherwise the engine's model answers it.
 public struct ModelCall: Hashable, Sendable {
   public let instructions: String
   public let input: [ChatMessage]
   public let schema: JSONValue?
+  public let model: Model?
 
-  public init(instructions: String, input: [ChatMessage], schema: JSONValue? = nil) {
+  public init(
+    instructions: String, input: [ChatMessage], schema: JSONValue? = nil, model: Model? = nil
+  ) {
     self.instructions = instructions
     self.input = input
     self.schema = schema
+    self.model = model
   }
 }
 

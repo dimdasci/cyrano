@@ -2,16 +2,19 @@
 
 import AppKit
 import CyranoCore
+import QuickLook
 import SwiftUI
 
-/// Context and the Check button. Before the first check the context is open and focused, so the
-/// user can paste what they are replying to before anything is sent.
+/// Context input: text, images, 📷. Before the first check it is open and focused, so the user
+/// can paste what they are replying to before anything is sent; the check starts by the dialog field.
 struct ContextBar: View {
   let model: PanelModel
   @Bindable var session: ProofreadingSession
   @State private var expanded: Bool
   @State private var explainingCapture = false
   @FocusState private var editing: Bool
+  @FocusState private var selected: Int?
+  @State private var previewing: URL?
 
   init(model: PanelModel, session: ProofreadingSession) {
     self.model = model
@@ -32,25 +35,45 @@ struct ContextBar: View {
         if model.canCaptureWindow {
           captureButton
         }
-        checkButton
       }
       if expanded {
-        TextEditor(text: $session.context)
-          .font(.body)
-          .frame(height: 64)
-          // The editor draws text edge to edge; the inset keeps it off the border.
-          .scrollContentBackground(.hidden)
-          .padding(.horizontal, 4)
-          .padding(.vertical, 6)
-          .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
-          .overlay(RoundedRectangle(cornerRadius: 6).stroke(.separator))
-          .focused($editing)
-          .onAppear { editing = session.versions.isEmpty }
+        contextEditor
         imagesRow
       }
     }
     .padding(.horizontal, 12)
     .padding(.vertical, 8)
+    // A request folds Context away; reading it does not.
+    .onChange(of: session.isBusy) { _, busy in
+      if busy && session.activity != .readingContext { expanded = false }
+    }
+    .quickLookPreview($previewing)
+  }
+
+  private var contextEditor: some View {
+    TextEditor(text: $session.context)
+      .font(.body)
+      .frame(height: 64)
+      // The editor draws text edge to edge; the inset keeps it off the border.
+      .scrollContentBackground(.hidden)
+      .padding(.horizontal, 4)
+      .padding(.vertical, 6)
+      .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
+      .overlay(RoundedRectangle(cornerRadius: 6).stroke(.separator))
+      .overlay(alignment: .topLeading) {
+        if session.activity == .readingContext {
+          HStack(spacing: 6) {
+            ProgressView().controlSize(.small)
+            Text("Reading context from the window…").foregroundStyle(.tertiary)
+          }
+          .padding(.horizontal, 9)
+          .padding(.vertical, 6)
+          .allowsHitTesting(false)
+        }
+      }
+      .focused($editing)
+      // Without captured text the cursor goes to Text to check instead.
+      .onAppear { editing = session.versions.isEmpty && !session.original.isEmpty }
   }
 
   @ViewBuilder private var collapsedSummary: some View {
@@ -77,7 +100,31 @@ struct ContextBar: View {
   private func thumbnails(size: CGSize, removable: Bool) -> some View {
     ForEach(Array(session.images.enumerated()), id: \.offset) { index, png in
       Thumbnail(
-        png: png, size: size, remove: removable ? { session.images.remove(at: index) } : nil)
+        png: png, size: size, remove: removable ? { session.images.remove(at: index) } : nil
+      )
+      .focusable()
+      .focused($selected, equals: index)
+      .onTapGesture {
+        selected = index
+        preview(png, number: index + 1)
+      }
+      .onKeyPress(.space) {
+        if previewing == nil { preview(png, number: index + 1) } else { previewing = nil }
+        return .handled
+      }
+    }
+  }
+
+  /// Quick Look needs a file. Each preview gets a new folder: Quick Look caches by URL.
+  private func preview(_ png: Data, number: Int) {
+    let folder = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
+    let url = folder.appending(path: "Context image \(number).png")
+    do {
+      try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+      try png.write(to: url)
+      previewing = url
+    } catch {
+      previewing = nil
     }
   }
 
@@ -95,7 +142,7 @@ struct ContextBar: View {
   private var captureButton: some View {
     Button {
       if CGPreflightScreenCaptureAccess() {
-        model.captureWindow(into: session)
+        model.captureWindow()
       } else {
         explainingCapture = true
       }
@@ -110,28 +157,12 @@ struct ContextBar: View {
       CaptureAccessPrompt {
         explainingCapture = false
         if CGRequestScreenCaptureAccess() {
-          model.captureWindow(into: session)
+          model.captureWindow()
         } else {
           PermissionStatus.screenRecording.openSettings()
         }
       }
     }
-  }
-
-  @ViewBuilder private var checkButton: some View {
-    if session.versions.isEmpty {
-      Button("Check") { start() }
-        .buttonStyle(.borderedProminent)
-        .disabled(session.isBusy)
-    } else {
-      Button("Recheck") { start() }
-        .disabled(session.isBusy)
-    }
-  }
-
-  private func start() {
-    expanded = false
-    Task { await session.check() }
   }
 }
 

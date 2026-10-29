@@ -9,27 +9,10 @@ struct ProofreadingView: View {
   let model: PanelModel
 
   var body: some View {
-    switch model.content {
-    case .nothingToCheck:
-      NothingToCheckView(app: model.app)
-    case .readingScreen:
-      ProgressView("Reading the text from the window…")
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    case .session(let session, let captured):
-      SessionView(model: model, session: session, captured: captured)
-    }
-  }
-}
-
-struct SessionView: View {
-  let model: PanelModel
-  @Bindable var session: ProofreadingSession
-  let captured: CapturedText
-
-  var body: some View {
+    @Bindable var session = model.session
     VStack(spacing: 0) {
       PanelHeader(session: session)
-        .onChange(of: session.options) { model.optionsChanged(session, for: captured) }
+        .onChange(of: session.options) { model.optionsChanged() }
       Divider()
       ContextBar(model: model, session: session)
       Divider()
@@ -99,43 +82,41 @@ private struct PanelHeader: View {
   }
 }
 
+/// The dialog field and the one action button (05 §2.7). Before the first check there is
+/// nothing to talk about yet, so only Check shows.
 private struct Composer: View {
   let session: ProofreadingSession
   @State private var draft = ""
 
   var body: some View {
     HStack(alignment: .bottom, spacing: 8) {
-      TextEditor(text: $draft)
-        .font(.body)
-        .frame(height: 44)
-        .overlay(alignment: .topLeading) {
-          if draft.isEmpty {
-            Text("Ask or tell what to change… (any language)")
-              .foregroundStyle(.tertiary)
-              .padding(.leading, 5)
-              .allowsHitTesting(false)
+      if session.versions.isEmpty {
+        Spacer()
+      } else {
+        TextEditor(text: $draft)
+          .font(.body)
+          .frame(height: 44)
+          .overlay(alignment: .topLeading) {
+            if draft.isEmpty {
+              Text("Ask or tell what to change… (any language)")
+                .foregroundStyle(.tertiary)
+                .padding(.leading, 5)
+                .allowsHitTesting(false)
+            }
           }
-        }
-      Button(action: send) {
-        Image(systemName: "arrow.up.circle.fill").font(.title2)
       }
-      .buttonStyle(.plain)
-      // The dialog continues a check; before the first one there is nothing to talk about.
-      .disabled(
-        draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || session.isBusy
-          || session.versions.isEmpty
-      )
-      .accessibilityLabel("Send")
-      .help("Send")
+      // Core decides between Check and Send.
+      Button(session.action(for: draft) == .check ? "Check" : "Send", action: perform)
+        .disabled(!session.canPerform(message: draft))
     }
     .padding(.horizontal, 12)
     .padding(.top, 8)
   }
 
-  private func send() {
+  private func perform() {
     let message = draft
     draft = ""
-    Task { await session.send(message) }
+    Task { await session.perform(message: message) }
   }
 }
 
@@ -148,10 +129,7 @@ private struct StatusLine: View {
       if session.activity == .failed(.planLimitReached) {
         Text("Plan limit reached").foregroundStyle(.red)
       } else {
-        Text("\(tokens(session.usage.total)) tokens")
-          .help(
-            "Fix \(tokens(session.usage.fix)) · Explain \(tokens(session.usage.explain)) · "
-              + "Intent \(tokens(session.usage.intent))")
+        Text("\(tokens(session.tokens)) tokens")
       }
       Spacer()
       if let message { Text(message).lineLimit(1).help(message) }
@@ -164,19 +142,5 @@ private struct StatusLine: View {
 
   private func tokens(_ count: Int) -> String {
     count < 1000 ? "\(count)" : String(format: "%.1fk", Double(count) / 1000)
-  }
-}
-
-private struct NothingToCheckView: View {
-  let app: AppModel
-
-  var body: some View {
-    VStack(spacing: 12) {
-      Text("Nothing to check. Select text or put the cursor in a text field.")
-        .multilineTextAlignment(.center)
-      Button("Check Clipboard") { app.checkClipboard() }
-    }
-    .padding(24)
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
   }
 }

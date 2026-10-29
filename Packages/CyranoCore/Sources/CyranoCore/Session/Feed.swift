@@ -65,12 +65,3 @@ public enum FeedItem: Hashable, Sendable, Identifiable {
     }
   }
 }
-
-/// Tokens spent in the current dialog, by call. See docs/specs/05-ui.md §2.7.
-public struct TokenUsage: Hashable, Sendable {
-  public internal(set) var fix = 0
-  public internal(set) var explain = 0
-  public internal(set) var intent = 0
-
-  public var total: Int { fix + explain + intent }
-}

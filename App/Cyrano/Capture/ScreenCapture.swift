@@ -1,5 +1,5 @@
-// Screenshot of the front window: context for a check (02 M10) and the last way to get the text
-// (02 C5).
+// Screenshot of the front window: an image for Context (02 M10) and what Context is read from
+// (02 C6).
 
 import AppKit
 import CoreGraphics

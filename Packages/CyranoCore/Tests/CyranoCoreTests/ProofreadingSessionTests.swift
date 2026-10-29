@@ -4,40 +4,51 @@ import Testing
 
 @testable import CyranoCore
 
-/// Answers Fix calls from a queue, classifies by a keyword and explains every change as grammar.
+/// Answers Fix calls from a queue, reads context with a fixed answer, classifies by a keyword and
+/// explains every change as grammar.
 final class FakeEngine: CorrectionEngine {
   private struct State {
     var fixes: [String]
+    var context: String
     var calls: [ModelCall] = []
     var failNextFix: EngineError?
     var holdsFixes = false
-    var heldFix: (@Sendable () -> Void)?
+    var holdsContext = false
+    var held: (@Sendable () -> Void)?
   }
 
   private let state: Mutex<State>
 
-  init(fixes: [String]) { state = Mutex(State(fixes: fixes)) }
+  init(fixes: [String], context: String = "") {
+    state = Mutex(State(fixes: fixes, context: context))
+  }
 
   var calls: [ModelCall] { state.withLock { $0.calls } }
   var fixCalls: [ModelCall] { calls.filter { $0.instructions.hasPrefix("You are a proofreader") } }
+  var contextCalls: [ModelCall] { calls.filter { $0.instructions == Prompts.readContext } }
 
   func failNextFix(with error: EngineError) { state.withLock { $0.failNextFix = error } }
 
-  /// Keeps the next Fix answers until `releaseFix()`, to look at the session while one streams.
+  /// Keeps the next Fix answers until `release()`, to look at the session while one streams.
   func holdFixes() { state.withLock { $0.holdsFixes = true } }
 
-  func releaseFix() {
-    let fix = state.withLock { state in
-      defer { state.heldFix = nil }
-      return state.heldFix
+  /// Keeps the context answer until `release()`.
+  func holdContext() { state.withLock { $0.holdsContext = true } }
+
+  func release() {
+    let answer = state.withLock { state in
+      defer { state.held = nil }
+      return state.held
     }
-    fix?()
+    answer?()
   }
 
   func respond(_ call: ModelCall) -> AsyncThrowingStream<ResponseUpdate, any Error> {
     let isFix = call.instructions.hasPrefix("You are a proofreader")
+    let isContext = call.instructions == Prompts.readContext
     let result = state.withLock { state -> Result<String, EngineError> in
       state.calls.append(call)
+      if isContext { return .success(state.context) }
       if call.instructions == Prompts.classify {
         return .success(call.input[0].text.contains("?") ? "question" : "edit")
       }
@@ -62,8 +73,10 @@ final class FakeEngine: CorrectionEngine {
         }
       }
       let held = state.withLock { state in
-        guard isFix, state.holdsFixes else { return false }
-        state.heldFix = deliver
+        guard (isFix && state.holdsFixes) || (isContext && state.holdsContext) else {
+          return false
+        }
+        state.held = deliver
         return true
       }
       if !held { deliver() }
@@ -91,7 +104,7 @@ final class FakeEngine: CorrectionEngine {
           version.diff ?? TextDiff(old: "", new: ""),
           .ready([1: Explanation(category: .grammar, reason: "Tense.")])))
     #expect(session.activity == .idle)
-    #expect(session.usage.total == 20)
+    #expect(session.tokens == 20)
   }
 
   @Test func firstMessageCarriesContextAndText() async throws {
@@ -138,7 +151,7 @@ final class FakeEngine: CorrectionEngine {
     }
     #expect(requests.count == 1)
     #expect(session.activity == .replying(partial: ""))
-    engine.releaseFix()
+    engine.release()
     await turn.value
     #expect(session.activity == .idle)
   }

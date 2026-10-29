@@ -5,16 +5,14 @@ import SwiftUI
 
 struct FeedView: View {
   let model: PanelModel
-  let session: ProofreadingSession
+  @Bindable var session: ProofreadingSession
 
   var body: some View {
     ScrollViewReader { proxy in
       ScrollView {
         LazyVStack(alignment: .leading, spacing: 10) {
           if session.feed.isEmpty {
-            Card(title: "Text to check") {
-              Text(session.original).font(.system(size: 14)).textSelection(.enabled)
-            }
+            TextToCheck(session: session)
           }
           ForEach(session.feed) { item in
             row(item)
@@ -50,6 +48,39 @@ struct FeedView: View {
   }
 }
 
+/// The text before the first check: captured text to fix up, or an empty field to type or paste
+/// into when nothing was captured (05 §2.4).
+private struct TextToCheck: View {
+  @Bindable var session: ProofreadingSession
+  @FocusState private var editing: Bool
+
+  var body: some View {
+    Card(title: "Text to check") {
+      TextEditor(text: $session.original)
+        .font(.system(size: 14))
+        .frame(minHeight: 120)
+        .scrollContentBackground(.hidden)
+        .overlay(alignment: .topLeading) {
+          if session.original.isEmpty {
+            Text("Select text in any app and press ⌥⌘G, or type or paste it here")
+              .font(.system(size: 14))
+              .foregroundStyle(.tertiary)
+              .padding(.leading, 5)
+              .allowsHitTesting(false)
+          }
+        }
+        .focused($editing)
+        .disabled(isChecking)
+        .onAppear { editing = session.original.isEmpty }
+    }
+  }
+
+  /// Context may still be read while the user fixes the text; a running check freezes it.
+  private var isChecking: Bool {
+    if case .checking = session.activity { true } else { false }
+  }
+}
+
 struct Bubble: View {
   let text: String
   let fromUser: Bool
@@ -76,7 +107,7 @@ private struct ActivityRow: View {
 
   var body: some View {
     switch session.activity {
-    case .idle:
+    case .idle, .readingContext:
       EmptyView()
     case .checking(let partial):
       Card(title: "Version \(session.versions.count + 1)") {
@@ -91,7 +122,7 @@ private struct ActivityRow: View {
       Bubble(text: partial.isEmpty ? "…" : partial, fromUser: false)
     case .failed(let error):
       ErrorRow(error: error, session: session) {
-        model.signInAndRetry(session)
+        model.signInAndRetry()
       } copyOriginal: {
         model.copy(session.original)
       }

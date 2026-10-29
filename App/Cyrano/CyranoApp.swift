@@ -51,7 +51,7 @@ private struct MenuContent: View {
   @Environment(\.openSettings) private var openSettings
 
   var body: some View {
-    Button("Check Text…") { app.showManualCheck() }
+    Button("Check Text…") { app.checkText() }
     Button("Check Clipboard") { app.checkClipboard() }
     Divider()
     Picker("Model: \(app.model.rawValue)", selection: Bindable(app).model) {

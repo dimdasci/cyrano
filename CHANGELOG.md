@@ -8,6 +8,35 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Added
+
+- Cyrano fills in Context for you. When you press ⌥⌘G in an app, it takes a screenshot of the
+  window and reads who is in the conversation and the message you're replying to. It takes a
+  few seconds; edit the result or add more before you press Check. Only the text goes with
+  your check, not the screenshot. Turn it off in Settings → General → Read context from the
+  window. Needs Screen Recording.
+- You can type or paste the text to check right in the panel, and fix the captured text before
+  the first check.
+- Click an image thumbnail in Context, or select it and press Space, to see it full size with
+  Quick Look. Handy for telling similar screenshots apart.
+
+### Changed
+
+- One button by the dialog field starts every check. It says Check before the first check and
+  after you change the context with the dialog field empty; otherwise it says Send, and your
+  message goes with the current context. The Check and Recheck buttons in Context are gone:
+  Context is only for what you're replying to.
+- Cyrano reads only the text you selected or the field you're typing in. It no longer selects
+  everything with ⌘A or guesses your draft from a screenshot. When there's nothing to read, the
+  panel opens with an empty field for your text.
+- Check Text… opens the same panel instead of a separate window.
+- The dialog field appears after the first check.
+- The token counter shows one total.
+
+### Fixed
+
+- Pressing ⌥⌘G on the desktop no longer checks the names of the files on it.
+
 ### Removed
 
 - Keyboard shortcuts inside the panel (⌘R, ⌘K, ⌘↩, ⇧⌘C) and ⌥⌘G next to Check Text… in the menu. Use the buttons instead; ⌥⌘G still opens the panel from any app and can be changed in Settings.

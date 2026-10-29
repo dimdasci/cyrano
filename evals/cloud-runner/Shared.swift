@@ -8,6 +8,15 @@ struct Expect: Decodable {
   var mustNotContain: [String]?
   var unchanged: Bool?
   var kind: String?
+  /// The output must be empty (Context: no conversation on screen).
+  var empty: Bool?
+}
+/// A Context case (04 §4.5): a screenshot with the user's draft. Lives outside git, in evals/private/.
+struct ContextCase: Decodable {
+  var id: String
+  var image: String
+  var text: String
+  var expect: Expect?
 }
 struct FollowUp: Decodable { var message: String; var expect: Expect? }
 struct Case: Decodable {
@@ -22,6 +31,17 @@ struct Case: Decodable {
 }
 
 // MARK: - Prompts
+
+let contextInstructions = """
+  The image is a screenshot of the app window where the user is writing a reply. TEXT is the user's draft.
+  Find the conversation the draft belongs to and output, in plain text:
+  People: everyone taking part, by the names shown on screen, and where it happens (channel, group, email thread) if visible.
+  Replying to: the message or messages the draft answers, word for word, each with its sender's name.
+  Copy messages in their original language. DO NOT include the draft. DO NOT add explanations.
+  If the screenshot shows no conversation the draft belongs to, output nothing.
+  """
+
+func contextPrompt(_ text: String) -> String { "TEXT:\n\"\"\"\n\(text)\n\"\"\"" }
 
 let levels = [
   "errors": "Fix only clear errors. Do not change correct phrasing, even if it could sound better.",
@@ -168,6 +188,7 @@ func check(_ out: String, original: String, _ e: Expect?, isAnswer: Bool) -> [St
   guard let e else { return [] }
   var fails: [String] = []
   if let k = e.kind { if (k == "answer") != isAnswer { fails.append("expected \(k)") } }
+  if e.empty == true && !out.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty { fails.append("expected empty") }
   if e.unchanged == true && out != original { fails.append("expected unchanged") }
   for s in e.mustContain ?? [] where !norm(out).contains(norm(s)) { fails.append("missing \"\(s)\"") }
   for s in e.mustNotContain ?? [] where norm(out).contains(norm(s)) { fails.append("contains \"\(s)\"") }
