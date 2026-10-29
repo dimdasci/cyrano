@@ -29,7 +29,7 @@ private struct GeneralPane: View {
         ForEach(Model.allCases, id: \.self) { Text($0.title).tag($0) }
       }
       Toggle("Show in menu bar", isOn: $showInMenuBar)
-      Section("Keyboard Shortcuts") {
+      Section("Shortcut") {
         KeyboardShortcuts.Recorder("Check text", name: .checkText)
       }
       Section("Permissions") {

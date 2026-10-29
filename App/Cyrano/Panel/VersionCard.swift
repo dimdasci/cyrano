@@ -44,12 +44,11 @@ struct VersionCard: View {
     }
   }
 
-  /// The latest version's Copy is the default action, ⇧⌘C from anywhere in the panel.
+  /// The latest version's Copy is the prominent one.
   @ViewBuilder private var copyButton: some View {
     if isLatest {
       Button("Copy") { actions.copy(version.text) }
         .buttonStyle(.borderedProminent)
-        .keyboardShortcut("c", modifiers: [.command, .shift])
     } else {
       Button("Copy") { actions.copy(version.text) }
     }

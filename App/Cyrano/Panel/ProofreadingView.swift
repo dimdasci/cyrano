@@ -120,14 +120,13 @@ private struct Composer: View {
         Image(systemName: "arrow.up.circle.fill").font(.title2)
       }
       .buttonStyle(.plain)
-      .keyboardShortcut(.return, modifiers: .command)
       // The dialog continues a check; before the first one there is nothing to talk about.
       .disabled(
         draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || session.isBusy
           || session.versions.isEmpty
       )
       .accessibilityLabel("Send")
-      .help("Send (⌘↩)")
+      .help("Send")
     }
     .padding(.horizontal, 12)
     .padding(.top, 8)

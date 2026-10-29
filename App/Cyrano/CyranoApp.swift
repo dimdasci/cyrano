@@ -52,7 +52,6 @@ private struct MenuContent: View {
 
   var body: some View {
     Button("Check Text…") { app.showManualCheck() }
-      .keyboardShortcut("g", modifiers: [.option, .command])
     Button("Check Clipboard") { app.checkClipboard() }
     Divider()
     Picker("Model: \(app.model.rawValue)", selection: Bindable(app).model) {

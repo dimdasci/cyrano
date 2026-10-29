@@ -60,4 +60,4 @@ scripts/release 0.2.0
 - **`.dmg` напрямую, без Mac App Store.** В App Store обязательна App Sandbox, а из неё нельзя читать текст в чужих приложениях через Accessibility и эмулировать ⌘C — на этом стоит весь захват.
 - Путь: подпись Developer ID → нотаризация Apple → `.dmg` → GitHub Releases → автообновление (Sparkle). Всё это — шаги workflow по тегу.
 - **Apple Developer Program** ($99 в год) покупаем, когда начнём пакет: без Developer ID сборку нельзя нотаризовать, macOS блокирует её при первом запуске, а разрешение Accessibility слетает с каждой версией.
-- До этого подпись локальная: [scripts/make-signing-identity](../scripts/make-signing-identity), см. [README](../README.md).
+- До этого подпись локальная: самоподписанный сертификат из [scripts/make-signing-identity](../scripts/make-signing-identity), см. [README](../README.md). Без него Xcode подписывает ad-hoc, и macOS сбрасывает разрешение Accessibility при каждой пересборке (02 T4).
