@@ -59,16 +59,16 @@ import Testing
   @Test func changedImagesWithAnEmptyFieldRecheck() async throws {
     let engine = FakeEngine(fixes: ["I have a cat.", "I have a cat!"])
     let session = session(engine)
-    session.images = [Data([1])]
+    session.images = [imageA]
     await session.check()
-    session.images = [Data([1])]
+    session.images = [imageA]
     #expect(session.action(for: "") == .send)
-    session.images.append(Data([2]))
+    session.images.append(imageB)
     #expect(session.action(for: "") == .check)
 
     await session.perform(message: "")
     let input = try #require(engine.fixCalls.last?.input)
-    #expect(input[0].images == [Data([1]), Data([2])])
+    #expect(input[0].images == [imageA, imageB])
     #expect(input.last?.text == Prompts.recheck)
   }
 

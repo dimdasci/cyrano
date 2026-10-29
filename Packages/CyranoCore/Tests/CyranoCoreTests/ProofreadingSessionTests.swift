@@ -4,6 +4,10 @@ import Testing
 
 @testable import CyranoCore
 
+/// Stand-in context images, typed once: array literals of `Data([1])` are slow to type-check.
+let imageA = Data([UInt8(1)])
+let imageB = Data([UInt8(2)])
+
 /// Answers Fix calls from a queue, reads context with a fixed answer, classifies by a keyword and
 /// explains every change as grammar.
 final class FakeEngine: CorrectionEngine {
@@ -214,18 +218,18 @@ final class FakeEngine: CorrectionEngine {
   @Test func checkSendsContextImagesWithTheFirstMessage() async throws {
     let engine = FakeEngine(fixes: ["I have a cat."])
     let session = session(engine)
-    session.images = [Data([1]), Data([2])]
+    session.images = [imageA, imageB]
     await session.check()
 
     let input = try #require(engine.fixCalls.first?.input)
-    #expect(input[0].images == [Data([1]), Data([2])])
+    #expect(input[0].images == [imageA, imageB])
     #expect(input[0].text.hasSuffix(Prompts.imagesNote))
   }
 
   @Test func changingImagesDoesNotStartACheck() {
     let engine = FakeEngine(fixes: [])
     let session = session(engine)
-    session.images.append(Data([1]))
+    session.images.append(imageA)
     session.images.removeAll()
     #expect(engine.calls.isEmpty)
     #expect(session.versions.isEmpty)
@@ -238,22 +242,22 @@ final class FakeEngine: CorrectionEngine {
     #expect(engine.fixCalls[0].input[0].images.isEmpty)
     #expect(!engine.fixCalls[0].input[0].text.contains(Prompts.imagesNote))
 
-    session.images = [Data([1])]
+    session.images = [imageA]
     await session.check()
     let input = try #require(engine.fixCalls.last?.input)
-    #expect(input.map(\.images) == [[Data([1])], [], []])
+    #expect(input.map(\.images) == [[imageA], [], []])
     #expect(input.last?.text == Prompts.recheck)
   }
 
   @Test func dialogAndExplainDoNotRepeatImages() async throws {
     let engine = FakeEngine(fixes: ["I have a cat.", "I have two cats."])
     let session = session(engine)
-    session.images = [Data([1])]
+    session.images = [imageA]
     await session.check()
     await session.send("make it two cats")
 
     let input = try #require(engine.fixCalls.last?.input)
-    #expect(input.map(\.images) == [[Data([1])], [], []])
+    #expect(input.map(\.images) == [[imageA], [], []])
     let otherCalls = engine.calls.filter { !engine.fixCalls.contains($0) }
     #expect(!otherCalls.isEmpty)
     #expect(otherCalls.allSatisfy { $0.input.allSatisfy(\.images.isEmpty) })
@@ -261,9 +265,9 @@ final class FakeEngine: CorrectionEngine {
 
   @Test func moreThanTenImagesWarn() {
     let session = session(FakeEngine(fixes: []))
-    session.images = Array(repeating: Data([1]), count: 10)
+    session.images = Array(repeating: imageA, count: 10)
     #expect(!session.hasManyImages)
-    session.images.append(Data([2]))
+    session.images.append(imageB)
     #expect(session.hasManyImages)
   }
 
