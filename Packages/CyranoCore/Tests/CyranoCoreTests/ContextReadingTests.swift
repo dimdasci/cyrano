@@ -9,7 +9,8 @@ import Testing
   let ravi = "People: Ravi, you; direct message\nReplying to:\nRavi: Do you have pets?"
 
   func session(_ engine: FakeEngine) -> ProofreadingSession {
-    ProofreadingSession(original: "I has a cat.", options: CheckOptions(), engine: engine)
+    ProofreadingSession(
+      original: "I has a cat.", options: CheckOptions(), engine: engine, dictionary: dictionary())
   }
 
   @Test func contextIsFilledWithTheAnswer() async {

@@ -40,6 +40,8 @@ public final class ProofreadingSession {
   /// PNG images of what the user is replying to; sent with the first message (M10).
   public var images: [Data] = []
   public var options: CheckOptions
+  /// Terms found in the text go with every Fix request, so a new one counts from the next.
+  public let dictionary: TermDictionary
   public private(set) var feed: [FeedItem] = []
   public private(set) var activity = Activity.idle
   /// Tokens spent in this panel, all calls together (M12).
@@ -53,12 +55,14 @@ public final class ProofreadingSession {
   private var contextReading: Task<String, any Error>?
 
   public init(
-    original: String, context: String = "", options: CheckOptions, engine: any CorrectionEngine
+    original: String, context: String = "", options: CheckOptions, engine: any CorrectionEngine,
+    dictionary: TermDictionary
   ) {
     self.original = original
     self.context = context
     self.options = options
     self.engine = engine
+    self.dictionary = dictionary
   }
 
   public var versions: [Version] {
@@ -168,20 +172,6 @@ public final class ProofreadingSession {
     await retry?()
   }
 
-  /// Reverts one change of the latest version into a new version, without calling the model.
-  public func reject(_ change: Change) {
-    guard let latest = versions.last, let diff = latest.diff, diff.changes.contains(change) else {
-      return
-    }
-    let text = diff.text(rejecting: change)
-    feed.append(
-      .version(
-        Version(
-          number: latest.number + 1, text: text,
-          edit: .corrections(TextDiff(old: latest.text, new: text), .unavailable),
-          origin: .rejection)))
-  }
-
   private func finishTurn(_ text: String, intent: Intent) async throws {
     switch intent {
     case .question:
@@ -282,7 +272,10 @@ public final class ProofreadingSession {
     switch origin {
     case .check:
       ChatMessage(
-        .user, Prompts.firstMessage(text: original, context: context, hasImages: !images.isEmpty),
+        .user,
+        Prompts.firstMessage(
+          text: original, context: context, keep: dictionary.found(in: original),
+          hasImages: !images.isEmpty),
         images: images)
     case .recheck: ChatMessage(.user, Prompts.recheck)
     case .request, .rejection: nil
@@ -296,5 +289,31 @@ public final class ProofreadingSession {
   private func takeID() -> Int {
     defer { nextID += 1 }
     return nextID
+  }
+}
+
+/// Edits made in the panel without calling the model.
+extension ProofreadingSession {
+  /// Reverts one change of the latest version into a new version, without calling the model.
+  public func reject(_ change: Change) {
+    guard let latest = versions.last, let diff = latest.diff, diff.changes.contains(change) else {
+      return
+    }
+    let text = diff.text(rejecting: change)
+    feed.append(
+      .version(
+        Version(
+          number: latest.number + 1, text: text,
+          edit: .corrections(TextDiff(old: latest.text, new: text), .unavailable),
+          origin: .rejection)))
+  }
+
+  /// Rejects the change and adds one of its replaced words to the dictionary: one action
+  /// (05 §2.4). Returns whether the term is new to the dictionary.
+  @discardableResult
+  public func neverChange(_ change: Change, keeping term: String) -> Bool {
+    guard change.terms.contains(term) else { return false }
+    reject(change)
+    return dictionary.add(term)
   }
 }

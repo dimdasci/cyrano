@@ -84,7 +84,7 @@ func firstPrompt(_ c: Case) -> String {
   }
   p += "TEXT:\n\"\"\"\n\(c.text)\n\"\"\""
   let keep = (c.doNotChange ?? []).filter { c.text.contains($0) }
-  if !keep.isEmpty { p += "\nKeep these words exactly as written: \(keep.joined(separator: ", "))." }
+  if !keep.isEmpty { p += "\nKeep these words exactly as written: \(keep.map { "\"\($0)\"" }.joined(separator: ", "))." }
   return p
 }
 

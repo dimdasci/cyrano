@@ -19,7 +19,7 @@ struct ProofreadingView: View {
       FeedView(model: model, session: session)
       Divider()
       Composer(session: session)
-      StatusLine(session: session, message: model.status)
+      StatusLine(session: session, status: model.status, undo: model.undo)
     }
     .frame(minWidth: 480, minHeight: 360)
     .background(ImagePasteMonitor { session.images += $0 })
@@ -122,7 +122,8 @@ private struct Composer: View {
 
 private struct StatusLine: View {
   let session: ProofreadingSession
-  let message: String?
+  let status: PanelStatus?
+  let undo: () -> Void
 
   var body: some View {
     HStack {
@@ -132,7 +133,12 @@ private struct StatusLine: View {
         Text("\(tokens(session.tokens)) tokens")
       }
       Spacer()
-      if let message { Text(message).lineLimit(1).help(message) }
+      if let status {
+        Text(status.text).lineLimit(1).help(status.text)
+        if status.canUndo {
+          Button("Undo", action: undo).buttonStyle(.link)
+        }
+      }
     }
     .font(.caption)
     .foregroundStyle(.secondary)

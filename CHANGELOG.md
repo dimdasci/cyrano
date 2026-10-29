@@ -8,6 +8,18 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Added
+
+- Teach Cyrano words it should never change: names, product terms, slang. Select a word in a
+  version card, right-click and choose Never Change. From the next check on, Cyrano keeps it
+  exactly as you wrote it. The status line under the dialog field confirms it, with Undo.
+- Right-click a change in the list under a version and choose Never Change for one of its
+  words: the change is undone and the word is kept from then on, in one step.
+- Settings → Dictionary lists your words with the date you added them. Search, add, edit with
+  a double-click, delete, and import or export them as a text file with one word per line.
+  Right-click a word in a card and choose Remove from Dictionary to let Cyrano correct it
+  again.
+
 ## [0.3.0] - 2026-10-29
 
 ### Added

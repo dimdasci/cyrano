@@ -60,14 +60,21 @@ enum Prompts {
     }
   }
 
-  /// The first user message: optional CONTEXT, then the TEXT, then a note on attached images.
-  static func firstMessage(text: String, context: String, hasImages: Bool) -> String {
+  /// The first user message: optional CONTEXT, then the TEXT, the dictionary terms found in it
+  /// and a note on attached images.
+  static func firstMessage(
+    text: String, context: String, keep terms: [String], hasImages: Bool
+  ) -> String {
     var message = ""
     if !context.trimmed.isEmpty {
       message += "CONTEXT (the message I am replying to; DO NOT correct or repeat it):\n"
       message += quoted(context.trimmed) + "\n\n"
     }
     message += "TEXT:\n" + quoted(text)
+    if !terms.isEmpty {
+      let list = terms.map { "\"\($0)\"" }.joined(separator: ", ")
+      message += "\nKeep these words exactly as written: \(list)."
+    }
     return hasImages ? message + "\n" + imagesNote : message
   }
 

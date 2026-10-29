@@ -100,6 +100,8 @@ TEXT:
 Keep these words exactly as written: {doNotChange}.                     ← только найденные в тексте
 ```
 
+Термины идут в кавычках через запятую, в написании из словаря: `Keep these words exactly as written: "Bitbucket", "k8s".` Кавычки держат фразу из нескольких слов одним целым. Строка собирается заново на каждом ходу, поэтому термин, добавленный после проверки, действует со следующего запроса. Проверка 2026-10-29 на `gpt-6.1-sol`: без строки модель правит `tmrw → tomorrow`, `Github → GitHub`, `kibana → Kibana`, со строкой оставляет все три и чинит остальное.
+
 Изображения контекста (📷, ⌘V, перетаскивание) прикладываются к этому же сообщению, каждое отдельным `input_image`, а в конец текста добавляется строка: `The attached images show the conversation around this message. Use them only to understand context. DO NOT correct or quote text from them.`
 
 ### 4.3 Ход диалога
