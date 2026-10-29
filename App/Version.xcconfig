@@ -1,4 +1,4 @@
 // The app version people see (CFBundleShortVersionString), semver. Change it only with
 // scripts/release, which also commits and tags it. The build number (CFBundleVersion) is not set
 // here: scripts/set-build-number writes the commit count into the built app.
-MARKETING_VERSION = 0.3.0
+MARKETING_VERSION = 0.4.0
