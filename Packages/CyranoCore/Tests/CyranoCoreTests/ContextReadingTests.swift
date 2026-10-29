@@ -5,21 +5,26 @@ import Testing
 
 /// Context read from a screenshot of the window before the first check (02 C6).
 @MainActor @Suite struct ContextReadingTests {
-  let screenshot = Data([0x89, 0x50, 0x4E, 0x47])
+  let screenshot = Data([UInt8]([0x89, 0x50, 0x4E, 0x47]))
   let ravi = "People: Ravi, you; direct message\nReplying to:\nRavi: Do you have pets?"
 
   func session(_ engine: FakeEngine) -> ProofreadingSession {
     ProofreadingSession(original: "I has a cat.", options: CheckOptions(), engine: engine)
   }
 
-  @Test func contextIsReadFromTheScreenshotWithLuna() async throws {
-    let engine = FakeEngine(fixes: [], context: "  \(ravi)\n")
-    let session = session(engine)
+  @Test func contextIsFilledWithTheAnswer() async {
+    let session = session(FakeEngine(fixes: [], context: "  \(ravi)\n"))
     await session.readContext(from: screenshot)
 
     #expect(session.context == ravi)
     #expect(session.activity == .idle)
     #expect(session.tokens == 10)
+  }
+
+  @Test func screenshotAndTextGoToLuna() async throws {
+    let engine = FakeEngine(fixes: [], context: ravi)
+    await session(engine).readContext(from: screenshot)
+
     let call = try #require(engine.contextCalls.first)
     #expect(call.model == .luna)
     #expect(call.input.count == 1)
