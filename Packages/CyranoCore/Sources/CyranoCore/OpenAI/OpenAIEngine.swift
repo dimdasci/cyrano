@@ -86,7 +86,8 @@ public struct OpenAIEngine: CorrectionEngine {
     request.httpMethod = "POST"
     request.setValue("Bearer \(try await accessToken())", forHTTPHeaderField: "Authorization")
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-    request.httpBody = try JSONEncoder().encode(ResponsesRequest.body(model: model, call: call))
+    request.httpBody = try JSONEncoder().encode(
+      ResponsesRequest.body(model: call.model ?? model, call: call))
     return request
   }
 

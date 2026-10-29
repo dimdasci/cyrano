@@ -21,6 +21,10 @@ final class AppModel {
   var customInstructions: String = StoredSettings.customInstructions {
     didSet { StoredSettings.customInstructions = customInstructions }
   }
+  /// Read who the user is replying to from a screenshot of the window (02 C6).
+  var readsContext: Bool = StoredSettings.readsContext {
+    didSet { StoredSettings.readsContext = readsContext }
+  }
 
   @ObservationIgnored private let auth = AuthService()
   @ObservationIgnored private let panel = PanelController()
@@ -33,45 +37,44 @@ final class AppModel {
 
   // MARK: Checks
 
+  /// ⌥⌘G: the text of the field or selection, then Context read from its window. Without text
+  /// the panel opens empty for the user to type or paste (02 C2, C6).
   func checkFocusedText() {
     Task {
-      guard let app = TextCapture.frontApp else { return showNothingToCheck() }
-      if let captured = await TextCapture.capture(from: app) { return openPanel(for: captured) }
-      await checkScreen(of: app)
+      guard let app = TextCapture.frontApp, let captured = await TextCapture.capture(from: app)
+      else {
+        openPanel(for: TextCapture.manual(""))
+        return
+      }
+      let session = openPanel(for: captured)
+      await readContext(into: session, from: captured)
     }
-  }
-
-  /// Nothing could be read or copied: let the model read the draft from a screenshot.
-  private func checkScreen(of app: NSRunningApplication) async {
-    panel.show(PanelModel(content: .readingScreen, app: self), near: nil)
-    guard let screenshot = await ScreenCapture.frontWindow(of: app),
-      let text = try? await ScreenReading.draft(in: screenshot, engine: makeEngine())
-    else { return showNothingToCheck() }
-    openPanel(for: TextCapture.fromScreen(text, app: app))
-  }
-
-  private func showNothingToCheck() {
-    panel.show(PanelModel(content: .nothingToCheck, app: self), near: nil)
   }
 
   func checkClipboard() {
-    guard let captured = TextCapture.fromClipboard() else { return showNothingToCheck() }
-    openPanel(for: captured)
+    openPanel(for: TextCapture.fromClipboard() ?? TextCapture.manual(""))
   }
 
-  func showManualCheck() {
-    windows.show(id: "manual", title: "Check Text", size: CGSize(width: 600, height: 560)) {
-      ManualCheckView(app: self)
-    }
+  func checkText() {
+    openPanel(for: TextCapture.manual(""))
   }
 
   /// Opens the panel without checking: the user adds context first, then presses Check.
-  func openPanel(for captured: CapturedText) {
+  @discardableResult
+  private func openPanel(for captured: CapturedText) -> ProofreadingSession {
     let session = makeSession(for: captured)
-    panel.show(PanelModel(content: .session(session, captured), app: self), near: captured.frame)
+    panel.show(PanelModel(session: session, captured: captured, app: self), near: captured.frame)
+    return session
   }
 
-  func makeSession(for captured: CapturedText) -> ProofreadingSession {
+  private func readContext(into session: ProofreadingSession, from captured: CapturedText) async {
+    guard readsContext, let app = captured.source, CGPreflightScreenCaptureAccess(),
+      let screenshot = await ScreenCapture.frontWindow(of: app)
+    else { return }
+    await session.readContext(from: screenshot)
+  }
+
+  private func makeSession(for captured: CapturedText) -> ProofreadingSession {
     var options = OptionsMemory.options(for: captured.bundleID)
     options.customInstructions = customInstructions
     return ProofreadingSession(original: captured.text, options: options, engine: makeEngine())
@@ -153,6 +156,11 @@ private enum StoredSettings {
   static var customInstructions: String {
     get { UserDefaults.standard.string(forKey: "customInstructions") ?? "" }
     set { UserDefaults.standard.set(newValue, forKey: "customInstructions") }
+  }
+
+  static var readsContext: Bool {
+    get { UserDefaults.standard.object(forKey: "readsContext") as? Bool ?? true }
+    set { UserDefaults.standard.set(newValue, forKey: "readsContext") }
   }
 }
 

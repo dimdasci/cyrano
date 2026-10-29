@@ -43,20 +43,13 @@ enum TextCapture {
     return app
   }
 
-  /// The selection or the whole focused field: through Accessibility, else with ⌘C, else with
-  /// ⌘A ⌘C. A screenshot is the caller's last resort, since reading it needs the model.
+  /// The selection or the whole focused field through Accessibility, else the selection with ⌘C.
+  /// Nothing else: no ⌘A, no guessing from a screenshot (02 C2).
   static func capture(from app: NSRunningApplication) async -> CapturedText? {
     log.notice(
       "capture: \(app.bundleIdentifier ?? "?", privacy: .public) trusted=\(AXIsProcessTrusted())")
     if AXIsProcessTrusted(), let captured = await fromAccessibility(app) { return captured }
-    if let captured = await fromKeyboard(app, wholeField: false) { return captured }
-    Clipboard.selectAll()
-    return await fromKeyboard(app, wholeField: true)
-  }
-
-  /// Text the model read from a screenshot of the app's window.
-  static func fromScreen(_ text: String, app: NSRunningApplication) -> CapturedText {
-    CapturedText(text: text, app: app)
+    return await fromSelection(app)
   }
 
   static func fromClipboard() -> CapturedText? {
@@ -68,14 +61,12 @@ enum TextCapture {
     CapturedText(text: text, appName: "Manual")
   }
 
-  private static func fromKeyboard(_ app: NSRunningApplication, wholeField: Bool) async
-    -> CapturedText?
-  {
+  private static func fromSelection(_ app: NSRunningApplication) async -> CapturedText? {
     guard let text = await Clipboard.copySelection(), hasText(text) else {
-      log.notice("capture: ⌘C copied nothing, wholeField=\(wholeField)")
+      log.notice("capture: ⌘C copied no text")
       return nil
     }
-    log.notice("capture: ⌘C copied \(text.count) characters, wholeField=\(wholeField)")
+    log.notice("capture: ⌘C copied \(text.count) characters")
     return CapturedText(text: text, app: app)
   }
 

@@ -1,5 +1,6 @@
-// One open panel: the first check, then a dialog of versions, requests and answers.
-// The whole history is sent on every turn. See docs/specs/02 M3–M5, M10 and 04-prompts.md §2.
+// One open panel: context read from the window, the first check, then a dialog of versions,
+// requests and answers. The whole history is sent on every turn. See docs/specs/02 M3–M5, M10,
+// C6 and 04-prompts.md §2.
 
 public import Foundation
 public import Observation
@@ -8,6 +9,8 @@ public import Observation
 public final class ProofreadingSession {
   public enum Activity: Hashable, Sendable {
     case idle
+    /// Context is being read from a screenshot of the window; Check waits for it (02 C6).
+    case readingContext
     case checking(partial: String)
     /// A dialog message waits for its kind; it is not in the feed yet.
     case classifying(request: String)
@@ -16,19 +19,38 @@ public final class ProofreadingSession {
     case failed(EngineError)
   }
 
-  public let original: String
-  /// What the user is replying to; used from the next check on.
-  public var context: String
+  /// What the one button by the dialog field does (05 §2.7).
+  public enum Action: Hashable, Sendable {
+    /// The first check, or a recheck with the changed context.
+    case check
+    /// A dialog message, with the current context.
+    case send
+  }
+
+  /// The text to check; the user may edit it until the first check.
+  public var original: String
+  /// What the user is replying to; used from the next check on. Typing here stops reading it.
+  public var context: String {
+    didSet {
+      guard activity == .readingContext else { return }
+      contextReading?.cancel()
+      activity = .idle
+    }
+  }
   /// PNG images of what the user is replying to; sent with the first message (M10).
   public var images: [Data] = []
   public var options: CheckOptions
   public private(set) var feed: [FeedItem] = []
   public private(set) var activity = Activity.idle
-  public private(set) var usage = TokenUsage()
+  /// Tokens spent in this panel, all calls together (M12).
+  public private(set) var tokens = 0
 
   private let engine: any CorrectionEngine
   private var nextID = 1
   private var retry: (@MainActor () async -> Void)?
+  /// The context as it went out in the last Fix request.
+  private var sentContext: (text: String, images: [Data])?
+  private var contextReading: Task<String, any Error>?
 
   public init(
     original: String, context: String = "", options: CheckOptions, engine: any CorrectionEngine
@@ -53,9 +75,57 @@ public final class ProofreadingSession {
 
   public var isBusy: Bool {
     switch activity {
-    case .checking, .classifying, .replying: true
+    case .readingContext, .checking, .classifying, .replying: true
     case .idle, .failed: false
     }
+  }
+
+  /// Check until the first version, and again when the context changed and there is no message.
+  public func action(for message: String) -> Action {
+    if versions.isEmpty { return .check }
+    return contextChanged && message.trimmed.isEmpty ? .check : .send
+  }
+
+  public func canPerform(message: String) -> Bool {
+    guard !isBusy else { return false }
+    return switch action(for: message) {
+    case .check: !latestText.trimmed.isEmpty
+    case .send: !message.trimmed.isEmpty
+    }
+  }
+
+  /// Fills Context with who is in the conversation and what the text replies to, read by Luna
+  /// from a screenshot of the window. Nothing on screen, an error or the timeout leave it empty.
+  public func readContext(from screenshot: Data, timeout: Duration = .seconds(10)) async {
+    activity = .readingContext
+    let call = ModelCall(
+      instructions: Prompts.readContext,
+      input: [ChatMessage(.user, Prompts.contextInput(original), images: [screenshot])],
+      model: .luna)
+    let reading = Task { try await run(call) }
+    contextReading = reading
+    let timer = Task {
+      try await Task.sleep(for: timeout)
+      reading.cancel()
+    }
+    let text = try? await reading.value
+    timer.cancel()
+    // The user typed in Context meanwhile: their text stays.
+    guard activity == .readingContext else { return }
+    activity = .idle
+    context = text?.trimmed ?? ""
+  }
+
+  public func perform(message: String) async {
+    switch action(for: message) {
+    case .check: await check()
+    case .send: await send(message)
+    }
+  }
+
+  private var contextChanged: Bool {
+    guard let sentContext else { return true }
+    return sentContext.text != context || sentContext.images != images
   }
 
   /// The first check, or a recheck of the latest version after settings or context changed.
@@ -143,7 +213,7 @@ public final class ProofreadingSession {
 
   private func explain(_ version: Version, diff: TextDiff, old: String) async {
     var explanations = Version.Explanations.unavailable
-    if let output = try? await run(ExplainCall.call(old: old, diff: diff), count: \.explain),
+    if let output = try? await run(ExplainCall.call(old: old, diff: diff)),
       let parsed = try? ExplainCall.parse(output, diff: diff)
     {
       explanations = .ready(parsed)
@@ -157,7 +227,7 @@ public final class ProofreadingSession {
   private func classify(_ message: String) async throws -> Intent {
     let call = ModelCall(
       instructions: Prompts.classify, input: [ChatMessage(.user, "Message: \(message)")])
-    let output = try await run(call, count: \.intent)
+    let output = try await run(call)
     return output.lowercased().contains("question") ? .question : .edit
   }
 
@@ -168,13 +238,14 @@ public final class ProofreadingSession {
     let input = history() + (prompt.map { [$0] } ?? [])
     let call = ModelCall(
       instructions: Prompts.proofreadInstructions(options), input: input)
-    let output = try await run(call, count: \.fix) { self.activity = progress($0) }
+    let sent = (text: context, images: images)
+    let output = try await run(call) { self.activity = progress($0) }
+    sentContext = sent
     return Prompts.cleanOutput(output, original: latestText)
   }
 
   private func run(
-    _ call: ModelCall, count: WritableKeyPath<TokenUsage, Int>,
-    progress: ((String) -> Void)? = nil
+    _ call: ModelCall, progress: ((String) -> Void)? = nil
   ) async throws -> String {
     var partial = ""
     for try await update in engine.respond(call) {
@@ -183,7 +254,7 @@ public final class ProofreadingSession {
         partial += delta
         progress?(partial)
       case .completed(let text, let tokens):
-        usage[keyPath: count] += tokens
+        self.tokens += tokens
         return text
       }
     }

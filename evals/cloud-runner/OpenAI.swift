@@ -281,14 +281,20 @@ func listModels() async throws -> [String] {
   return models.filter { ($0["visibility"] as? String ?? "list") == "list" }.compactMap { ($0["slug"] ?? $0["id"]) as? String }
 }
 
-struct ChatMessage { var role: String; var text: String }
+struct ChatMessage {
+  var role: String
+  var text: String
+  /// PNG images sent after the text as input_image data URLs.
+  var images: [Data] = []
+}
 
 /// One streamed Responses API call. `schema` requests JSON output matching it.
 func respond(model: String, instructions: String, input: [ChatMessage], schema: [String: Any]? = nil) async throws -> String {
   var body: [String: Any] = [
     "model": model, "instructions": instructions, "store": false, "stream": true,
     "input": input.map { m in
-      ["role": m.role, "content": [["type": m.role == "assistant" ? "output_text" : "input_text", "text": m.text]]]
+      ["role": m.role, "content": [["type": m.role == "assistant" ? "output_text" : "input_text", "text": m.text]]
+        + m.images.map { ["type": "input_image", "image_url": "data:image/png;base64,\($0.base64EncodedString())"] }]
     },
   ]
   if let effort = ProcessInfo.processInfo.environment["EFFORT"] { body["reasoning"] = ["effort": effort] }

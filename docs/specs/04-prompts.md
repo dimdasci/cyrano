@@ -24,6 +24,7 @@
                                        [Explain] ◄─┘ (номера правок → категория + причина)
 ```
 
+0. **Context** — до первой проверки, если текст взят из окна приложения: отдельный вызов `gpt-6-luna` со скриншотом окна и текстом пользователя возвращает, кто участвует в переписке и на что пользователь отвечает (§4.5). Результат попадает в поле Context как текст и дальше идёт в Fix блоком CONTEXT (§4.2); сам скриншот в Fix не уходит.
 1. **Fix** — диалог. История хранится в приложении и целиком уходит в `input` на каждом ходу. Возвращает только текст, потоком.
 2. **Diff** — word-level LCS, соседние правки (через ≤ 1 неизменённое слово) склеиваем. Подсветка всегда точная.
 3. **Explain** — отдельный вызов с `text.format = json_schema`. Можно запускать после показа текста: пояснения догружаются.
@@ -117,7 +118,7 @@ The user asks to change the latest version of the text: {message}
 The request may be in any language. Apply it and output only the full new version of the text, in {language}.
 ```
 
-Перепроверка (смена типа, тона, уровня, языка или контекста, кнопка Recheck; история диалога сохраняется):
+Перепроверка (смена типа, тона, уровня, языка или контекста, кнопка Check при пустом поле диалога; история диалога сохраняется):
 ```
 The settings or the CONTEXT changed. Check the latest version of the text again under the current rules and output only the full text.
 ```
@@ -149,7 +150,29 @@ Changes:
 
 Схема (`text.format`, `strict: true`): `{ items: [{ id: integer, category: "grammar" | "spelling" | "punctuation" | "wordChoice" | "style", reason: string }] }`.
 
-### 4.5 Постобработка
+### 4.5 Context — со скриншота
+
+Instructions:
+```
+The image is a screenshot of the app window where the user is writing a reply. TEXT is the user's draft.
+Find the conversation the draft belongs to and output, in plain text:
+People: everyone taking part, by the names shown on screen, and where it happens (channel, group, email thread) if visible.
+Replying to: the message or messages the draft answers, word for word, each with its sender's name.
+Copy messages in their original language. DO NOT include the draft. DO NOT add explanations.
+If the screenshot shows no conversation the draft belongs to, output nothing.
+```
+
+Input — одно сообщение, скриншот отдельным `input_image`:
+```
+TEXT:
+"""
+{text}
+"""
+```
+
+Пустой ответ — контекста нет, поле Context остаётся пустым.
+
+### 4.6 Постобработка
 
 - Снимаем обрамляющие `"""` или `"`, если их не было во входе.
 - Если Explain упал, показываем правки без пояснений; проверка не прерывается.
@@ -158,5 +181,6 @@ Changes:
 
 - [evals/cases.json](../../evals/cases.json): `{ id, text, contextType, level?, replyTo?, doNotChange?, followUps?, expect: { mustContain[], mustNotContain[], unchanged?, kind? } }`. Проверки без учёта регистра и типографских кавычек.
 - Раннер: [evals/cloud-runner](../../evals/cloud-runner) (`login` · `models` · `run`, `MODEL=…`, `EFFORT=…`).
+- Context (§4.5): кейсы со скриншотами в `evals/private/context/` — папка в `.gitignore`, в репозиторий не попадает: на скриншотах настоящие переписки и имена. Запуск: `openai-runner context ../private/context/cases.json` (по умолчанию `gpt-6-luna`). Набор: личная переписка, групповой канал, ветка письма, мессенджер и окно без переписки (документ). Проверяем только явное: имена участников есть, сообщение, на которое отвечают, есть, черновика нет; для окна без переписки — пустой ответ.
 - Нужно довести до ≥ 30 кейсов и ужесточить проверки: запреты на найденные порчи текста (`today's 420`, `calls`), допустимые альтернативы вместо одной строки (`Thanks for clarifying the complaint` тоже правильно).
 - В `CyranoCore` раннер становится CLI-таргетом `cyrano-eval` поверх того же кода, что и приложение.

@@ -121,14 +121,20 @@ enum Prompts {
       .joined(separator: "\n")
   }
 
-  static let readScreen = """
-    The image is a screenshot of the window where the user is writing.
-    Output the text the user is writing or editing: the draft in the focused text field or \
-    compose box, or the selected text. Copy it exactly, character for character, with its line \
-    breaks. Do not correct it.
-    Ignore menus, toolbars, buttons, signatures, other messages and quoted replies.
-    If there is no such text, output nothing.
+  /// Who is in the conversation and what the draft replies to, from a screenshot (04 §4.5).
+  static let readContext = """
+    The image is a screenshot of the app window where the user is writing a reply. TEXT is the \
+    user's draft.
+    Find the conversation the draft belongs to and output, in plain text:
+    People: everyone taking part, by the names shown on screen, and where it happens (channel, \
+    group, email thread) if visible.
+    Replying to: the message or messages the draft answers, word for word, each with its \
+    sender's name.
+    Copy messages in their original language. DO NOT include the draft. DO NOT add explanations.
+    If the screenshot shows no conversation the draft belongs to, output nothing.
     """
+
+  static func contextInput(_ text: String) -> String { "TEXT:\n" + quoted(text) }
 
   private static func quoted(_ text: String) -> String { "\"\"\"\n\(text)\n\"\"\"" }
 

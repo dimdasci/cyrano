@@ -1,6 +1,6 @@
 // Cloud eval runner: runs evals/cases.json on a ChatGPT plan model via Sign in with ChatGPT.
 // Build: swiftc -parse-as-library -O OpenAI.swift Shared.swift main.swift -o /tmp/openai-runner
-// Usage: openai-runner login | models | run [cases.json]   (MODEL=<id>, EFFORT=low|medium|…)
+// Usage: openai-runner login | models | run [cases.json] | context <cases.json>   (MODEL=<id>, EFFORT=low|medium|…)
 import Foundation
 
 /// Keeps the dialog history client-side: the plan-usage API has no previous_response_id over HTTP.
@@ -73,9 +73,38 @@ let explainSchema: [String: Any] = [
       print("Signed in as \(c.email ?? c.subject), client \(c.clientID)")
     case "models":
       for m in try await listModels() { print(m) }
+    case "context":
+      try await runContext(path: args.dropFirst().first ?? "../private/context/cases.json")
     default:
       try await run(path: args.dropFirst().first ?? "cases.json")
     }
+  }
+
+  /// Context from a screenshot (04 §4.5). Image paths are relative to the cases file.
+  static func runContext(path: String) async throws {
+    if model.isEmpty { model = "gpt-6-luna" }
+    let url = URL(fileURLWithPath: path)
+    let cases = try JSONDecoder().decode([ContextCase].self, from: Data(contentsOf: url))
+    print("model: \(model)\n")
+    var passed = 0
+    for c in cases {
+      print("━━ \(c.id)")
+      do {
+        let image = try Data(contentsOf: url.deletingLastPathComponent().appending(path: c.image))
+        let t0 = Date()
+        let out = try await respondRetrying(
+          model: model, instructions: contextInstructions,
+          input: [ChatMessage(role: "user", text: contextPrompt(c.text), images: [image])])
+        print(out)
+        let f = check(out, original: "", c.expect, isAnswer: false)
+        if f.isEmpty { passed += 1 }
+        print(String(format: "   %.1fs  ", Date().timeIntervalSince(t0)) + (f.isEmpty ? "PASS" : "FAIL: " + f.joined(separator: "; ")))
+      } catch {
+        print("   ERROR: \(error)")
+      }
+      print("")
+    }
+    print("RESULT: \(passed) / \(cases.count) cases passed")
   }
 
   static func run(path: String) async throws {

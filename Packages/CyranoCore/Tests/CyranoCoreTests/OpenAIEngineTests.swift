@@ -119,4 +119,24 @@ enum SSE {
     let transport = ScriptedTransport([.lines(status: 200, [SSE.delta("partial")])])
     await #expect(throws: EngineError.self) { try await collect(engine(transport)) }
   }
+
+  @Test func callCanNameItsModel() async throws {
+    let transport = ScriptedTransport([.lines(status: 200, [SSE.completed(tokens: 1)])])
+    let luna = ModelCall(instructions: "Read.", input: [ChatMessage(.user, "TEXT")], model: .luna)
+    for try await _ in engine(transport).respond(luna) {}
+    let data = try #require(await transport.sentBodies.first)
+    let body = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+    #expect(body["model"] as? String == "gpt-6-luna")
+  }
+
+  @Test func imagesGoAsDataURLs() throws {
+    let png = Data([0x89, 0x50, 0x4E, 0x47])
+    let call = ModelCall(instructions: "Read.", input: [ChatMessage(.user, "TEXT", images: [png])])
+    let data = try JSONEncoder().encode(ResponsesRequest.body(model: .sol, call: call))
+    let body = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+    let input = try #require(body["input"] as? [[String: Any]])
+    let content = try #require(input.first?["content"] as? [[String: Any]])
+    #expect(content.map { $0["type"] as? String } == ["input_text", "input_image"])
+    #expect(content.last?["image_url"] as? String == "data:image/png;base64,iVBORw==")
+  }
 }

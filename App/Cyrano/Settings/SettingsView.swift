@@ -29,13 +29,17 @@ private struct GeneralPane: View {
         ForEach(Model.allCases, id: \.self) { Text($0.title).tag($0) }
       }
       Toggle("Show in menu bar", isOn: $showInMenuBar)
+      Toggle(isOn: $app.readsContext) {
+        Text("Read context from the window")
+        Text("A screenshot of the window goes to OpenAI to find who you're replying to.")
+      }
       Section("Shortcut") {
         KeyboardShortcuts.Recorder("Check text", name: .checkText)
       }
       Section("Permissions") {
         PermissionStatus.accessibility
         PermissionStatus.screenRecording
-        Text("Screen Recording is used only when the text can't be read any other way.")
+        Text("Screen Recording is used to read who you're replying to and for the camera button.")
           .font(.caption)
           .foregroundStyle(.secondary)
       }

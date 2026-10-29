@@ -8,28 +8,21 @@ import SwiftUI
 /// What one panel shows and the actions it needs from the app.
 @Observable
 final class PanelModel {
-  enum Content {
-    case nothingToCheck
-    case readingScreen
-    case session(ProofreadingSession, CapturedText)
-  }
-
-  let content: Content
+  let session: ProofreadingSession
+  let captured: CapturedText
   let app: AppModel
   /// One line under the composer: the result of Copy.
   var status: String?
 
-  init(content: Content, app: AppModel) {
-    self.content = content
+  init(session: ProofreadingSession, captured: CapturedText, app: AppModel) {
+    self.session = session
+    self.captured = captured
     self.app = app
   }
 
   /// The source app goes into the title bar, which truncates it natively; the header row keeps
   /// its width for the pop-ups.
-  var title: String {
-    guard case .session(_, let captured) = content else { return "Proofreading" }
-    return "Proofreading — \(captured.appName)"
-  }
+  var title: String { "Proofreading — \(captured.appName)" }
 
   func copy(_ text: String) {
     Clipboard.copy(text)
@@ -38,21 +31,18 @@ final class PanelModel {
 
   /// Panel settings changed: remember them for the app and check the latest version again.
   /// Before the first check there is nothing to recheck yet.
-  func optionsChanged(_ session: ProofreadingSession, for captured: CapturedText) {
+  func optionsChanged() {
     OptionsMemory.remember(session.options, for: captured.bundleID)
     guard !session.versions.isEmpty else { return }
     Task { await session.check() }
   }
 
   /// 📷 needs the app the text came from; pasted text has none.
-  var canCaptureWindow: Bool {
-    guard case .session(_, let captured) = content else { return false }
-    return captured.source != nil
-  }
+  var canCaptureWindow: Bool { captured.source != nil }
 
   /// Adds a screenshot of the source app's front window to the context (M10).
-  func captureWindow(into session: ProofreadingSession) {
-    guard case .session(_, let captured) = content, let app = captured.source else { return }
+  func captureWindow() {
+    guard let app = captured.source else { return }
     Task {
       guard let png = await ScreenCapture.frontWindow(of: app) else {
         status = "Couldn't capture the window. Check Screen Recording in Settings."
@@ -62,8 +52,8 @@ final class PanelModel {
     }
   }
 
-  func signInAndRetry(_ session: ProofreadingSession) {
-    app.signInWithChatGPT { Task { await session.tryAgain() } }
+  func signInAndRetry() {
+    app.signInWithChatGPT { [session] in Task { await session.tryAgain() } }
   }
 }
 

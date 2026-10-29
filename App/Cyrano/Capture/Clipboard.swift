@@ -12,7 +12,8 @@ enum Clipboard {
     NSPasteboard.general.setString(text, forType: .string)
   }
 
-  /// Presses ⌘C in the front app and returns what it copied; the clipboard is restored.
+  /// Presses ⌘C in the front app and returns the text it copied; the clipboard is restored.
+  /// Copied files (Finder) are not text, even though the clipboard also names them as a string.
   static func copySelection() async -> String? {
     let saved = Snapshot()
     let before = NSPasteboard.general.changeCount
@@ -20,14 +21,11 @@ enum Clipboard {
     for _ in 0..<10 where NSPasteboard.general.changeCount == before {
       try? await Task.sleep(for: .milliseconds(30))
     }
-    let copied = NSPasteboard.general.changeCount == before ? nil : string
+    let changed = NSPasteboard.general.changeCount != before
+    let files = NSPasteboard.general.types?.contains(.fileURL) ?? false
+    let copied = changed && !files ? string : nil
     saved.restore()
     return copied
-  }
-
-  /// ⌘A in the front app.
-  static func selectAll() {
-    press(key: 0x00)  // A
   }
 
   private static func press(key: CGKeyCode) {
