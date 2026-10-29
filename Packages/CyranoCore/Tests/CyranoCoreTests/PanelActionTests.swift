@@ -7,7 +7,8 @@ import Testing
 @MainActor @Suite struct PanelActionTests {
   func session(_ engine: FakeEngine, original: String = "I has a cat.") -> ProofreadingSession {
     ProofreadingSession(
-      original: original, context: "Do you have pets?", options: CheckOptions(), engine: engine)
+      original: original, context: "Do you have pets?", options: CheckOptions(), engine: engine,
+      dictionary: dictionary())
   }
 
   @Test func actionIsCheckBeforeTheFirstCheck() async throws {

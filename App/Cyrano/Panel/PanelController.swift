@@ -11,8 +11,8 @@ final class PanelModel {
   let session: ProofreadingSession
   let captured: CapturedText
   let app: AppModel
-  /// One line under the composer: the result of Copy.
-  var status: String?
+  /// One line under the composer: the result of Copy or of a change to the dictionary.
+  var status: PanelStatus?
 
   init(session: ProofreadingSession, captured: CapturedText, app: AppModel) {
     self.session = session
@@ -26,7 +26,7 @@ final class PanelModel {
 
   func copy(_ text: String) {
     Clipboard.copy(text)
-    status = "Copied."
+    status = .note("Copied.")
   }
 
   /// Panel settings changed: remember them for the app and check the latest version again.
@@ -45,7 +45,7 @@ final class PanelModel {
     guard let app = captured.source else { return }
     Task {
       guard let png = await ScreenCapture.frontWindow(of: app) else {
-        status = "Couldn't capture the window. Check Screen Recording in Settings."
+        status = .note("Couldn't capture the window. Check Screen Recording in Settings.")
         return
       }
       session.images.append(png)

@@ -1,4 +1,4 @@
-// Settings: General, Style, Account. See docs/specs/05-ui.md §5.
+// Settings: General, Style, Dictionary, Account. See docs/specs/05-ui.md §5.
 
 import ApplicationServices
 import CoreGraphics
@@ -13,6 +13,9 @@ struct SettingsView: View {
     TabView {
       Tab("General", systemImage: "gearshape") { GeneralPane(app: app) }
       Tab("Style", systemImage: "textformat") { StylePane(app: app) }
+      Tab("Dictionary", systemImage: "character.book.closed") {
+        DictionaryPane(dictionary: app.dictionary)
+      }
       Tab("Account", systemImage: "person.crop.circle") { AccountPane(app: app) }
     }
     .frame(width: 520)

@@ -1,5 +1,6 @@
 // One version of the text with its diff, summary, changes and actions. See docs/specs/05-ui.md §2.4.
 
+import AppKit
 import CyranoCore
 import SwiftUI
 
@@ -7,6 +8,8 @@ struct VersionCard: View {
   struct Actions {
     let copy: (String) -> Void
     let reject: (Change) -> Void
+    let selectionItem: (String) -> DictionaryItem
+    let changeItems: (Change) -> [DictionaryItem]
   }
 
   let version: Version
@@ -16,16 +19,16 @@ struct VersionCard: View {
 
   var body: some View {
     Card(title: "Version \(version.number)") {
-      Text(DiffText.attributed(version))
-        .font(.system(size: 14))
-        .textSelection(.enabled)
+      SelectableText(text: DiffText.attributed(version)) { selection in
+        TermDictionary.term(fromSelection: selection).map(actions.selectionItem)
+      }
       HStack {
         summaryButton
         Spacer()
         copyButton
       }
       if showsChanges {
-        ChangeList(version: version, canReject: isLatest, reject: actions.reject)
+        ChangeList(version: version, canReject: isLatest, actions: actions)
       }
     }
     .accessibilityElement(children: .contain)
@@ -82,7 +85,7 @@ func plural(_ count: Int, _ one: String, _ many: String? = nil) -> String {
 private struct ChangeList: View {
   let version: Version
   let canReject: Bool
-  let reject: (Change) -> Void
+  let actions: VersionCard.Actions
 
   var body: some View {
     VStack(alignment: .leading, spacing: 6) {
@@ -98,16 +101,30 @@ private struct ChangeList: View {
           }
           Spacer()
           if canReject {
-            Button("Reject", systemImage: "xmark") { reject(change) }
+            Button("Reject", systemImage: "xmark") { actions.reject(change) }
               .labelStyle(.iconOnly)
               .buttonStyle(.plain)
               .help("Reject this change")
           }
         }
+        // The whole row, gaps included, opens the menu.
+        .contentShape(Rectangle())
+        .contextMenu { neverChange(change) }
         .accessibilityElement(children: .combine)
         .accessibilityLabel(
           "\(change.words[0]), replaced with \(change.words[1]), "
             + (version.reasons[change.id]?.category == .style ? "style suggestion" : "error"))
+      }
+    }
+  }
+}
+
+extension ChangeList {
+  /// Only the latest version's changes can be rejected.
+  @ViewBuilder fileprivate func neverChange(_ change: Change) -> some View {
+    if canReject {
+      ForEach(actions.changeItems(change), id: \.title) { item in
+        Button(item.title, action: item.perform)
       }
     }
   }
@@ -126,28 +143,41 @@ extension Version {
 /// solid for errors and dashed for style. Color is never the only signal. A translation is
 /// shown as plain text.
 enum DiffText {
-  static func attributed(_ version: Version) -> AttributedString {
-    guard let diff = version.diff else { return AttributedString(version.text) }
-    var result = AttributedString()
+  private static let plain: [NSAttributedString.Key: Any] = [
+    .font: NSFont.systemFont(ofSize: 14), .foregroundColor: NSColor.labelColor,
+  ]
+
+  static func attributed(_ version: Version) -> NSAttributedString {
+    guard let diff = version.diff else {
+      return NSAttributedString(string: version.text, attributes: plain)
+    }
+    let result = NSMutableAttributedString()
     for segment in diff.segments {
       switch segment {
       case .same(let text):
-        result += AttributedString(text)
+        result.append(NSAttributedString(string: text, attributes: plain))
       case .changed(let change):
-        result += attributed(change, isStyle: version.reasons[change.id]?.category == .style)
+        result.append(attributed(change, isStyle: version.reasons[change.id]?.category == .style))
       }
     }
     return result
   }
 
-  private static func attributed(_ change: Change, isStyle: Bool) -> AttributedString {
-    var old = AttributedString(change.old)
-    old.strikethroughStyle = .single
-    old.foregroundColor = .secondary
-    var new = AttributedString(change.new)
-    new.underlineStyle = isStyle ? Text.LineStyle(pattern: .dash) : .single
-    new.backgroundColor = isStyle ? Color.blue.opacity(0.15) : Color.green.opacity(0.2)
+  private static func attributed(_ change: Change, isStyle: Bool) -> NSAttributedString {
+    var old = plain
+    old[.strikethroughStyle] = NSUnderlineStyle.single.rawValue
+    old[.foregroundColor] = NSColor.secondaryLabelColor
+    var new = plain
+    new[.underlineStyle] =
+      isStyle
+      ? NSUnderlineStyle([.single, .patternDash]).rawValue : NSUnderlineStyle.single.rawValue
+    new[.backgroundColor] =
+      isStyle
+      ? NSColor.systemBlue.withAlphaComponent(0.15) : NSColor.systemGreen.withAlphaComponent(0.2)
     let separator = change.old.isEmpty || change.new.isEmpty ? "" : " "
-    return old + AttributedString(separator) + new
+    let result = NSMutableAttributedString(string: change.old, attributes: old)
+    result.append(NSAttributedString(string: separator, attributes: plain))
+    result.append(NSAttributedString(string: change.new, attributes: new))
+    return result
   }
 }

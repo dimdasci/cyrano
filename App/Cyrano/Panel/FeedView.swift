@@ -44,7 +44,9 @@ struct FeedView: View {
   private var actions: VersionCard.Actions {
     VersionCard.Actions(
       copy: { model.copy($0) },
-      reject: { session.reject($0) })
+      reject: { session.reject($0) },
+      selectionItem: { model.selectionItem(for: $0) },
+      changeItems: { model.changeItems(for: $0) })
   }
 }
 

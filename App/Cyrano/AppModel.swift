@@ -26,6 +26,9 @@ final class AppModel {
     didSet { StoredSettings.readsContext = readsContext }
   }
 
+  /// «Never change» terms, shared by every panel and Settings (02 M11).
+  let dictionary = TermDictionary.standard()
+
   @ObservationIgnored private let auth = AuthService()
   @ObservationIgnored private let panel = PanelController()
   @ObservationIgnored private let windows = WindowPresenter()
@@ -77,7 +80,8 @@ final class AppModel {
   private func makeSession(for captured: CapturedText) -> ProofreadingSession {
     var options = OptionsMemory.options(for: captured.bundleID)
     options.customInstructions = customInstructions
-    return ProofreadingSession(original: captured.text, options: options, engine: makeEngine())
+    return ProofreadingSession(
+      original: captured.text, options: options, engine: makeEngine(), dictionary: dictionary)
   }
 
   private func makeEngine() -> any CorrectionEngine {
