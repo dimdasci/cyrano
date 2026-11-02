@@ -24,7 +24,7 @@ jobs:
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           # The build number is the commit count on HEAD; the summary reports it.
           fetch-depth: 0

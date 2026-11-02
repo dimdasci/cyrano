@@ -7,6 +7,8 @@ import Testing
 actor ScriptedTransport: HTTPTransport {
   enum Reply {
     case lines(status: Int, [String])
+    /// A 200 stream that loses the connection after these lines.
+    case broken([String])
     case failure(URLError.Code)
   }
 
@@ -26,14 +28,17 @@ actor ScriptedTransport: HTTPTransport {
   }
 
   func stream(for request: URLRequest) async throws -> HTTPStream {
-    guard case .lines(let status, let lines) = try next(request) else {
-      throw URLError(.timedOut)
-    }
+    let (status, lines, broken): (Int, [String], Bool) =
+      switch try next(request) {
+      case .lines(let status, let lines): (status, lines, false)
+      case .broken(let lines): (200, lines, true)
+      case .failure: throw URLError(.timedOut)
+      }
     return HTTPStream(
       status: status,
       lines: AsyncThrowingStream { continuation in
         for line in lines { continuation.yield(line) }
-        continuation.finish()
+        continuation.finish(throwing: broken ? URLError(.networkConnectionLost) : nil)
       })
   }
 
@@ -58,16 +63,24 @@ enum SSE {
 }
 
 @Suite struct OpenAIEngineTests {
-  let call = ModelCall(instructions: "Be nice.", input: [ChatMessage(.user, "TEXT")])
+  let call = ModelCall(model: .sol, instructions: "Be nice.", input: [ChatMessage(.user, "TEXT")])
 
   func engine(_ transport: ScriptedTransport) -> OpenAIEngine {
-    OpenAIEngine(model: .sol, transport: transport, accessToken: { "token-1" })
+    OpenAIEngine(transport: transport, accessToken: { "token-1" })
   }
 
-  func collect(_ engine: OpenAIEngine) async throws -> [ResponseUpdate] {
+  func collect(
+    _ engine: OpenAIEngine, _ call: ModelCall? = nil
+  ) async throws -> [ResponseUpdate] {
     var updates: [ResponseUpdate] = []
-    for try await update in engine.respond(call) { updates.append(update) }
+    for try await update in engine.respond(call ?? self.call) { updates.append(update) }
     return updates
+  }
+
+  /// The JSON body of the first request.
+  func sentBody(_ transport: ScriptedTransport) async throws -> [String: Any] {
+    let data = try #require(await transport.sentBodies.first)
+    return try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
   }
 
   @Test func streamsTextThenCompletesWithUsage() async throws {
@@ -84,8 +97,7 @@ enum SSE {
   @Test func sendsOnlySupportedFields() async throws {
     let transport = ScriptedTransport([.lines(status: 200, [SSE.completed(tokens: 1)])])
     _ = try await collect(engine(transport))
-    let data = try #require(await transport.sentBodies.first)
-    let body = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
+    let body = try await sentBody(transport)
     #expect(Set(body.keys) == ["model", "instructions", "input", "store", "stream", "reasoning"])
     #expect(body["model"] as? String == "gpt-6.1-sol")
     #expect(body["store"] as? Bool == false)
@@ -97,6 +109,24 @@ enum SSE {
     let body = #"{"error":{"code":"subscription_sharing_usage_limit_exceeded","message":"x"}}"#
     let transport = ScriptedTransport([.lines(status: 429, [body])])
     await #expect(throws: EngineError.planLimitReached) { try await collect(engine(transport)) }
+  }
+
+  static let streamErrors: [(String, EngineError)] = [
+    (
+      #"data: {"type":"response.failed","response":{"error":{"code":"#
+        + #""subscription_sharing_usage_limit_exceeded"}}}"#, .planLimitReached
+    ),
+    (
+      #"data: {"type":"error","error":{"code":"subscription_sharing_usage_unavailable"}}"#,
+      .planUsageUnavailable
+    ),
+  ]
+
+  /// Plan errors arrive in the middle of the stream (M12).
+  @Test(arguments: streamErrors)
+  func errorsInTheStreamAreRecognized(line: String, error: EngineError) async throws {
+    let transport = ScriptedTransport([.lines(status: 200, [SSE.delta("Hel"), line])])
+    await #expect(throws: error) { try await collect(engine(transport)) }
   }
 
   @Test func revokedTokenMeansSignedOut() async throws {
@@ -115,28 +145,39 @@ enum SSE {
     await #expect(throws: EngineError.network) { try await collect(engine(failing)) }
   }
 
+  /// A retry after text arrived would show that text twice.
+  @Test func failureAfterTextIsNotRetried() async throws {
+    let transport = ScriptedTransport([
+      .broken([SSE.delta("Hel")]), .lines(status: 200, [SSE.completed(tokens: 3)]),
+    ])
+    await #expect(throws: EngineError.network) { try await collect(engine(transport)) }
+    #expect(await transport.requests.count == 1)
+  }
+
   @Test func streamWithoutCompletionFails() async throws {
     let transport = ScriptedTransport([.lines(status: 200, [SSE.delta("partial")])])
     await #expect(throws: EngineError.self) { try await collect(engine(transport)) }
   }
 
-  @Test func callCanNameItsModel() async throws {
-    let transport = ScriptedTransport([.lines(status: 200, [SSE.completed(tokens: 1)])])
-    let luna = ModelCall(instructions: "Read.", input: [ChatMessage(.user, "TEXT")], model: .luna)
-    for try await _ in engine(transport).respond(luna) {}
-    let data = try #require(await transport.sentBodies.first)
-    let body = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
-    #expect(body["model"] as? String == "gpt-6-luna")
-  }
-
-  @Test func imagesGoAsDataURLs() throws {
+  @Test func imagesRepliesAndSchemaGoInTheirWireShape() async throws {
     let png = Data([0x89, 0x50, 0x4E, 0x47])
-    let call = ModelCall(instructions: "Read.", input: [ChatMessage(.user, "TEXT", images: [png])])
-    let data = try JSONEncoder().encode(ResponsesRequest.body(model: .sol, call: call))
-    let body = try #require(try JSONSerialization.jsonObject(with: data) as? [String: Any])
-    let input = try #require(body["input"] as? [[String: Any]])
-    let content = try #require(input.first?["content"] as? [[String: Any]])
-    #expect(content.map { $0["type"] as? String } == ["input_text", "input_image"])
-    #expect(content.last?["image_url"] as? String == "data:image/png;base64,iVBORw==")
+    let input = [ChatMessage(.user, "TEXT", images: [png]), ChatMessage(.assistant, "Fixed")]
+    let call = ModelCall(
+      model: .luna, instructions: "Read.", input: input, schema: ["type": "object"])
+    let transport = ScriptedTransport([.lines(status: 200, [SSE.completed(tokens: 1)])])
+    _ = try await collect(engine(transport), call)
+
+    let body = try await sentBody(transport)
+    #expect(body["model"] as? String == "gpt-6-luna")
+    let messages = try #require(body["input"] as? [[String: Any]])
+    let content = messages.map { $0["content"] as? [[String: Any]] ?? [] }
+    #expect(
+      content.map { $0.map { $0["type"] as? String } } == [
+        ["input_text", "input_image"], ["output_text"],
+      ])
+    #expect(content[0].last?["image_url"] as? String == "data:image/png;base64,iVBORw==")
+    let format = (body["text"] as? [String: Any])?["format"] as? [String: Any]
+    #expect(format?["type"] as? String == "json_schema")
+    #expect(format?["strict"] as? Bool == true)
   }
 }

@@ -7,12 +7,10 @@ public struct OpenAIEngine: CorrectionEngine {
 
   static let endpoint = URL(string: "https://api.openai.com/v1/responses")
 
-  let model: Model
   let transport: any HTTPTransport
   let accessToken: TokenProvider
 
-  public init(model: Model, transport: any HTTPTransport, accessToken: @escaping TokenProvider) {
-    self.model = model
+  public init(transport: any HTTPTransport, accessToken: @escaping TokenProvider) {
     self.transport = transport
     self.accessToken = accessToken
   }
@@ -87,7 +85,7 @@ public struct OpenAIEngine: CorrectionEngine {
     request.setValue("Bearer \(try await accessToken())", forHTTPHeaderField: "Authorization")
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     request.httpBody = try JSONEncoder().encode(
-      ResponsesRequest.body(model: call.model ?? model, call: call))
+      ResponsesRequest.body(call))
     return request
   }
 

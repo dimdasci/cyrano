@@ -40,6 +40,7 @@ public final class ProofreadingSession {
   /// PNG images of what the user is replying to; sent with the first message (M10).
   public var images: [Data] = []
   public var options: CheckOptions
+  public let models: ModelChoice
   /// Terms found in the text go with every Fix request, so a new one counts from the next.
   public let dictionary: TermDictionary
   public private(set) var feed: [FeedItem] = []
@@ -55,12 +56,13 @@ public final class ProofreadingSession {
   private var contextReading: Task<String, any Error>?
 
   public init(
-    original: String, context: String = "", options: CheckOptions, engine: any CorrectionEngine,
-    dictionary: TermDictionary
+    original: String, context: String = "", options: CheckOptions,
+    models: ModelChoice = ModelChoice(), engine: any CorrectionEngine, dictionary: TermDictionary
   ) {
     self.original = original
     self.context = context
     self.options = options
+    self.models = models
     self.engine = engine
     self.dictionary = dictionary
   }
@@ -103,9 +105,8 @@ public final class ProofreadingSession {
   public func readContext(from screenshot: Data, timeout: Duration = .seconds(10)) async {
     activity = .readingContext
     let call = ModelCall(
-      instructions: Prompts.readContext,
-      input: [ChatMessage(.user, Prompts.contextInput(original), images: [screenshot])],
-      model: .luna)
+      model: models.context, instructions: Prompts.readContext,
+      input: [ChatMessage(.user, Prompts.contextInput(original), images: [screenshot])])
     let reading = Task { try await run(call) }
     contextReading = reading
     let timer = Task {
@@ -203,7 +204,8 @@ public final class ProofreadingSession {
 
   private func explain(_ version: Version, diff: TextDiff, old: String) async {
     var explanations = Version.Explanations.unavailable
-    if let output = try? await run(ExplainCall.call(old: old, diff: diff)),
+    let call = ExplainCall.call(model: models.explanations, old: old, diff: diff)
+    if let output = try? await run(call),
       let parsed = try? ExplainCall.parse(output, diff: diff)
     {
       explanations = .ready(parsed)
@@ -216,7 +218,8 @@ public final class ProofreadingSession {
 
   private func classify(_ message: String) async throws -> Intent {
     let call = ModelCall(
-      instructions: Prompts.classify, input: [ChatMessage(.user, "Message: \(message)")])
+      model: models.proofreading, instructions: Prompts.classify,
+      input: [ChatMessage(.user, "Message: \(message)")])
     let output = try await run(call)
     return output.lowercased().contains("question") ? .question : .edit
   }
@@ -227,7 +230,8 @@ public final class ProofreadingSession {
   ) async throws -> String {
     let input = history() + (prompt.map { [$0] } ?? [])
     let call = ModelCall(
-      instructions: Prompts.proofreadInstructions(options), input: input)
+      model: models.proofreading, instructions: Prompts.proofreadInstructions(options),
+      input: input)
     let sent = (text: context, images: images)
     let output = try await run(call) { self.activity = progress($0) }
     sentContext = sent

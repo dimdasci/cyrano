@@ -1,4 +1,5 @@
-// First launch: sign in, Accessibility, shortcut. See docs/specs/05-ui.md §1.
+// First launch: sign in, Accessibility, context from the window, shortcut.
+// See docs/specs/05-ui.md §1.
 
 import CyranoCore
 import KeyboardShortcuts
@@ -10,25 +11,21 @@ struct OnboardingView: View {
 
   var body: some View {
     Form {
-      Section("1. Sign in") {
-        Text("Cyrano uses your ChatGPT Plus or Pro plan to check your messages.")
-        if let account = app.account {
-          Label(
-            "Signed in as \(account.email ?? "ChatGPT user")", systemImage: "checkmark.circle.fill")
-        } else {
-          SignInControls(app: app)
-        }
-        Text("Your text is sent to OpenAI only when you run a check. It is not stored.")
-          .font(.caption)
-          .foregroundStyle(.secondary)
-      }
+      signIn
       Section("2. Accessibility") {
         Text(
           "Cyrano reads the text in the field you're typing in, so you don't have to copy it."
         )
         PermissionStatus.accessibility
       }
-      Section("3. Shortcut") {
+      Section("3. Context from the window") {
+        ReadContextToggle(app: app)
+        // Asked only for those who want it; otherwise 📷 asks on its first press.
+        if app.readsContext {
+          PermissionStatus.screenRecording
+        }
+      }
+      Section("4. Shortcut") {
         KeyboardShortcuts.Recorder("Check text", name: .checkText)
         Text("Select text or put the cursor in a text field, then press the shortcut.")
           .font(.caption)
@@ -42,6 +39,21 @@ struct OnboardingView: View {
       }
     }
     .formStyle(.grouped)
-    .frame(minWidth: 520, minHeight: 440)
+    .frame(minWidth: 520, minHeight: 700)
+  }
+
+  private var signIn: some View {
+    Section("1. Sign in") {
+      Text("Cyrano uses your ChatGPT Plus or Pro plan to check your messages.")
+      if let account = app.account {
+        Label(
+          "Signed in as \(account.email ?? "ChatGPT user")", systemImage: "checkmark.circle.fill")
+      } else {
+        SignInControls(app: app)
+      }
+      Text("Your text is sent to OpenAI only when you run a check. It is not stored.")
+        .font(.caption)
+        .foregroundStyle(.secondary)
+    }
   }
 }

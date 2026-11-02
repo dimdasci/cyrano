@@ -1,4 +1,4 @@
-// App-wide state: account, model choice, style settings, and the entry points of a check.
+// App-wide state: account, models, style settings, and the entry points of a check.
 
 import AppKit
 import CyranoCore
@@ -15,8 +15,9 @@ final class AppModel {
 
   private(set) var account: Account?
   private(set) var signIn = SignInState.idle
-  var model: Model = StoredSettings.model {
-    didSet { StoredSettings.model = model }
+  /// The model for each operation (02 M1).
+  var models = ModelChoice(from: .standard) {
+    didSet { models.save(to: .standard) }
   }
   var customInstructions: String = StoredSettings.customInstructions {
     didSet { StoredSettings.customInstructions = customInstructions }
@@ -28,6 +29,8 @@ final class AppModel {
 
   /// «Never change» terms, shared by every panel and Settings (02 M11).
   let dictionary = TermDictionary.standard()
+  /// Context type, tone, level and language per app, from the panel header (05 §5).
+  let appDefaults = AppDefaults()
 
   @ObservationIgnored private let auth = AuthService()
   @ObservationIgnored private let panel = PanelController()
@@ -78,14 +81,15 @@ final class AppModel {
   }
 
   private func makeSession(for captured: CapturedText) -> ProofreadingSession {
-    var options = OptionsMemory.options(for: captured.bundleID)
+    var options = appDefaults.options(for: captured.bundleID)
     options.customInstructions = customInstructions
     return ProofreadingSession(
-      original: captured.text, options: options, engine: makeEngine(), dictionary: dictionary)
+      original: captured.text, options: options, models: models, engine: makeEngine(),
+      dictionary: dictionary)
   }
 
   private func makeEngine() -> any CorrectionEngine {
-    OpenAIEngine(model: model, transport: URLSessionTransport()) { [auth] in
+    OpenAIEngine(transport: URLSessionTransport()) { [auth] in
       try await auth.accessToken()
     }
   }
@@ -135,7 +139,7 @@ final class AppModel {
   // MARK: Windows
 
   func showOnboarding() {
-    windows.show(id: "onboarding", title: "Cyrano", size: CGSize(width: 520, height: 440)) {
+    windows.show(id: "onboarding", title: "Cyrano", size: CGSize(width: 520, height: 700)) {
       OnboardingView(app: self)
     }
   }
@@ -146,17 +150,12 @@ final class AppModel {
 
   func showAbout() {
     NSApp.activate()
-    NSApp.orderFrontStandardAboutPanel(options: [.credits: AboutCredits.text(model: model)])
+    NSApp.orderFrontStandardAboutPanel(options: [.credits: AboutCredits.text])
   }
 }
 
 /// Settings stored in UserDefaults. Tokens never go here (Keychain only).
 private enum StoredSettings {
-  static var model: Model {
-    get { UserDefaults.standard.string(forKey: "model").flatMap(Model.init) ?? .sol }
-    set { UserDefaults.standard.set(newValue.rawValue, forKey: "model") }
-  }
-
   static var customInstructions: String {
     get { UserDefaults.standard.string(forKey: "customInstructions") ?? "" }
     set { UserDefaults.standard.set(newValue, forKey: "customInstructions") }
@@ -165,25 +164,5 @@ private enum StoredSettings {
   static var readsContext: Bool {
     get { UserDefaults.standard.object(forKey: "readsContext") as? Bool ?? true }
     set { UserDefaults.standard.set(newValue, forKey: "readsContext") }
-  }
-}
-
-/// Context type, tone, level and language per app (bundle id). See docs/specs/02 S2.
-enum OptionsMemory {
-  static func options(for bundleID: String?) -> CheckOptions {
-    guard let data = UserDefaults.standard.data(forKey: key(bundleID)),
-      let options = try? JSONDecoder().decode(CheckOptions.self, from: data)
-    else { return CheckOptions() }
-    return options
-  }
-
-  static func remember(_ options: CheckOptions, for bundleID: String?) {
-    var stored = options
-    stored.customInstructions = ""
-    UserDefaults.standard.set(try? JSONEncoder().encode(stored), forKey: key(bundleID))
-  }
-
-  private static func key(_ bundleID: String?) -> String {
-    "options.\(bundleID ?? "manual")"
   }
 }

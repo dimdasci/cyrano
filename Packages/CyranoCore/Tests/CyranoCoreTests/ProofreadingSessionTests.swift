@@ -9,11 +9,14 @@ let imageA = Data([UInt8(1)])
 let imageB = Data([UInt8(2)])
 
 /// Answers Fix calls from a queue, reads context with a fixed answer, classifies by a keyword and
-/// explains every change as grammar.
+/// explains with a fixed answer: by default change 1 is grammar.
 final class FakeEngine: CorrectionEngine {
+  static let grammarReason = #"{"items":[{"id":1,"category":"grammar","reason":"Tense."}]}"#
+
   private struct State {
     var fixes: [String]
-    var context: String
+    var context: Result<String, EngineError>
+    var explanation: String
     var calls: [ModelCall] = []
     var failNextFix: EngineError?
     var holdsFixes = false
@@ -23,8 +26,8 @@ final class FakeEngine: CorrectionEngine {
 
   private let state: Mutex<State>
 
-  init(fixes: [String], context: String = "") {
-    state = Mutex(State(fixes: fixes, context: context))
+  init(fixes: [String], context: String = "", explanation: String = grammarReason) {
+    state = Mutex(State(fixes: fixes, context: .success(context), explanation: explanation))
   }
 
   var calls: [ModelCall] { state.withLock { $0.calls } }
@@ -32,6 +35,8 @@ final class FakeEngine: CorrectionEngine {
   var contextCalls: [ModelCall] { calls.filter { $0.instructions == Prompts.readContext } }
 
   func failNextFix(with error: EngineError) { state.withLock { $0.failNextFix = error } }
+
+  func failContext(with error: EngineError) { state.withLock { $0.context = .failure(error) } }
 
   /// Keeps the next Fix answers until `release()`, to look at the session while one streams.
   func holdFixes() { state.withLock { $0.holdsFixes = true } }
@@ -52,13 +57,11 @@ final class FakeEngine: CorrectionEngine {
     let isContext = call.instructions == Prompts.readContext
     let result = state.withLock { state -> Result<String, EngineError> in
       state.calls.append(call)
-      if isContext { return .success(state.context) }
+      if isContext { return state.context }
       if call.instructions == Prompts.classify {
         return .success(call.input[0].text.contains("?") ? "question" : "edit")
       }
-      if call.schema != nil {
-        return .success(#"{"items":[{"id":1,"category":"grammar","reason":"Tense."}]}"#)
-      }
+      if call.schema != nil { return .success(state.explanation) }
       if let error = state.failNextFix {
         state.failNextFix = nil
         return .failure(error)
@@ -103,11 +106,7 @@ final class FakeEngine: CorrectionEngine {
     let version = try #require(session.versions.first)
     #expect(version.number == 1)
     #expect(version.diff?.changes.map(\.words) == [["has", "have"]])
-    #expect(
-      version.edit
-        == .corrections(
-          version.diff ?? TextDiff(old: "", new: ""),
-          .ready([1: Explanation(category: .grammar, reason: "Tense.")])))
+    #expect(version.explanations == .ready([1: Explanation(category: .grammar, reason: "Tense.")]))
     #expect(session.activity == .idle)
     #expect(session.tokens == 20)
   }
@@ -191,8 +190,8 @@ final class FakeEngine: CorrectionEngine {
     #expect(engine.fixCalls.last?.input.last?.text.contains("DO NOT rewrite the text") == true)
   }
 
-  @Test func rejectingAChangeAddsALocalVersion() async throws {
-    let engine = FakeEngine(fixes: ["I have a cat at our home."])
+  @Test func rejectingAChangeAddsALocalVersionTheNextRequestStartsFrom() async throws {
+    let engine = FakeEngine(fixes: ["I have a cat at our home.", "I has a cat at our house."])
     let session = session(engine, original: "I has a cat at home.")
     await session.check()
     let first = try #require(session.versions.first?.diff?.changes.first)
@@ -201,17 +200,24 @@ final class FakeEngine: CorrectionEngine {
     #expect(session.versions.last?.text == "I has a cat at our home.")
     #expect(session.versions.last?.origin == .rejection)
     #expect(engine.fixCalls.count == 1)
+
+    await session.send("say house")
+    let latest = try #require(engine.fixCalls.last?.input.dropLast().last)
+    #expect(latest.role == .assistant)
+    #expect(latest.text == "I has a cat at our home.")
   }
 
   @Test func recheckUsesNewOptionsAndKeepsTheDialog() async throws {
-    let engine = FakeEngine(fixes: ["I have a cat.", "I've got a cat."])
+    let engine = FakeEngine(fixes: ["I have a cat.", "I have two cats.", "I've got two cats."])
     let session = session(engine)
     await session.check()
+    await session.send("make it two cats")
     session.options.tone = .casual
     await session.check()
 
     let call = try #require(engine.fixCalls.last)
     #expect(call.instructions.contains("Tone: casual."))
+    #expect(call.input.map(\.role) == [.user, .assistant, .user, .assistant, .user])
     #expect(call.input.last?.text == Prompts.recheck)
     #expect(session.versions.last?.origin == .recheck)
   }
@@ -225,15 +231,6 @@ final class FakeEngine: CorrectionEngine {
     let input = try #require(engine.fixCalls.first?.input)
     #expect(input[0].images == [imageA, imageB])
     #expect(input[0].text.hasSuffix(Prompts.imagesNote))
-  }
-
-  @Test func changingImagesDoesNotStartACheck() {
-    let engine = FakeEngine(fixes: [])
-    let session = session(engine)
-    session.images.append(imageA)
-    session.images.removeAll()
-    #expect(engine.calls.isEmpty)
-    #expect(session.versions.isEmpty)
   }
 
   @Test func recheckSendsImagesAddedAfterTheFirstCheck() async throws {

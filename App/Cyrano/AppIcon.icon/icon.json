@@ -1,0 +1,30 @@
+{
+  "fill" : {
+    "automatic-gradient" : "extended-srgb:0.20000,0.24000,0.62000,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "image-name" : "check.svg",
+          "name" : "check"
+        },
+        {
+          "image-name" : "quill.svg",
+          "name" : "quill"
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.4
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "squares" : "shared"
+  }
+}

@@ -3,9 +3,9 @@
 import Foundation
 
 enum ResponsesRequest {
-  static func body(model: Model, call: ModelCall) -> JSONValue {
+  static func body(_ call: ModelCall) -> JSONValue {
     var body: [String: JSONValue] = [
-      "model": .string(model.rawValue),
+      "model": .string(call.model.rawValue),
       "instructions": .string(call.instructions),
       "input": .array(call.input.map(message)),
       "store": false,

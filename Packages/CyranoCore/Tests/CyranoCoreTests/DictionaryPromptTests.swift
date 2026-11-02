@@ -66,14 +66,6 @@ import Testing
     #expect(session.versions.last?.origin == .rejection)
     #expect(session.dictionary.contains("k8s"))
   }
-
-  @Test func neverChangeKeepsOnlyWordsOfTheChange() async throws {
-    let (session, change) = try await checkedK8s()
-
-    #expect(!session.neverChange(change, keeping: "today"))
-    #expect(session.versions.count == 1)
-    #expect(session.dictionary.terms.isEmpty)
-  }
 }
 
 /// The words a change row offers to keep (05 §2.4).

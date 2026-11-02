@@ -2,6 +2,7 @@
 // Build: swiftc -O .claude/skills/verify-app/ax.swift -o .build/ax
 //
 //   ax windows                titles of Cyrano's windows, front first
+//   ax close [window]         closes Cyrano's windows (window: title substring)
 //   ax tree [window]          role | label | value of every element (window: title substring)
 //   ax wait <text> [seconds]  waits until some element's label or value contains the text
 //   ax press <label>          presses the button or link with this label
@@ -16,6 +17,8 @@
 //   ax rows                   prints the rows of tables
 //   ax selectrow <value>      selects the table row that has a cell with this value
 //   ax doubleclick <value>    double-clicks the element with exactly this value
+//   ax key <letter> [mods…]   presses the key in the front app like a keyboard (mods: command,
+//                             option, shift, control); check the front app first
 
 import AppKit
 import ApplicationServices
@@ -59,8 +62,31 @@ func children(_ element: AXUIElement) -> [AXUIElement] {
   attribute(element, "AXChildren") as? [AXUIElement] ?? []
 }
 
-func all(_ root: AXUIElement) -> [AXUIElement] {
-  [root] + children(root).flatMap(all)
+/// The element and everything under it, top down, with how deep each one is. Walks without
+/// recursion and visits each element once: SwiftUI trees can be deep and can point back at an
+/// ancestor, and recursion overflowed the stack. `skip` leaves out an element and what is under it.
+func walk(_ root: AXUIElement, skip: (AXUIElement) -> Bool = { _ in false }) -> [(
+  element: AXUIElement, depth: Int
+)] {
+  var found: [(element: AXUIElement, depth: Int)] = []
+  var seen = Set<AXElement>()
+  var pending = [(root, 0)]
+  while let (element, depth) = pending.popLast() {
+    guard depth < 200, !skip(element), seen.insert(AXElement(element)).inserted else { continue }
+    found.append((element, depth))
+    pending += children(element).reversed().map { ($0, depth + 1) }
+  }
+  return found
+}
+
+func all(_ root: AXUIElement) -> [AXUIElement] { walk(root).map(\.element) }
+
+/// AXUIElement compared by identity, for the visited set.
+struct AXElement: Hashable {
+  let element: AXUIElement
+  init(_ element: AXUIElement) { self.element = element }
+  static func == (a: Self, b: Self) -> Bool { CFEqual(a.element, b.element) }
+  func hash(into hasher: inout Hasher) { hasher.combine(CFHash(element)) }
 }
 
 func windows() -> [AXUIElement] {
@@ -69,16 +95,18 @@ func windows() -> [AXUIElement] {
 
 func role(_ element: AXUIElement) -> String { string(element, "AXRole") }
 
-func elements() -> [AXUIElement] { windows().flatMap(all) }
+func elements() -> [AXUIElement] { windows().flatMap { all($0) } }
 
-func tree(_ element: AXUIElement, depth: Int = 0) {
-  let value = string(element, "AXValue").replacingOccurrences(of: "\n", with: "⏎")
-  let help = string(element, "AXHelp")
-  let parts = [role(element), label(element), String(value.prefix(160)), help]
-  if role(element) != "AXGroup" || parts.dropFirst().contains(where: { !$0.isEmpty }) {
-    print(String(repeating: "  ", count: depth) + parts.joined(separator: " | "))
+func tree(_ window: AXUIElement) {
+  for (element, depth) in walk(window) {
+    let value = string(element, "AXValue").replacingOccurrences(of: "\n", with: "⏎")
+    let help = string(element, "AXHelp")
+    let parts = [role(element), label(element), String(value.prefix(160)), help]
+    if role(element) != "AXGroup" || parts.dropFirst().contains(where: { !$0.isEmpty }) {
+      let indent = String(repeating: "  ", count: depth)
+      print(indent + parts.joined(separator: " | "))
+    }
   }
-  for child in children(element) { tree(child, depth: depth + 1) }
 }
 
 func perform(_ element: AXUIElement, _ action: String) {
@@ -88,10 +116,9 @@ func perform(_ element: AXUIElement, _ action: String) {
 
 /// Items of the open context menu; the menu bar is left out.
 func openMenuItems() -> [AXUIElement] {
-  func outsideMenuBar(_ element: AXUIElement) -> [AXUIElement] {
-    role(element) == "AXMenuBar" ? [] : [element] + children(element).flatMap(outsideMenuBar)
+  walk(application(), skip: { role($0) == "AXMenuBar" }).map(\.element).filter {
+    role($0) == "AXMenuItem"
   }
-  return outsideMenuBar(application()).filter { role($0) == "AXMenuItem" }
 }
 
 func frame(_ element: AXUIElement) -> CGRect {
@@ -134,6 +161,28 @@ func click(_ element: AXUIElement, count: Int) {
   }
 }
 
+/// Presses a letter key with modifiers at the HID tap, like a real keyboard. System Events
+/// keystrokes reach the front app but don't always trigger global hot keys such as ⌥⌘G.
+func pressKey(_ letter: String, _ modifiers: [String]) {
+  let codes: [String: CGKeyCode] = [
+    "a": 0, "s": 1, "d": 2, "f": 3, "h": 4, "g": 5, "z": 6, "x": 7, "c": 8, "v": 9, "b": 11,
+    "q": 12, "w": 13, "e": 14, "r": 15, "y": 16, "t": 17, "o": 31, "u": 32, "i": 34, "p": 35,
+    "l": 37, "j": 38, "k": 40, "n": 45, "m": 46,
+  ]
+  let flags: [String: CGEventFlags] = [
+    "command": .maskCommand, "option": .maskAlternate, "shift": .maskShift,
+    "control": .maskControl,
+  ]
+  guard let code = codes[letter.lowercased()] else { fail("no key \(letter)") }
+  let source = CGEventSource(stateID: .hidSystemState)
+  for isDown in [true, false] {
+    let event = CGEvent(keyboardEventSource: source, virtualKey: code, keyDown: isDown)
+    event?.flags = CGEventFlags(modifiers.map { flags[$0] ?? [] })
+    event?.post(tap: .cghidEventTap)
+    Thread.sleep(forTimeInterval: 0.05)
+  }
+}
+
 func printMenu() {
   Thread.sleep(forTimeInterval: 0.5)
   for item in openMenuItems() { print(label(item).isEmpty ? "—" : label(item)) }
@@ -145,6 +194,14 @@ guard AXIsProcessTrusted() else { fail("Accessibility is not granted to this pro
 switch arguments.first {
 case "windows":
   for window in windows() { print(label(window)) }
+case "close":
+  let match = arguments.dropFirst().first ?? ""
+  for window in windows() where match.isEmpty || label(window).contains(match) {
+    guard let button = attribute(window, "AXCloseButton") else { continue }
+    print("closing \(label(window))")
+    // AXCloseButton is always an AXUIElement.
+    perform(button as! AXUIElement, "AXPress")
+  }
 case "tree":
   let match = arguments.dropFirst().first ?? ""
   for window in windows() where match.isEmpty || label(window).contains(match) { tree(window) }
@@ -237,6 +294,9 @@ case "doubleclick":
   }
   click(target, count: 2)
   print("double-clicked \(arguments[1])")
+case "key":
+  pressKey(arguments[1], Array(arguments.dropFirst(2)))
+  print("pressed \(arguments.dropFirst().joined(separator: " "))")
 default:
-  fail("usage: ax windows|tree|wait|press|select|menu|rightclick|pick|appmenu|set|rows|selectrow|doubleclick …")
+  fail("usage: ax windows|close|tree|wait|press|select|menu|rightclick|pick|appmenu|set|rows|selectrow|doubleclick|key …")
 }

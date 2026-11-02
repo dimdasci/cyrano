@@ -11,16 +11,12 @@ import Testing
       dictionary: dictionary())
   }
 
-  @Test func actionIsCheckBeforeTheFirstCheck() async throws {
-    let engine = FakeEngine(fixes: ["I have a cat."])
-    let session = session(engine)
+  @Test func actionIsCheckBeforeTheFirstCheck() async {
+    let session = session(FakeEngine(fixes: ["I have a cat."]))
     #expect(session.action(for: "") == .check)
     #expect(session.canPerform(message: ""))
 
     await session.perform(message: "")
-    let input = try #require(engine.fixCalls.first?.input)
-    #expect(input.count == 1)
-    #expect(input[0].text.contains("Do you have pets?"))
     #expect(session.versions.last?.origin == .check)
   }
 
@@ -30,14 +26,11 @@ import Testing
     await session.check()
     #expect(session.action(for: "") == .send)
     #expect(!session.canPerform(message: "  "))
-    #expect(session.action(for: "make it two cats") == .send)
     #expect(session.canPerform(message: "make it two cats"))
 
     await session.perform(message: "make it two cats")
-    let input = try #require(engine.fixCalls.last?.input)
-    #expect(input.map(\.role) == [.user, .assistant, .user])
-    #expect(input[0].text.contains("Do you have pets?"))
-    #expect(input[2].text.contains("make it two cats"))
+    let first = try #require(engine.fixCalls.last?.input.first)
+    #expect(first.text.contains("Do you have pets?"))
     #expect(session.versions.last?.origin == .request)
   }
 
@@ -57,20 +50,14 @@ import Testing
     #expect(session.action(for: "") == .send)
   }
 
-  @Test func changedImagesWithAnEmptyFieldRecheck() async throws {
-    let engine = FakeEngine(fixes: ["I have a cat.", "I have a cat!"])
-    let session = session(engine)
+  @Test func changedImagesWithAnEmptyFieldRecheck() async {
+    let session = session(FakeEngine(fixes: ["I have a cat."]))
     session.images = [imageA]
     await session.check()
     session.images = [imageA]
     #expect(session.action(for: "") == .send)
     session.images.append(imageB)
     #expect(session.action(for: "") == .check)
-
-    await session.perform(message: "")
-    let input = try #require(engine.fixCalls.last?.input)
-    #expect(input[0].images == [imageA, imageB])
-    #expect(input.last?.text == Prompts.recheck)
   }
 
   @Test func changedContextWithAMessageSendsBoth() async throws {

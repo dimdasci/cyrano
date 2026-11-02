@@ -4,6 +4,7 @@ import AppKit
 import CyranoCore
 import QuickLook
 import SwiftUI
+import TipKit
 
 /// Context input: text, images, 📷. Before the first check it is open and focused, so the user
 /// can paste what they are replying to before anything is sent; the check starts by the dialog field.
@@ -15,6 +16,11 @@ struct ContextBar: View {
   @FocusState private var editing: Bool
   @FocusState private var selected: Int?
   @State private var previewing: URL?
+  /// One hint at a time: Context first, then 📷.
+  @State private var tips = TipGroup(.ordered) {
+    ContextTip()
+    CaptureTip()
+  }
 
   init(model: PanelModel, session: ProofreadingSession) {
     self.model = model
@@ -39,6 +45,7 @@ struct ContextBar: View {
       if expanded {
         contextEditor
         imagesRow
+        tip
       }
     }
     .padding(.horizontal, 12)
@@ -74,6 +81,17 @@ struct ContextBar: View {
       .focused($editing)
       // Without captured text the cursor goes to Text to check instead.
       .onAppear { editing = session.versions.isEmpty && !session.original.isEmpty }
+  }
+
+  /// Hints before the first check, while the user fills in the context.
+  @ViewBuilder private var tip: some View {
+    if session.versions.isEmpty {
+      if let tip = tips.currentTip as? ContextTip {
+        TipView(tip)
+      } else if model.canCaptureWindow, let tip = tips.currentTip as? CaptureTip {
+        TipView(tip)
+      }
+    }
   }
 
   @ViewBuilder private var collapsedSummary: some View {
@@ -141,6 +159,7 @@ struct ContextBar: View {
 
   private var captureButton: some View {
     Button {
+      CaptureTip().invalidate(reason: .actionPerformed)
       if CGPreflightScreenCaptureAccess() {
         model.captureWindow()
       } else {
