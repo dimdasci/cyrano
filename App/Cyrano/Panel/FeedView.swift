@@ -6,11 +6,17 @@ import SwiftUI
 struct FeedView: View {
   let model: PanelModel
   @Bindable var session: ProofreadingSession
+  /// How much taller the feed must be to show everything in it; the panel grows by it (05 §2.1).
+  @Binding var shortfall: CGFloat
+  @State private var contentHeight = Self.minHeight
+  @State private var visibleHeight = Self.minHeight
+
+  private static let minHeight: CGFloat = 80
 
   var body: some View {
     ScrollViewReader { proxy in
       ScrollView {
-        LazyVStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 10) {
           if session.feed.isEmpty {
             TextToCheck(session: session)
           }
@@ -21,6 +27,15 @@ struct FeedView: View {
           Color.clear.frame(height: 1).id("bottom")
         }
         .padding(12)
+        .onGeometryChange(for: CGFloat.self, of: \.size.height) {
+          contentHeight = $0
+          shortfall = max(contentHeight, Self.minHeight) - visibleHeight
+        }
+      }
+      .frame(minHeight: Self.minHeight, idealHeight: contentHeight, maxHeight: .infinity)
+      .onGeometryChange(for: CGFloat.self, of: \.size.height) {
+        visibleHeight = $0
+        shortfall = max(contentHeight, Self.minHeight) - visibleHeight
       }
       .onChange(of: session.feed) { proxy.scrollTo("bottom") }
       .onChange(of: session.activity) { proxy.scrollTo("bottom") }

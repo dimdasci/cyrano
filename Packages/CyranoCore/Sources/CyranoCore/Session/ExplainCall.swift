@@ -24,9 +24,9 @@ enum ExplainCall {
     ],
   ]
 
-  static func call(old: String, diff: TextDiff) -> ModelCall {
+  static func call(model: Model, old: String, diff: TextDiff) -> ModelCall {
     ModelCall(
-      instructions: Prompts.explain,
+      model: model, instructions: Prompts.explain,
       input: [ChatMessage(.user, Prompts.explainInput(old: old, diff: diff))],
       schema: schema)
   }

@@ -4,6 +4,7 @@ import ApplicationServices
 import CoreGraphics
 import CyranoCore
 import KeyboardShortcuts
+import ServiceManagement
 import SwiftUI
 
 struct SettingsView: View {
@@ -18,7 +19,8 @@ struct SettingsView: View {
       }
       Tab("Account", systemImage: "person.crop.circle") { AccountPane(app: app) }
     }
-    .frame(width: 520)
+    // Wide enough for the five columns of Style → Per-app defaults.
+    .frame(width: 600)
   }
 }
 
@@ -28,13 +30,13 @@ private struct GeneralPane: View {
 
   var body: some View {
     Form {
-      Picker("Model", selection: $app.model) {
-        ForEach(Model.allCases, id: \.self) { Text($0.title).tag($0) }
-      }
       Toggle("Show in menu bar", isOn: $showInMenuBar)
-      Toggle(isOn: $app.readsContext) {
-        Text("Read context from the window")
-        Text("A screenshot of the window goes to OpenAI to find who you're replying to.")
+      LaunchAtLogin()
+      ReadContextToggle(app: app)
+      Section("Models") {
+        modelPicker("Read context", "Who you're replying to, from a screenshot", \.context)
+        modelPicker("Proofreading", "Checks and the dialog", \.proofreading)
+        modelPicker("Explanations", "Reasons for each change", \.explanations)
       }
       Section("Shortcut") {
         KeyboardShortcuts.Recorder("Check text", name: .checkText)
@@ -49,23 +51,64 @@ private struct GeneralPane: View {
     }
     .formStyle(.grouped)
   }
+
+  private func modelPicker(
+    _ title: String, _ detail: String, _ operation: WritableKeyPath<ModelChoice, Model>
+  ) -> some View {
+    Picker(selection: $app.models[dynamicMember: operation]) {
+      ForEach(Model.allCases, id: \.self) { Text($0.rawValue).tag($0) }
+    } label: {
+      Text(title)
+      Text(detail)
+    }
+  }
 }
 
-private struct StylePane: View {
+/// The same choice as in onboarding (05 §1): read who the user replies to from the window.
+struct ReadContextToggle: View {
   @Bindable var app: AppModel
 
   var body: some View {
-    Form {
-      Section("Custom instructions") {
-        TextEditor(text: $app.customInstructions)
-          .font(.body)
-          .frame(height: 120)
-        Text("Added to every check, one rule per line. Changes apply to the next check.")
-          .font(.caption)
-          .foregroundStyle(.secondary)
+    Toggle(isOn: $app.readsContext) {
+      Text("Read context from the window")
+      Text("A screenshot of the window goes to OpenAI to find who you're replying to.")
+    }
+  }
+}
+
+/// The login item is the system's: its status is read back, not stored.
+private struct LaunchAtLogin: View {
+  @State private var status = SMAppService.mainApp.status
+  @State private var failure: String?
+
+  var body: some View {
+    Toggle(
+      "Launch at login",
+      isOn: Binding(get: { status != .notRegistered && status != .notFound }, set: change))
+    if status == .requiresApproval {
+      HStack {
+        Text("Allow Cyrano in Login Items to start it at login.").foregroundStyle(.secondary)
+        Spacer()
+        Button("Open System Settings…") { SMAppService.openSystemSettingsLoginItems() }
       }
     }
-    .formStyle(.grouped)
+    if let failure {
+      Text(failure).foregroundStyle(.secondary)
+    }
+  }
+
+  private func change(_ launches: Bool) {
+    do {
+      if launches {
+        try SMAppService.mainApp.register()
+      } else {
+        try SMAppService.mainApp.unregister()
+      }
+      failure = nil
+    } catch {
+      failure = "Couldn't change the login item: \(error.localizedDescription)"
+    }
+    status = SMAppService.mainApp.status
   }
 }
 
@@ -116,7 +159,7 @@ struct SignInControls: View {
 struct PermissionStatus: View {
   static let accessibility = PermissionStatus(
     title: "Accessibility", pane: "Privacy_Accessibility", isGranted: { AXIsProcessTrusted() })
-  /// For 📷 in the context and for reading text from a screenshot when nothing else works.
+  /// For 📷 in the context and for reading who the user replies to from the window.
   static let screenRecording = PermissionStatus(
     title: "Screen Recording", pane: "Privacy_ScreenCapture",
     isGranted: { CGPreflightScreenCaptureAccess() },

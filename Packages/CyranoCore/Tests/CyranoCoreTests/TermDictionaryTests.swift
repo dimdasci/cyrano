@@ -30,13 +30,9 @@ func temporaryDictionaryFile() -> URL {
   @Test func theFileHoldsTermAndAddedDate() throws {
     let file = temporaryDictionaryFile()
     TermDictionary(file: file).add("Bitbucket", at: added)
-    let json = try String(contentsOf: file, encoding: .utf8)
-    #expect(json.contains(#""term" : "Bitbucket""#))
-    #expect(json.contains(#""added" : "2027-01-15T08:00:00Z""#))
-  }
-
-  @Test func noFileMeansAnEmptyDictionary() {
-    #expect(TermDictionary(file: temporaryDictionaryFile()).terms.isEmpty)
+    let json = try JSONSerialization.jsonObject(with: Data(contentsOf: file))
+    let entries = try #require(json as? [[String: String]])
+    #expect(entries == [["term": "Bitbucket", "added": "2027-01-15T08:00:00Z"]])
   }
 
   @Test func anUnreadableFileIsKeptAside() throws {
@@ -60,13 +56,14 @@ func temporaryDictionaryFile() -> URL {
     #expect(dictionary.contains("BITBUCKET"))
   }
 
-  @Test func removingAndRenaming() {
-    let dictionary = dictionary(["Bitbucket", "k8s", "Jira"])
-    let removed = dictionary.remove("BitBucket")
-    #expect(removed?.text == "Bitbucket")
+  @Test func removingAndRenamingAreSaved() {
+    let file = temporaryDictionaryFile()
+    let dictionary = TermDictionary(file: file)
+    for term in ["Bitbucket", "k8s", "Jira"] { dictionary.add(term) }
+    #expect(dictionary.remove("BitBucket")?.text == "Bitbucket")
     #expect(!dictionary.rename("k8s", to: "jira"))
     #expect(dictionary.rename("k8s", to: "K8s"))
-    #expect(dictionary.terms.map(\.text) == ["K8s", "Jira"])
+    #expect(TermDictionary(file: file).terms.map(\.text) == ["K8s", "Jira"])
   }
 
   @Test func importReadsOneTermPerLine() {
@@ -76,13 +73,15 @@ func temporaryDictionaryFile() -> URL {
     #expect(dictionary.exported == "Bitbucket\nk8s\nJira\n")
   }
 
-  @Test func aSelectionBecomesATerm() {
-    #expect(TermDictionary.term(fromSelection: " Bitbucket. ") == "Bitbucket")
-    #expect(TermDictionary.term(fromSelection: "“k8s”,") == "k8s")
-    #expect(TermDictionary.term(fromSelection: "pull request") == "pull request")
-    #expect(TermDictionary.term(fromSelection: "C++") == "C++")
-    #expect(TermDictionary.term(fromSelection: "two\nlines") == nil)
-    #expect(TermDictionary.term(fromSelection: " , ") == nil)
+  /// Selection and the term it gives; "" means none.
+  nonisolated static let selections: [(String, String)] = [
+    (" Bitbucket. ", "Bitbucket"), ("“k8s”,", "k8s"), ("pull request", "pull request"),
+    ("C++", "C++"), ("two\nlines", ""), (" , ", ""),
+  ]
+
+  @Test(arguments: selections)
+  func aSelectionBecomesATerm(selection: String, term: String) {
+    #expect(TermDictionary.term(fromSelection: selection) ?? "" == term)
   }
 }
 

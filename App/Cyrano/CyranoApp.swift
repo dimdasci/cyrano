@@ -4,6 +4,7 @@ import AppKit
 import CyranoCore
 import KeyboardShortcuts
 import SwiftUI
+import TipKit
 
 @main
 struct CyranoApp: App {
@@ -26,6 +27,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   let app = AppModel()
 
   func applicationDidFinishLaunching(_ notification: Notification) {
+    // Hints in the panel stay until closed or followed (05 §1).
+    try? Tips.configure([.displayFrequency(.immediate)])
     KeyboardShortcuts.onKeyUp(for: .checkText) { [app] in
       app.checkFocusedText()
     }
@@ -43,7 +46,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 }
 
 extension KeyboardShortcuts.Name {
-  static let checkText = Self("checkText", default: .init(.g, modifiers: [.option, .command]))
+  static let checkText = Self("checkText", initial: .init(.g, modifiers: [.option, .command]))
 }
 
 private struct MenuContent: View {
@@ -54,9 +57,6 @@ private struct MenuContent: View {
     Button("Check Text…") { app.checkText() }
     Button("Check Clipboard") { app.checkClipboard() }
     Divider()
-    Picker("Model: \(app.model.rawValue)", selection: Bindable(app).model) {
-      ForEach(Model.allCases, id: \.self) { Text($0.rawValue).tag($0) }
-    }
     if let account = app.account {
       Text("Signed in as \(account.email ?? "ChatGPT user")")
     } else {

@@ -22,19 +22,20 @@ import Testing
     #expect(session.tokens == 10)
   }
 
-  @Test func screenshotAndTextGoToLuna() async throws {
+  @Test func screenshotAndTextGoToTheModel() async throws {
     let engine = FakeEngine(fixes: [], context: ravi)
     await session(engine).readContext(from: screenshot)
 
     let call = try #require(engine.contextCalls.first)
-    #expect(call.model == .luna)
     #expect(call.input.count == 1)
     #expect(call.input[0].images == [screenshot])
     #expect(call.input[0].text == "TEXT:\n\"\"\"\nI has a cat.\n\"\"\"")
   }
 
-  @Test func noConversationOnScreenLeavesContextEmpty() async {
-    let session = session(FakeEngine(fixes: [], context: " \n"))
+  @Test func failedReadingLeavesContextEmptyWithoutAnError() async {
+    let engine = FakeEngine(fixes: [])
+    engine.failContext(with: .network)
+    let session = session(engine)
     await session.readContext(from: screenshot)
     #expect(session.context.isEmpty)
     #expect(session.activity == .idle)

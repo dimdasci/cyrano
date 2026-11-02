@@ -29,7 +29,7 @@
 
 - `POST https://api.openai.com/v1/responses`, `Authorization: Bearer <access token>`.
 - Обязательно `store: false` и `stream: true` (SSE). Успех — только после `response.completed`.
-- Список моделей: `GET /v1/models` с тем же токеном, брать `visibility: "list"`. В примерах документации — `gpt-6.1-sol`.
+- Список моделей: `GET /v1/models` с тем же токеном, брать `visibility: "list"`. В примерах документации — `gpt-6.1-sol`. Проверено 2026-11-01: ответ — `{"models": [...]}` около 670 КБ, у модели `slug`, `display_name`, `description`, `visibility` (`list`/`hide`), `priority`, `input_modalities` и другие поля. Cyrano его не вызывает: список моделей фиксирован и меняется релизами ([02](../specs/02-tech-decisions.md) M1).
 - **Не поддерживается:** `previous_response_id` (историю диалога шлём целиком в `input`), `system` items (вместо них `instructions`), `temperature`, `max_output_tokens`, `metadata` и др., а также встроенные инструменты (file search, code interpreter, image generation).
 - Картинки на вход — в зависимости от модели. Structured outputs в ограничениях не указаны, это надо проверить.
 - Ошибки лимитов приходят посреди стрима: `subscription_sharing_usage_limit_exceeded`, `subscription_sharing_usage_unavailable`.

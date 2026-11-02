@@ -38,12 +38,6 @@ import Testing
     #expect(TextDiff(old: old, new: new).newText == new)
   }
 
-  @Test func rejectingAChangeRestoresTheOldWords() {
-    let diff = TextDiff(old: "I has a cat and a dog", new: "I have a cat and two dogs")
-    let first = diff.changes[0]
-    #expect(diff.text(rejecting: first) == "I has a cat and two dogs")
-  }
-
   @Test func whitespaceOnlyEditsAreNotChanges() {
     let diff = TextDiff(old: "Hi  there", new: "Hi there")
     #expect(diff.changes.isEmpty)

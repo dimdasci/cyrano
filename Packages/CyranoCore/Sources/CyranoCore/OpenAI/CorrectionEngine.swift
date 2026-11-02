@@ -20,16 +20,16 @@ public struct ChatMessage: Hashable, Sendable {
   }
 }
 
-/// One model call: instructions, the whole dialog as input, and an optional JSON output schema.
-/// A call may name its model; otherwise the engine's model answers it.
+/// One model call: the model, instructions, the whole dialog as input, and an optional JSON
+/// output schema.
 public struct ModelCall: Hashable, Sendable {
+  public let model: Model
   public let instructions: String
   public let input: [ChatMessage]
   public let schema: JSONValue?
-  public let model: Model?
 
   public init(
-    instructions: String, input: [ChatMessage], schema: JSONValue? = nil, model: Model? = nil
+    model: Model, instructions: String, input: [ChatMessage], schema: JSONValue? = nil
   ) {
     self.instructions = instructions
     self.input = input
@@ -55,16 +55,4 @@ public enum EngineError: Error, Hashable, Sendable {
   case planUsageUnavailable
   case network
   case failed(String)
-}
-
-public enum Model: String, CaseIterable, Codable, Sendable {
-  case sol = "gpt-6.1-sol"
-  case luna = "gpt-6-luna"
-
-  public var title: String {
-    switch self {
-    case .sol: "\(rawValue) — Best quality"
-    case .luna: "\(rawValue) — Faster"
-    }
-  }
 }

@@ -12,10 +12,12 @@ description: Проверить изменение в запущенном Cyran
 Пользователь в это время может работать за компьютером, а клавиатура и мышь общие.
 
 - Перед началом скажи пользователю, что ближайшие минуты будешь нажимать клавиши и двигать мышь, и попроси не переключать окна.
-- Клавиши (`osascript … keystroke`) уходят в окно, которое впереди. Отправляй их, только убедившись, что впереди нужное приложение: `capture.sh` проверяет TextEdit; для Cyrano — `osascript -e 'tell application "System Events" to get name of first process whose frontmost is true'` должно вернуть `Cyrano`. Если впереди другое — не нажимай, скажи об этом.
+- Клавиши (`ax key`, `osascript … keystroke`) уходят в окно с фокусом клавиатуры, и это не всегда переднее приложение. Панель Cyrano забирает клавиши, не делая Cyrano передним (System Events при этом называет TextEdit), а запрос пароля Keychain (`SecurityAgent`) забирает их у всех. Поэтому `capture.sh` сначала закрывает окна Cyrano (`ax close`), ждёт, пока закроется запрос пароля, и только потом проверяет, что впереди TextEdit. Для клавиш в Cyrano `osascript -e 'tell application "System Events" to get name of first process whose frontmost is true'` должно вернуть `Cyrano`. Если впереди другое — не нажимай, скажи об этом.
+- Запрос пароля Keychain появляется, когда свежая сборка впервые читает токен. Его закрывает только пользователь: скажи ему и подожди, клавиши в это время не отправляй.
 - Check нажимай, только если первая строка `.build/ax windows` — `Proofreading — TextEdit`. Иначе панель могла забрать текст из окна пользователя: не читай её и не отправляй на проверку.
-- Словарь и настройки — настоящие данные пользователя. Перед проверкой сохрани копию `~/Library/Application Support/Cyrano/dictionary.json` (или запомни, что файла нет), после — закрой Cyrano и верни как было. Пока Cyrano запущен, он держит словарь в памяти и запишет его обратно при следующем изменении.
+- Словарь и настройки — настоящие данные пользователя. Перед проверкой сохрани копию `~/Library/Application Support/Cyrano/dictionary.json` (или запомни, что файла нет) и `defaults export io.github.dimdasci.cyrano <файл>`, после — сравни и, если что-то изменилось, закрой Cyrano и верни как было. Пока Cyrano запущен, он держит словарь в памяти и запишет его обратно при следующем изменении.
 - Системные настройки (разрешения) меняет только пользователь.
+- Если шаг навыка не сработал (`capture.sh`, `ax`), остановись: найди причину (см. «Если клавиши не дошли») и исправь навык. Не обходи его своими скриптами и не продолжай проверку в обход.
 
 ## Подготовка
 
@@ -33,6 +35,7 @@ pkill -x Cyrano; sleep 1; open .build/xcode/Build/Products/Debug/Cyrano.app; sle
 | Команда | Что делает |
 |---|---|
 | `ax windows` | заголовки окон Cyrano, переднее первым |
+| `ax close [окно]` | закрывает окна Cyrano; окно — подстрока заголовка |
 | `ax tree [окно]` | дерево: `роль \| подпись \| значение \| подсказка`; окно — подстрока заголовка (`Dictionary`) |
 | `ax wait <текст> [сек]` | ждёт, пока текст появится в подписи или значении (по умолчанию 30 с) |
 | `ax press <подпись>` | нажимает кнопку или ссылку (`Check`, `Send`, `Copy`, `Undo`, `▸ 1 fix`, `Add Term`) |
@@ -45,14 +48,16 @@ pkill -x Cyrano; sleep 1; open .build/xcode/Build/Products/Debug/Cyrano.app; sle
 | `ax rows` | строки таблиц |
 | `ax selectrow <значение>` | выбирает строку таблицы |
 | `ax doubleclick <значение>` | двойной клик по элементу с этим значением |
+| `ax key <буква> [command] [option] [shift] [control]` | нажимает клавишу как клавиатура (через HID); только когда впереди нужное приложение |
 
-Вывод `ax tree` сохраняй в файл и ищи в нём: при `ax tree | head` утилита может умереть от SIGPIPE и ничего не напечатать.
+Вывод `ax tree` сохраняй в файл и ищи в нём: при `ax tree | head` утилита может умереть от SIGPIPE и ничего не напечатать. Если команда перед этим упала, файл старый: не читай его, а сначала разберись с ошибкой.
 
 ## Сценарий
 
 1. Открыть панель: `.claude/skills/verify-app/capture.sh "I pushed the fix to Github, can you review it when you have a minute?"`. Подожди 10–12 с: Cyrano читает контекст со скриншота, Check до этого неактивна.
 2. `.build/ax press Check`, `.build/ax wait "Version 1" 60`, затем `.build/ax tree > …` — текст карточки в строке `AXTextArea`: удалённое и добавленное идут подряд (`Github, can GitHub. Can`). Пояснения приходят ещё через 5–15 с: сводка меняется с `Explaining…` на `1 fix`.
 3. Проверяй то, что видит пользователь: подписи, сводку, строку статуса (`AXStaticText` внизу), файлы, которые пишет приложение.
+4. Закрой панель и TextEdit: `.build/ax close`, `osascript -e 'tell application "TextEdit" to close every document saving no'`.
 
 Примеры, которые `gpt-6.1-sol` стабильно исправляет (удобно для словаря): `Github → GitHub`, `kibana → Kibana`, `grafana → Grafana`. Модель в контексте сообщения может не тронуть сленг (`tmrw`, `pls`), так что на них не полагайся.
 
@@ -63,7 +68,18 @@ Settings: `.build/ax appmenu "Settings…"`, вкладка — `.build/ax press
 - Подписи кнопок SwiftUI лежат в `AXAttributedDescription`; System Events (AppleScript, JXA) их не читает, поэтому `ax` написан на `AXUIElement`.
 - `AXShowMenu` работает для текста карточки (`NSTextView`), но не для SwiftUI `.contextMenu` (ошибка -25204) — там `ax rightclick`. Правый клик попадает в центр элемента; если меню не открылось, проверь, что у строки есть `.contentShape`, иначе пустое место не ловит клик.
 - Кнопка, которая открывает модальное окно (Import…, Export…), не возвращается из `AXPress`, пока окно открыто: запускай `ax press` в фоне (`… &`). Окну сохранения нужен ввод пути с клавиатуры (⇧⌘G) — только когда впереди Cyrano; иначе закрой его `ax press Cancel`.
-- После проверки закрой лишние панели и TextEdit: `osascript -e 'tell application "TextEdit" to close every document saving no'`.
+
+## Если клавиши не дошли
+
+`capture.sh` пишет `the panel did not open for TextEdit`, а разрешения на месте. Куда ушли клавиши, видно в системном журнале (время — местное):
+
+```bash
+/usr/bin/log show --last 2m --predicate '(process == "WindowServer" AND eventMessage CONTAINS "Keyboard event") OR (process == "tccd" AND eventMessage CONTAINS "AUTHREQ_RESULT")' --style compact
+```
+
+- `destinations for Keyboard event: (<keyboardFocus; TextEdit…>)` — клавиши дошли до TextEdit, но ⌥⌘G не сработал как хоткей: сработавший хоткей WindowServer не отдаёт окну, и строки для него нет. Посмотри, жив ли Cyrano и не записывают ли сочетание в Settings. Хоткей нажимай через `ax key`: нажатия System Events (`osascript … keystroke`) доходят до приложения, но глобальный хоткей вызывают не всегда (2026-11-02 не вызывали ни у Cyrano, ни у отдельной пробы с `RegisterEventHotKey`).
+- `keyboardFocus; Cyrano…` или `SecurityAgent…` — фокус держала панель Cyrano или запрос пароля.
+- `AUTHREQ_RESULT … authValue=2` — macOS разрешила доступ; `authValue=0` — запретила, см. «Разрешения».
 
 ## Разрешения
 

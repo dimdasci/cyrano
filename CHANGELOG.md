@@ -8,6 +8,47 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+The Proofreading panel now fits its content, and Settings lets you choose the model for each
+step of a check.
+
+### Added
+
+- Settings → General → Models: choose gpt-6.1-sol, gpt-6.1-terra or gpt-6-luna separately for
+  reading context, for proofreading and the dialog, and for explanations. By default context
+  is read with gpt-6-luna and everything else uses gpt-6.1-sol.
+- Settings → General → Launch at login starts Cyrano when you log in to your Mac.
+- Settings → Style → Per-app defaults shows the Context, Tone, Level and Language that Cyrano
+  remembers for each app. Select an app and press − or Delete to reset it to Message · Neutral
+  · Fluency · Auto.
+- The first times you use the Proofreading panel, hints show where to add what you're replying
+  to, what the camera button does and that you can ask for changes in the dialog field. A hint
+  goes away for good once you close it or do what it says.
+- Setup has a step for context from the window: turn Read context from the window on or off
+  and grant Screen Recording right there. With it off, the camera button asks for Screen
+  Recording the first time you press it.
+- Cyrano has its own app icon.
+
+### Changed
+
+- The Proofreading panel is as tall as its content, up to 70% of the screen; after that only
+  the versions and the dialog scroll. It grows downward and keeps its top edge in place. You
+  can no longer resize it by dragging.
+- The model is no longer chosen in the menu bar menu, and About no longer shows it.
+
+### Fixed
+
+- Settings and About no longer open behind the Proofreading panel. The panel stays in front of
+  other apps, but not of Cyrano's own windows.
+- Settings… and About Cyrano in the menu bar menu always open in front of the app you're in.
+  Before, about one time in five the window opened behind it.
+- Closing the Proofreading panel or the setup window frees its memory right away, including
+  context screenshots. Before, the last closed panel stayed in memory until the next check.
+
+### Known issues
+
+- gpt-6.1-terra is offered but hasn't been tested on Cyrano's examples yet, so its corrections
+  may differ in quality from gpt-6.1-sol.
+
 ## [0.4.0] - 2026-10-29
 
 ### Added

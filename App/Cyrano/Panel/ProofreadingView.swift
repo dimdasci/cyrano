@@ -3,10 +3,16 @@
 import ApplicationServices
 import CyranoCore
 import SwiftUI
+import TipKit
 import UniformTypeIdentifiers
 
 struct ProofreadingView: View {
   let model: PanelModel
+  /// Everything but the feed has a fixed height, so the panel needs the height of the content
+  /// as laid out plus what the feed lacks to show all of it. Measured, not the ideal size SwiftUI
+  /// reports to AppKit: that one isn't reported when only the hidden part of the feed changes.
+  @State private var laidOutHeight: CGFloat = 0
+  @State private var feedShortfall: CGFloat = 0
 
   var body: some View {
     @Bindable var session = model.session
@@ -16,12 +22,14 @@ struct ProofreadingView: View {
       Divider()
       ContextBar(model: model, session: session)
       Divider()
-      FeedView(model: model, session: session)
+      FeedView(model: model, session: session, shortfall: $feedShortfall)
       Divider()
       Composer(session: session)
       StatusLine(session: session, status: model.status, undo: model.undo)
     }
-    .frame(minWidth: 480, minHeight: 360)
+    .frame(width: PanelLayout.width)
+    .onGeometryChange(for: CGFloat.self, of: \.size.height) { laidOutHeight = $0 }
+    .onChange(of: laidOutHeight + feedShortfall) { _, height in model.idealHeightChanged(height) }
     .background(ImagePasteMonitor { session.images += $0 })
     .onDrop(of: [.image, .fileURL], isTargeted: nil) { providers in
       Task { session.images += await ContextImages.load(providers) }
@@ -89,6 +97,17 @@ private struct Composer: View {
   @State private var draft = ""
 
   var body: some View {
+    VStack(alignment: .leading, spacing: 8) {
+      if !session.versions.isEmpty {
+        TipView(DialogTip())
+      }
+      field
+    }
+    .padding(.horizontal, 12)
+    .padding(.top, 8)
+  }
+
+  private var field: some View {
     HStack(alignment: .bottom, spacing: 8) {
       if session.versions.isEmpty {
         Spacer()
@@ -96,6 +115,7 @@ private struct Composer: View {
         TextEditor(text: $draft)
           .font(.body)
           .frame(height: 44)
+          .accessibilityLabel("Ask or tell what to change")
           .overlay(alignment: .topLeading) {
             if draft.isEmpty {
               Text("Ask or tell what to change… (any language)")
@@ -109,13 +129,15 @@ private struct Composer: View {
       Button(session.action(for: draft) == .check ? "Check" : "Send", action: perform)
         .disabled(!session.canPerform(message: draft))
     }
-    .padding(.horizontal, 12)
-    .padding(.top, 8)
   }
 
   private func perform() {
     let message = draft
     draft = ""
+    switch session.action(for: message) {
+    case .check: ContextTip().invalidate(reason: .actionPerformed)
+    case .send: DialogTip().invalidate(reason: .actionPerformed)
+    }
     Task { await session.perform(message: message) }
   }
 }
