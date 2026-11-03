@@ -52,7 +52,14 @@ brew install swiftlint periphery && npm install -g jscpd
 scripts/check
 ```
 
-Раннер примеров:
+Eval чтения контекста со скриншота — тем же кодом, что и приложение (кейсы и формат — [evals/context/README.md](evals/context/README.md)):
+
+```bash
+swift build --package-path Packages/CyranoCore --product cyrano-eval
+Packages/CyranoCore/.build/debug/cyrano-eval context evals/context/cases.json
+```
+
+Раннер примеров исправлений (Fix, Explain, классификатор; переедет в `cyrano-eval` в пакете 17):
 
 ```bash
 cd evals/cloud-runner && swiftc -parse-as-library -O OpenAI.swift Shared.swift main.swift -o /tmp/openai-runner

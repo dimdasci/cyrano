@@ -1,0 +1,121 @@
+{
+ "window": {
+  "title": "Search (⌘E)"
+ },
+ "theme": "work",
+ "title": "Chat",
+ "sections": [
+  {
+   "title": null,
+   "items": [
+    {
+     "name": "Alex Morgan (You)"
+    },
+    {
+     "name": "Daniel, Erin and Priya"
+    },
+    {
+     "name": "Data Platform - Pipelines"
+    },
+    {
+     "name": "Data Engineering"
+    }
+   ]
+  },
+  {
+   "title": "Chats",
+   "items": [
+    {
+     "name": "Rahul Mehta",
+     "on": false
+    },
+    {
+     "name": "Priya Raman",
+     "on": false
+    },
+    {
+     "name": "Data Team [Project review]",
+     "on": false
+    },
+    {
+     "name": "Tomas Lindqvist",
+     "on": true
+    },
+    {
+     "name": "Dipika Shah",
+     "on": false
+    },
+    {
+     "name": "Dipika, Kenji and Tomas",
+     "on": false
+    },
+    {
+     "name": "Daniel Ortiz",
+     "on": false
+    },
+    {
+     "name": "Weekly RouteDesk Call",
+     "on": false
+    },
+    {
+     "name": "All Hands - Tech",
+     "on": false
+    },
+    {
+     "name": "Kenji Ito",
+     "on": false
+    },
+    {
+     "name": "Dashboard and Dataset review",
+     "on": false
+    }
+   ]
+  }
+ ],
+ "header": {
+  "name": "Tomas Lindqvist",
+  "tabs": [
+   "Chat",
+   "Shared",
+   "Notes",
+   "Recap",
+   "Storyline"
+  ]
+ },
+ "messages": [
+  {
+   "from": "Tomas Lindqvist",
+   "time": "23.10 16:10",
+   "texts": [
+    "Thanks, looks good. Ship it."
+   ]
+  },
+  {
+   "from": "me",
+   "time": "23.10 16:40",
+   "texts": [
+    "Great. The new pipeline still needs to be deployed to prod, so could you please give me access? Ideally today or tomorrow, so I have time to get it working in prod before our Friday call."
+   ]
+  },
+  {
+   "date": "27 October"
+  },
+  {
+   "from": "me",
+   "time": "27.10 09:20",
+   "texts": [
+    "Morning, Tomas! Is there a chance we could talk about the user directory and authorization today with Bhavna, Priya, and Marta? If you have a free slot in your calendar, could you set up a call for us?"
+   ]
+  },
+  {
+   "date": "Yesterday"
+  },
+  {
+   "from": "me",
+   "time": "Yesterday 12:39",
+   "texts": [
+    "Hi Tomas, I want to share a short contract update. I've billed 9 of the 10 weeks of work so far, as I had one week off. Under the initial contract and budget, we have 1 week for RouteDesk with an optional 2 weeks of support. As the contract period is 10 weeks, from 24 Aug to 31 Oct, do we need to sign a new one? How does it work on the paperwork side?"
+   ]
+  }
+ ]
+}

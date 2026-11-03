@@ -16,8 +16,7 @@ final class TestDefaults {
 }
 
 extension ModelCall {
-  /// Only explanations ask for a JSON schema.
-  fileprivate var explains: Bool { schema != nil }
+  fileprivate var explains: Bool { instructions == Prompts.explain }
   fileprivate var onTerra: Bool { model == Model.terra }
 }
 

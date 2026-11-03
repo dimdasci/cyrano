@@ -1,0 +1,189 @@
+{
+ "window": {
+  "browser": {
+   "tabs": [
+    "Mail - Alex Morgan - Mailbox",
+    "RouteDesk – Dashboards",
+    "Jira – CX-412"
+   ],
+   "active": 0,
+   "url": "mail.brightline-travel.com/mail/inbox/id/AAQkAGI2"
+  }
+ },
+ "app": "Mailbox",
+ "account": "alex.morgan@brightline-travel.com",
+ "reminder": {
+  "title": "RouteDesk – Weekly touchbase",
+  "time": "Tomorrow 4:30 PM · Teams meeting"
+ },
+ "folders": [
+  {
+   "name": "› Favorites",
+   "head": true
+  },
+  {
+   "name": "⌄ alex.morgan@brightline-t…",
+   "head": true
+  },
+  {
+   "name": "Inbox",
+   "on": true
+  },
+  {
+   "name": "Drafts",
+   "count": "[2]"
+  },
+  {
+   "name": "Sent Items"
+  },
+  {
+   "name": "Deleted Items"
+  },
+  {
+   "name": "Junk Email"
+  },
+  {
+   "name": "Notes"
+  },
+  {
+   "name": "Archive"
+  },
+  {
+   "name": "Confluence"
+  },
+  {
+   "name": "Conversation History"
+  },
+  {
+   "name": "Search Folders"
+  },
+  {
+   "name": "Go to Groups"
+  }
+ ],
+ "list": [
+  {
+   "title": "Today",
+   "items": [
+    {
+     "from": "Henrik Solberg; Priya Raman",
+     "subject": "Replace CallFlow with RouteDesk in the Nov 6 status update",
+     "time": "6:48 PM",
+     "preview": "Hello, I will be out of the office until Monday…",
+     "on": true,
+     "attachment": "Solberg_Travel_Update.pdf"
+    }
+   ]
+  },
+  {
+   "title": "Last Week",
+   "items": [
+    {
+     "from": "Brightline No-Reply",
+     "subject": "Reaction Daily Digest - Sat…",
+     "time": "Sat 6:23 PM",
+     "preview": "Mailbox Reactions: Sofia Marin and 3 others…"
+    },
+    {
+     "from": "Atlassian",
+     "subject": "Your API token is about to expire",
+     "time": "Sat 3:07 AM",
+     "preview": "CAUTION: This is an external email and…",
+     "external": true
+    },
+    {
+     "from": "Priya Raman",
+     "subject": "Contact Center Analysis – weekly sync",
+     "time": "Fri 9:58 PM",
+     "preview": "Adding Alex as a second meeting organizer…",
+     "unread": true
+    },
+    {
+     "from": "Priya Raman",
+     "subject": "CX Awareness Detection – feedback",
+     "time": "Fri 2:05 PM",
+     "preview": "Alex – more feedback below on CX dashboards…",
+     "attachment": "SearchReport_Oct.xlsx"
+    },
+    {
+     "from": "Priya Raman",
+     "subject": "CX Awareness — weekly numbers",
+     "time": "Thu 10/29",
+     "preview": "Alex - a bit more feedback on CX numbers…"
+    },
+    {
+     "from": "Marta Kowalczyk",
+     "subject": "PNR Tracker Project",
+     "time": "Thu 10/29",
+     "preview": "Hi Alex, I reached out to Andres to get the export…"
+    },
+    {
+     "from": "Priya Raman",
+     "subject": "QUICK dashboard and mobile view",
+     "time": "Thu 10/29",
+     "preview": "Alex, below is feedback collected from the supervisors…"
+    }
+   ]
+  }
+ ],
+ "thread": {
+  "subject": "Q4 vendor review – agenda and owners",
+  "scroll": "bottom",
+  "messages": [
+   {
+    "from": "Marta Kowalczyk",
+    "time": "Fri 10/30 3:12 PM",
+    "collapsed": true,
+    "body": "Hi all, here is the draft agenda for the Q4 vendor review on Nov 12. Please add your topics by…"
+   },
+   {
+    "from": "Sofia Marin",
+    "time": "Mon 11/2 8:40 AM",
+    "collapsed": true,
+    "body": "Added the hotel content items. Can we also cover the GDS contract renewal?"
+   },
+   {
+    "from": "Marta Kowalczyk",
+    "email": "marta.kowalczyk@brightline-travel.com",
+    "to": [
+     "Alex Morgan",
+     "Sofia Marin",
+     "Daniel Ortiz",
+     "Priya Raman",
+     "Kenji Ito",
+     "Hannah Okafor"
+    ],
+    "cc": [
+     "Partner Operations",
+     "Henrik Solberg",
+     "Erin Walsh"
+    ],
+    "time": "Mon 11/2 4:55 PM",
+    "body": "Thanks everyone. Updated agenda below; each topic needs one owner who presents for 10 minutes.\n\n1. Contact center tooling (CallFlow → RouteDesk) — owner: ?\n2. Hotel content and rate parity — Sofia\n3. GDS contract renewal — Daniel\n4. Data platform costs — Kenji\n5. Open questions\n\nAlex, could you take topic 1? You know the RouteDesk numbers best. Please confirm by Wednesday so I can send the invite to the vendors.",
+    "signature": {
+     "name": "Marta Kowalczyk",
+     "lines": [
+      "Senior Program Manager, Partner Operations",
+      "Brightline Travel · +48 22 555 0142"
+     ]
+    }
+   }
+  ]
+ },
+ "compose": {
+  "to": [
+   "Marta Kowalczyk",
+   "Sofia Marin",
+   "Daniel Ortiz",
+   "Priya Raman",
+   "Kenji Ito",
+   "Hannah Okafor"
+  ],
+  "cc": [
+   "Partner Operations",
+   "Henrik Solberg",
+   "Erin Walsh"
+  ],
+  "subject": "Re: Q4 vendor review – agenda and owners"
+ }
+}

@@ -1,0 +1,113 @@
+<!doctype html>
+<!-- A dense web mail client: folders, message list, reading pane with a reply. See ../README.md. -->
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+.mail { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.appbar { height: 46px; flex: none; background: #0f6cbd; color: #fff; display: flex; align-items: center; gap: 18px; padding: 0 16px; }
+.appbar .name { font-size: 16px; font-weight: 600; width: 230px; }
+.appbar .search { flex: 0 1 420px; background: #fff; color: #666; border-radius: 4px; padding: 6px 10px; }
+.appbar .reminder { margin-left: auto; font-size: 11.5px; line-height: 1.25; text-align: right; }
+.appbar .reminder b { display: block; }
+.ribbon-tabs { height: 34px; flex: none; display: flex; gap: 20px; align-items: center; padding: 0 22px; background: #f5f5f5; font-size: 13.5px; }
+.ribbon-tabs .on { border-bottom: 2px solid #0f6cbd; padding-bottom: 3px; font-weight: 600; }
+.ribbon { height: 40px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 18px; background: #f5f5f5; border-bottom: 1px solid #ddd; }
+.ribbon .box { border: 1px solid #ccc; background: #fff; padding: 3px 8px; border-radius: 3px; font-size: 12.5px; }
+.body { flex: 1; min-height: 0; display: flex; }
+.rail { width: 48px; flex: none; background: #f0f0f0; display: flex; flex-direction: column; align-items: center; gap: 20px; padding-top: 16px; }
+.folders { width: 210px; flex: none; background: #f7f7f7; padding: 10px 8px; font-size: 13.5px; overflow: hidden; }
+.folders div { padding: 7px 10px; border-radius: 4px; display: flex; justify-content: space-between; white-space: nowrap; overflow: hidden; }
+.folders .head { font-weight: 600; color: #333; }
+.folders .on { background: #e1e1e1; font-weight: 600; }
+.list { width: 360px; flex: none; border-right: 1px solid #ddd; overflow: hidden; }
+.list .filters { display: flex; gap: 18px; padding: 12px 16px; font-size: 15px; border-bottom: 1px solid #e5e5e5; }
+.list .filters .on { color: #0f6cbd; font-weight: 600; border-bottom: 2px solid #0f6cbd; }
+.list .group { padding: 9px 16px; font-weight: 600; background: #fafafa; border-bottom: 1px solid #eee; }
+.item { display: flex; gap: 10px; padding: 9px 14px; border-bottom: 1px solid #eee; }
+.item.on { background: #e6eef8; }
+.item .text { flex: 1; min-width: 0; line-height: 1.4; }
+.item .row { display: flex; justify-content: space-between; gap: 8px; white-space: nowrap; }
+.item .row span:first-child, .item .preview { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item .from { font-size: 14px; } .item.unread .from { font-weight: 700; }
+.item .preview { color: #666; }
+.item .ext { font-size: 11px; background: #eee; padding: 0 4px; margin-right: 4px; color: #555; }
+.chip { display: inline-block; border: 1px solid #ddd; border-radius: 3px; padding: 2px 8px; margin-top: 4px; font-size: 12px; }
+.reading { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.subject { flex: none; padding: 12px 20px; font-size: 18px; border-bottom: 1px solid #e5e5e5; display: flex; gap: 14px; align-items: center; }
+.subject .ai { font-size: 13px; background: #eef3fb; color: #0f6cbd; border-radius: 4px; padding: 4px 10px; white-space: nowrap; }
+.thread { flex: 1; min-height: 0; overflow: auto; padding: 0 28px; font-size: 14px; line-height: 1.45; }
+.msg { border-bottom: 1px solid #eee; padding: 16px 0; }
+.msg .head { display: flex; gap: 12px; align-items: flex-start; margin-bottom: 10px; }
+.msg .meta { flex: 1; font-size: 13px; color: #555; line-height: 1.4; }
+.msg .meta b { color: #111; font-size: 14.5px; }
+.msg.collapsed .head { margin: 0; }
+.msg.collapsed .snippet { color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.msg p { margin: 0 0 10px; }
+.msg ul, .msg ol { margin: 0 0 10px; padding-left: 24px; }
+.sig { margin-top: 18px; font-size: 13px; line-height: 1.5; border-top: 2px solid #c4314b; padding-top: 8px; color: #333; width: 520px; }
+.sig .who { color: #c4314b; font-weight: 700; font-size: 15px; }
+.sig .slogan { color: #c4314b; font-weight: 600; margin-top: 6px; }
+.disclaimer { margin-top: 10px; font-size: 11px; color: #888; }
+.banner { flex: none; padding: 9px 20px; font-size: 13.5px; border-top: 1px solid #e5e5e5; background: #fdf3f4; }
+.banner.info { background: #f3f7fc; }
+.compose { flex: none; height: 44%; display: flex; flex-direction: column; border-top: 1px solid #ddd; padding: 10px 20px; gap: 8px; font-size: 14px; }
+.compose.full { flex: 1; height: auto; }
+.compose .actions { display: flex; gap: 14px; align-items: center; }
+.send { background: #0f6cbd; color: #fff; padding: 6px 18px; border-radius: 4px; font-weight: 600; }
+.field { display: flex; gap: 10px; align-items: center; border-bottom: 1px solid #e5e5e5; padding-bottom: 6px; flex-wrap: wrap; }
+.field .label { border: 1px solid #ccc; padding: 3px 10px; border-radius: 3px; }
+.person { border: 1px solid #ddd; border-radius: 3px; padding: 2px 8px; white-space: nowrap; }
+.draft { white-space: pre-wrap; padding-top: 6px; line-height: 1.45; flex: 1; }
+.quoted { color: #666; border-top: 1px solid #e5e5e5; padding-top: 8px; font-size: 13px; white-space: pre-wrap; }
+</style>
+<script src="common.js"></script>
+<script>
+function message(m) {
+  if (m.collapsed) {
+    return `<div class="msg collapsed"><div class="head">${avatar(m.from, 28)}<div class="meta"><b>${esc(m.from)}</b> · ${esc(m.time)}<div class="snippet">${esc(m.body)}</div></div></div></div>`;
+  }
+  const to = m.to ? `To: ${esc(m.to.join("; "))}` : "";
+  const cc = m.cc ? `<br>Cc: ${esc(m.cc.join("; "))}` : "";
+  const sig = m.signature ? `<div class="sig"><div class="who">${esc(m.signature.name)}</div>${m.signature.lines.map(esc).join("<br>")}${m.signature.slogan ? `<div class="slogan">${esc(m.signature.slogan)}</div>` : ""}</div>` : "";
+  const disclaimer = m.disclaimer ? `<div class="disclaimer">${esc(m.disclaimer)}</div>` : "";
+  return `<div class="msg"><div class="head">${avatar(m.from, 36)}<div class="meta"><b>${esc(m.from)}</b> &lt;${esc(m.email ?? "")}&gt;<br>${to}${cc}</div><div class="meta" style="flex:none">${esc(m.time)}</div></div>${m.html ?? paragraphs(m.body)}${sig}${disclaimer}</div>`;
+}
+
+function render(data, draft) {
+  const folders = data.folders.map((f) => `<div class="${f.on ? "on" : ""} ${f.head ? "head" : ""}"><span>${esc(f.name)}</span><span>${esc(f.count ?? "")}</span></div>`).join("");
+  const list = data.list.map((g) => `<div class="group">${esc(g.title)}</div>` + g.items.map((i) => `
+    <div class="item ${i.on ? "on" : ""} ${i.unread ? "unread" : ""}">${avatar(i.from)}<div class="text">
+      <div class="row"><span class="from">${i.external ? '<span class="ext">External</span>' : ""}${esc(i.from)}</span></div>
+      <div class="row"><span>${esc(i.subject)}</span><span>${esc(i.time)}</span></div>
+      <div class="preview">${esc(i.preview)}</div>${i.attachment ? `<span class="chip">📎 ${esc(i.attachment)}</span>` : ""}</div></div>`).join("")).join("");
+  const c = data.compose;
+  const people = (list) => list.map((p) => `<span class="person">${esc(p)}</span>`).join("");
+  const banners = (c.banners ?? []).map((b) => `<div class="banner ${b.info ? "info" : ""}">${esc(b.text)}</div>`).join("");
+  const compose = `<div class="compose ${c.full ? "full" : ""}">
+    <div class="actions"><span class="send">Send ▾</span><span>From: ${esc(data.account)} ⌄</span></div>
+    <div class="field"><span class="label">To</span>${people(c.to)}</div>
+    ${c.cc ? `<div class="field"><span class="label">Cc</span>${people(c.cc)}</div>` : ""}
+    <div class="field">${esc(c.subject)}</div>
+    <div class="draft">${esc(draft)}</div>
+    ${c.quoted ? `<div class="quoted">${esc(c.quoted)}</div>` : ""}</div>`;
+  const thread = c.full ? "" : `<div class="subject">${esc(data.thread.subject)}<span class="ai">✦ Summarize this email</span></div>
+    <div class="thread" id="thread">${data.thread.messages.map(message).join("")}</div>`;
+  const ribbon = ["File", "Home", "View", "Help", "Message", "Insert", "Format text", "Draw", "Options"]
+    .map((t) => `<span class="${t === "Message" ? "on" : ""}">${t}</span>`).join("");
+  if (data.popout) {
+    show(data.window, `<div class="mail"><div class="ribbon-tabs">${ribbon}</div><div class="ribbon"><span class="box">Aptos ⌄</span><span class="box">12 ⌄</span><b>B</b><i>I</i><u>U</u>${'<span class="icon"></span>'.repeat(14)}</div><div class="reading">${compose}</div></div>`, data.overlays);
+    return;
+  }
+  show(data.window, `<div class="mail">
+    <div class="appbar"><span class="name">${esc(data.app)}</span><span class="search">🔍 Search</span>
+      ${data.reminder ? `<span class="reminder"><b>${esc(data.reminder.title)}</b>${esc(data.reminder.time)}</span>` : ""}</div>
+    <div class="ribbon-tabs">${ribbon}</div>
+    <div class="ribbon"><span class="box">Aptos ⌄</span><span class="box">12 ⌄</span><b>B</b><i>I</i><u>U</u><s>S</s>
+      ${'<span class="icon"></span>'.repeat(22)}</div>
+    <div class="body"><div class="rail">${'<span class="icon"></span>'.repeat(8)}</div>
+      <div class="folders">${folders}</div><div class="list"><div class="filters"><span class="on">Focused</span><span>Other</span></div>${list}</div>
+      <div class="reading">${thread}${banners}${compose}</div></div></div>`, data.overlays);
+  const pane = document.getElementById("thread");
+  if (pane) pane.scrollTop = data.thread.scroll === "bottom" ? pane.scrollHeight : (data.thread.scroll ?? 0);
+}
+</script></head><body></body></html>

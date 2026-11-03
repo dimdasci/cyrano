@@ -8,6 +8,30 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Changed
+
+- Context read from the window now describes the conversation instead of copying messages from
+  the screen: who you're writing to, the language, what it's about, whether you're replying,
+  following up or starting a new topic, and how formal it is. It no longer comes out empty when
+  only part of a long email is visible. Anything Cyrano can't tell from the window is left out
+  for you to add.
+- The output language follows the conversation: when Context shows that the conversation is in
+  Spanish, the language pop-up switches to Spanish before you press Check, whatever language
+  your draft is in. Pick another language to override it.
+- The output language is no longer remembered for each app: you write in different languages
+  in the same app. The Proofreading panel opens with Auto, and the language you pick applies to
+  that panel only. Settings → Style → Per-app defaults no longer has a Language column.
+- While Cyrano reads the conversation from the window, the Context title shows how long it has
+  been reading and a Skip link to check without it. Reading now waits up to 20 seconds instead
+  of 10, so a slow answer is no longer lost.
+- When reading gives nothing, the Context title says why: no conversation in the window, it took
+  too long, or an error. After a timeout or an error, Try Again reads the window again.
+
+### Fixed
+
+- A stopped request is no longer sent to OpenAI a second time.
+- A closed Proofreading panel no longer stays in memory after a failed check.
+
 ## [0.5.0] - 2026-11-02
 
 The Proofreading panel now fits its content, and Settings lets you choose the model for each

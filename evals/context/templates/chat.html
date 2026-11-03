@@ -1,0 +1,108 @@
+<!doctype html>
+<!-- A messenger: app rail, list of chats, open conversation, optional thread panel. Themes: work, personal. See ../README.md. -->
+<html><head><meta charset="utf-8">
+<link rel="stylesheet" href="common.css">
+<style>
+.chat { flex: 1; display: flex; min-width: 0; }
+.rail { width: 64px; flex: none; background: #ebebef; display: flex; flex-direction: column; align-items: center; gap: 26px; padding-top: 20px; }
+.side { width: 320px; flex: none; background: #f5f5f7; border-right: 1px solid #ddd; overflow: hidden; }
+.side .top { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px 10px; font-size: 19px; font-weight: 700; }
+.side .filters { display: flex; gap: 6px; padding: 0 18px 12px; border-bottom: 1px solid #e2e2e2; }
+.side .filters span { border: 1px solid #ccc; border-radius: 14px; padding: 3px 10px; font-size: 12.5px; }
+.side .search { margin: 10px 16px; background: #fff; border: 1px solid #ddd; border-radius: 18px; padding: 7px 14px; color: #888; }
+.side .section { padding: 12px 18px 4px; font-size: 13.5px; color: #444; }
+.conv { display: flex; gap: 10px; align-items: center; padding: 8px 18px; }
+.conv.on { background: #fff; }
+.conv .text { flex: 1; min-width: 0; }
+.conv .row { display: flex; justify-content: space-between; gap: 8px; }
+.conv .name { font-size: 14.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.conv.unread .name { font-weight: 700; }
+.conv .time { font-size: 12px; color: #777; white-space: nowrap; }
+.conv .preview { font-size: 13px; color: #666; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.header { flex: none; display: flex; align-items: center; gap: 12px; padding: 10px 22px; border-bottom: 1px solid #e2e2e2; }
+.header .name { font-size: 18px; font-weight: 700; }
+.header .status { font-size: 12.5px; color: #666; }
+.header .tabs { display: flex; gap: 18px; margin-left: 10px; font-size: 14.5px; color: #444; }
+.header .tabs .on { font-weight: 600; border-bottom: 2px solid #5b5fc7; padding-bottom: 4px; }
+.header .tools { margin-left: auto; display: flex; gap: 16px; }
+.feed { flex: 1; min-height: 0; overflow: auto; padding: 8px 40px 16px; font-size: 14.5px; line-height: 1.45; }
+.date { text-align: center; color: #666; font-size: 13px; margin: 16px 0 8px; }
+.divider { display: flex; align-items: center; gap: 12px; color: #5b5fc7; font-weight: 600; font-size: 13px; margin: 16px 0; }
+.divider::before, .divider::after { content: ""; flex: 1; border-top: 1px solid #5b5fc7; }
+.group { display: flex; gap: 12px; margin: 10px 0; }
+.group.mine { justify-content: flex-end; }
+.group .col { display: flex; flex-direction: column; gap: 4px; max-width: 78%; }
+.group.mine .col { align-items: flex-end; }
+.group .meta { font-size: 12.5px; color: #555; }
+.bubble { background: #f0f0f0; border-radius: 6px; padding: 8px 14px; white-space: pre-wrap; }
+.mine .bubble { background: #e8ebfa; }
+.reaction { font-size: 12px; background: #fff; border: 1px solid #ddd; border-radius: 10px; padding: 0 6px; align-self: flex-start; }
+.picture { width: 300px; height: 360px; border-radius: 6px; overflow: hidden; background: linear-gradient(160deg, #127a8a, #0c4f5a 55%, #e9c32c 56%, #e9c32c 64%, #3d6b45 65%); color: #fff; padding: 18px; font-weight: 700; line-height: 1.15; }
+.picture .big { font-size: 46px; }
+.picture .small { font-size: 12px; font-weight: 500; }
+.compose { flex: none; margin: 8px 22px 16px; border: 1px solid #ccc; border-bottom: 2px solid #5b5fc7; border-radius: 6px; padding: 12px 14px; min-height: 56px; font-size: 14.5px; line-height: 1.45; }
+.compose .draft { white-space: pre-wrap; }
+.compose .placeholder { color: #888; }
+.compose .tools { display: flex; justify-content: flex-end; gap: 14px; margin-top: 10px; }
+.hint { flex: none; text-align: right; font-size: 12px; color: #666; margin: -10px 24px 8px; }
+.thread { width: 420px; flex: none; border-left: 1px solid #ddd; display: flex; flex-direction: column; background: #fafafa; }
+.thread .title { padding: 14px 18px; font-weight: 700; border-bottom: 1px solid #e2e2e2; }
+.thread .feed { padding: 8px 18px; }
+.personal .side { background: #fff; }
+.personal .main { background: #efe7dd; background-image: radial-gradient(#d8cfc2 1px, transparent 1px); background-size: 18px 18px; }
+.personal .header { background: #f7f5f3; }
+.personal .bubble { background: #fff; border-radius: 10px; box-shadow: 0 1px 1px rgba(0,0,0,.08); }
+.personal .mine .bubble { background: #d9fdd3; }
+.personal .compose { background: #fff; border: none; border-radius: 22px; min-height: 0; padding: 10px 18px; }
+.personal .conv.on { background: #f0f0f0; }
+.personal .date { display: table; margin: 14px auto; background: #fff; border-radius: 8px; padding: 3px 12px; font-weight: 600; color: #333; }
+.time-in { font-size: 11px; color: #777; margin-left: 10px; }
+</style>
+<script src="common.js"></script>
+<script>
+function picture(p) {
+  return `<div class="picture"><div class="big">${esc(p.title)}</div><div>${esc(p.subtitle ?? "")}</div><br><div class="small">${(p.lines ?? []).map(esc).join("<br>")}</div></div>`;
+}
+
+/// Consecutive bubbles of one sender under one name and time, as messengers show them.
+function entry(m, theme) {
+  if (m.date) return `<div class="date">${esc(m.date)}</div>`;
+  if (m.divider) return `<div class="divider">${esc(m.divider)}</div>`;
+  const mine = m.from === "me";
+  const time = theme === "personal" ? (t) => `<span class="time-in">${esc(m.time)}</span>` : () => "";
+  const bubbles = (m.texts ?? []).map((t) => `<div class="bubble">${esc(t)}${time()}</div>`).join("");
+  const meta = mine ? (theme === "work" ? `<div class="meta">${esc(m.time)}</div>` : "") : (theme === "work" ? `<div class="meta">${esc(m.from)} &nbsp;${esc(m.time)}</div>` : "");
+  const reaction = m.reaction ? `<div class="reaction">${esc(m.reaction)}</div>` : "";
+  const face = mine || theme === "personal" ? "" : avatar(m.from, 36);
+  return `<div class="group ${mine ? "mine" : ""}">${face}<div class="col">${meta}${m.picture ? picture(m.picture) : ""}${bubbles}${reaction}</div></div>`;
+}
+
+function compose(draft, theme) {
+  const text = draft ? `<div class="draft">${esc(draft)}</div>` : `<div class="placeholder">Type a message</div>`;
+  const tools = theme === "work" ? `<div class="tools">${'<span class="icon"></span>'.repeat(6)}</div>` : "";
+  return `<div class="compose">${text}${tools}</div>` + (theme === "work" ? `<div class="hint">Shift+Enter starts a new line.</div>` : "");
+}
+
+function render(data, draft) {
+  const theme = data.theme ?? "work";
+  const sections = data.sections.map((s) => (s.title ? `<div class="section">⌄ ${esc(s.title)}</div>` : "") + s.items.map((c) => `
+    <div class="conv ${c.on ? "on" : ""} ${c.unread ? "unread" : ""}">${avatar(c.name, theme === "personal" ? 46 : 28)}<div class="text">
+      <div class="row"><span class="name">${esc(c.name)}</span><span class="time">${esc(c.time ?? "")}</span></div>
+      ${c.preview ? `<div class="preview">${esc(c.preview)}</div>` : ""}</div></div>`).join("")).join("");
+  const filters = theme === "work" ? `<div class="filters"><span>Unread</span><span>Channels</span><span>Chats</span></div>` : `<div class="search">🔍 Search</div>`;
+  const h = data.header;
+  const tabs = h.tabs ? `<div class="tabs">${h.tabs.map((t, i) => `<span class="${i === 0 ? "on" : ""}">${esc(t)}</span>`).join("")}</div>` : "";
+  const header = `<div class="header">${avatar(h.name, 40)}<div><div class="name">${esc(h.name)}</div>${h.status ? `<div class="status">${esc(h.status)}</div>` : ""}</div>${tabs}<div class="tools">${'<span class="icon"></span>'.repeat(4)}</div></div>`;
+  const feed = (list) => list.map((m) => entry(m, theme)).join("");
+  const t = data.thread;
+  const thread = t ? `<div class="thread"><div class="title">${esc(t.title)}</div><div class="feed" id="threadfeed">${feed(t.messages)}</div>${compose(draft, theme)}</div>` : "";
+  show(data.window, `<div class="chat ${theme}"><div class="rail">${'<span class="icon"></span>'.repeat(7)}</div>
+    <div class="side"><div class="top">${esc(data.title ?? "Chats")}<span>⋯ ✎</span></div>${filters}${sections}</div>
+    <div class="main">${header}<div class="feed" id="feed">${feed(data.messages)}</div>${t ? "" : compose(draft, theme)}</div>${thread}</div>`, data.overlays);
+  for (const id of ["feed", "threadfeed"]) {
+    const pane = document.getElementById(id);
+    if (pane) pane.scrollTop = pane.scrollHeight;
+  }
+}
+</script></head><body></body></html>

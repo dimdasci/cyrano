@@ -1,0 +1,126 @@
+{
+ "window": {
+  "title": "Search (⌘E)"
+ },
+ "theme": "work",
+ "title": "Chat",
+ "sections": [
+  {
+   "title": null,
+   "items": [
+    {
+     "name": "Alex Morgan (You)"
+    },
+    {
+     "name": "Daniel, Erin and Priya"
+    },
+    {
+     "name": "Data Platform - Pipelines"
+    },
+    {
+     "name": "Data Engineering"
+    }
+   ]
+  },
+  {
+   "title": "Chats",
+   "items": [
+    {
+     "name": "Rahul Mehta",
+     "on": true
+    },
+    {
+     "name": "Priya Raman",
+     "on": false
+    },
+    {
+     "name": "Data Team [Project review]",
+     "on": false
+    },
+    {
+     "name": "Tomas Lindqvist",
+     "on": false
+    },
+    {
+     "name": "Dipika Shah",
+     "on": false
+    },
+    {
+     "name": "Dipika, Kenji and Tomas",
+     "on": false
+    },
+    {
+     "name": "Daniel Ortiz",
+     "on": false
+    },
+    {
+     "name": "Weekly RouteDesk Call",
+     "on": false
+    },
+    {
+     "name": "All Hands - Tech",
+     "on": false
+    },
+    {
+     "name": "Kenji Ito",
+     "on": false
+    },
+    {
+     "name": "Dashboard and Dataset review",
+     "on": false
+    }
+   ]
+  }
+ ],
+ "header": {
+  "name": "Rahul Mehta",
+  "tabs": [
+   "Chat",
+   "Shared",
+   "Notes",
+   "Recap",
+   "Storyline"
+  ]
+ },
+ "messages": [
+  {
+   "from": "Rahul Mehta",
+   "time": "13.10 11:02",
+   "texts": [
+    "Hi Alex, do you have some time this week to go through the RouteDesk dashboards?",
+    "Let me know when you are available"
+   ]
+  },
+  {
+   "from": "me",
+   "time": "13.10 12:32",
+   "texts": [
+    "Hi Rahul, good morning!",
+    "I am available today 2pm-7pm my time, if this works for you. You can check my availability in the calendar, I keep it in actual state, more or less"
+   ]
+  },
+  {
+   "from": "Rahul Mehta",
+   "time": "13.10 13:46",
+   "texts": [
+    "ok"
+   ]
+  },
+  {
+   "divider": "Last read"
+  },
+  {
+   "date": "Today"
+  },
+  {
+   "from": "Rahul Mehta",
+   "time": "09:30",
+   "texts": [
+    "Hi Alex, Good morning",
+    "I was trying to do a poc on amazon quick",
+    "and i wanted to use a dev account...",
+    "can you tell me in which AWS account you have setup your quick for development..."
+   ]
+  }
+ ]
+}

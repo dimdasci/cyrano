@@ -1,0 +1,108 @@
+{
+ "window": {
+  "title": "Search (⌘E)"
+ },
+ "theme": "work",
+ "title": "Chat",
+ "sections": [
+  {
+   "title": null,
+   "items": [
+    {
+     "name": "Alex Morgan (You)"
+    },
+    {
+     "name": "Daniel, Erin and Priya"
+    },
+    {
+     "name": "Data Platform - Pipelines"
+    },
+    {
+     "name": "Data Engineering"
+    }
+   ]
+  },
+  {
+   "title": "Chats",
+   "items": [
+    {
+     "name": "Rahul Mehta",
+     "on": false
+    },
+    {
+     "name": "Priya Raman",
+     "on": true
+    },
+    {
+     "name": "Data Team [Project review]",
+     "on": false
+    },
+    {
+     "name": "Tomas Lindqvist",
+     "on": false
+    },
+    {
+     "name": "Dipika Shah",
+     "on": false
+    },
+    {
+     "name": "Dipika, Kenji and Tomas",
+     "on": false
+    },
+    {
+     "name": "Daniel Ortiz",
+     "on": false
+    },
+    {
+     "name": "Weekly RouteDesk Call",
+     "on": false
+    },
+    {
+     "name": "All Hands - Tech",
+     "on": false
+    },
+    {
+     "name": "Kenji Ito",
+     "on": false
+    },
+    {
+     "name": "Dashboard and Dataset review",
+     "on": false
+    }
+   ]
+  }
+ ],
+ "header": {
+  "name": "Priya Raman",
+  "tabs": [
+   "Chat",
+   "Shared",
+   "Notes",
+   "Recap"
+  ]
+ },
+ "messages": [
+  {
+   "from": "me",
+   "time": "Yesterday 10:05",
+   "texts": [
+    "Hi Priya, the pilot dashboards are live for the night shift too. Let me know what the supervisors say."
+   ]
+  },
+  {
+   "from": "Priya Raman",
+   "time": "Yesterday 17:52",
+   "texts": [
+    "Alex, a few more things after the pilot. I collected them from all four teams, so some of them overlap:\n\n1. The queue report loads in about 40 seconds in the morning, which is when they need it most. Can we pre-compute the first page?\n\n2. Agents on the night shift see yesterday's numbers until 8 am because the refresh runs at 7:30. Could we run it twice, at midnight and 7:30?\n\n3. The export to Excel drops the call reason column. They use it for the weekly review with the client, so this one is the most urgent.\n\n4. They would like the abandoned calls to be red when they're above 5%, like in CallFlow.\n\n5. Nobody uses the map view, we can hide it.\n\n6. The date filter resets every time they switch between tabs. They have to pick the week again each time.\n\n7. Team leads want to see their own team by default instead of the whole site.\n\n8. The tooltip on the service level chart shows the numbers with six decimals.\n\n9. Some of them asked for a dark mode, but this is a nice-to-have.\n\nI promised the supervisors an answer this week with what we can do in the report before the Nov 6 status update and what goes to December."
+   ]
+  }
+ ],
+ "overlays": [
+  {
+   "app": "Messenger · Daniel, Erin and Priya",
+   "title": "Erin Walsh",
+   "text": "Can someone send me the deck from yesterday? I need slide 7 for the client call at 3",
+   "position": "top"
+  }
+ ]
+}

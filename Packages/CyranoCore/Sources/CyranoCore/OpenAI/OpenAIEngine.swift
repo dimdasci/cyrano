@@ -29,7 +29,8 @@ public struct OpenAIEngine: CorrectionEngine {
     }
   }
 
-  /// A network failure before any text arrived is retried once (M13).
+  /// A network failure before any text arrived is retried once (M13). A stopped call is not: its
+  /// request ends with a network error too.
   private func respondRetryingOnce(
     _ call: ModelCall, yield: (ResponseUpdate) -> Void
   ) async throws {
@@ -39,7 +40,7 @@ public struct OpenAIEngine: CorrectionEngine {
         receivedText = true
         yield(update)
       }
-    } catch EngineError.network where !receivedText {
+    } catch EngineError.network where !receivedText && !Task.isCancelled {
       try await respondOnce(call, yield: yield)
     }
   }
@@ -84,8 +85,7 @@ public struct OpenAIEngine: CorrectionEngine {
     request.httpMethod = "POST"
     request.setValue("Bearer \(try await accessToken())", forHTTPHeaderField: "Authorization")
     request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-    request.httpBody = try JSONEncoder().encode(
-      ResponsesRequest.body(call))
+    request.httpBody = ResponsesRequest.body(call).json
     return request
   }
 

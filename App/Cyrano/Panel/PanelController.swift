@@ -63,6 +63,7 @@ final class PanelModel {
 /// A closed panel is released with its session, versions and images, however it was closed.
 final class PanelController: NSObject, NSWindowDelegate {
   private var panel: ProofreadingPanel?
+  private var model: PanelModel?
 
   func show(_ model: PanelModel, near field: CGRect?) {
     close()
@@ -98,14 +99,19 @@ final class PanelController: NSObject, NSWindowDelegate {
     panel.orderFrontRegardless()
     panel.makeKey()
     self.panel = panel
+    self.model = model
   }
 
   func close() {
     panel?.close()
   }
 
+  /// A context still being read is stopped: its call ends with the panel.
   func windowWillClose(_ notification: Notification) {
-    if notification.object as? NSWindow === panel { panel = nil }
+    guard notification.object as? NSWindow === panel else { return }
+    model?.session.stopReadingContext()
+    panel = nil
+    model = nil
   }
 
   private static func screenWithMouse() -> CGRect {

@@ -181,3 +181,40 @@ enum SSE {
     #expect(format?["strict"] as? Bool == true)
   }
 }
+
+/// Holds every request open until the caller is cancelled, as URLSession does.
+actor HangingTransport: HTTPTransport {
+  private(set) var requests = 0
+
+  func data(for request: URLRequest) async throws -> (status: Int, body: Data) {
+    throw URLError(.badServerResponse)
+  }
+
+  func stream(for request: URLRequest) async throws -> HTTPStream {
+    requests += 1
+    do {
+      try await Task.sleep(for: .seconds(60))
+    } catch {
+      throw URLError(.cancelled)
+    }
+    throw URLError(.badServerResponse)
+  }
+}
+
+@Suite struct OpenAIEngineCancellationTests {
+  /// A stopped call ends the request and does not send it again as a network failure.
+  @Test func cancelledCallIsNotSentAgain() async {
+    let transport = HangingTransport()
+    let engine = OpenAIEngine(transport: transport, accessToken: { "token-1" })
+    let call = ModelCall(model: .luna, instructions: "Read.", input: [ChatMessage(.user, "TEXT")])
+    let consumer = Task {
+      for try await _ in engine.respond(call) {}
+    }
+    while await transport.requests == 0 { await Task.yield() }
+    consumer.cancel()
+    _ = await consumer.result
+    try? await Task.sleep(for: .milliseconds(50))
+
+    #expect(await transport.requests == 1)
+  }
+}

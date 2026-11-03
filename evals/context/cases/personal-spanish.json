@@ -1,0 +1,102 @@
+{
+ "window": {
+  "title": ""
+ },
+ "theme": "personal",
+ "title": "Chats",
+ "sections": [
+  {
+   "title": null,
+   "items": [
+    {
+     "name": "Courier Express",
+     "preview": "Su envío 7762225575 de…",
+     "time": "06:01"
+    },
+    {
+     "name": "Mateo Ruiz",
+     "preview": "Como tengo mucho trabajo, puedes…",
+     "time": "Yesterday",
+     "on": true
+    },
+    {
+     "name": "Ирина Белова",
+     "preview": "Ну что, в субботу в силе?",
+     "time": "Sunday"
+    },
+    {
+     "name": "Evaristo Morales",
+     "preview": "muchas gracias!",
+     "time": "Wednesday"
+    },
+    {
+     "name": "Пётр Соколов",
+     "preview": "С днём рождения, дорогой друг!…",
+     "time": "25.10.26"
+    },
+    {
+     "name": "Hannah Okafor",
+     "preview": "See you at the airport then",
+     "time": "20.10.26"
+    }
+   ]
+  }
+ ],
+ "header": {
+  "name": "Mateo Ruiz",
+  "status": "last seen today at 08:45"
+ },
+ "messages": [
+  {
+   "date": "Mon, 26 Oct"
+  },
+  {
+   "from": "Mateo Ruiz",
+   "time": "21:15",
+   "texts": [
+    "Hola Alex, perdón por favor si puedes decirme cómo se llama el libro de español porfa muchas gracias. Un saludo"
+   ]
+  },
+  {
+   "from": "me",
+   "time": "21:21",
+   "picture": {
+    "title": "2 AULA",
+    "subtitle": "INTERNACIONAL PLUS",
+    "lines": [
+     "CURSO DE ESPAÑOL · A2",
+     "EDICIÓN HÍBRIDA",
+     "Contiene un código de acceso de 12 meses al entorno digital"
+    ]
+   },
+   "texts": [
+    "Claro que sí, aquí tienes"
+   ]
+  },
+  {
+   "from": "Mateo Ruiz",
+   "time": "22:34",
+   "texts": [
+    "Muchas gracias Alex buenas noches nos vemos el miércoles"
+   ]
+  },
+  {
+   "from": "me",
+   "time": "22:35",
+   "texts": [
+    "Igualmente! Buenas noches, nos vemos pronto"
+   ]
+  },
+  {
+   "date": "Yesterday"
+  },
+  {
+   "from": "Mateo Ruiz",
+   "time": "13:59",
+   "texts": [
+    "Hola Alex buenas tardes, perdona por molestarte solo una pregunta",
+    "Como tengo mucho trabajo, puedes decirme porfa que deberes tenemos para hacer el miércoles"
+   ]
+  }
+ ]
+}

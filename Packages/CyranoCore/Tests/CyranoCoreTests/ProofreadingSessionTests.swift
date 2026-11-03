@@ -22,6 +22,7 @@ final class FakeEngine: CorrectionEngine {
     var holdsFixes = false
     var holdsContext = false
     var held: (@Sendable () -> Void)?
+    var openStreams = 0
   }
 
   private let state: Mutex<State>
@@ -31,12 +32,16 @@ final class FakeEngine: CorrectionEngine {
   }
 
   var calls: [ModelCall] { state.withLock { $0.calls } }
+  /// Answers not yet finished, failed or cancelled: a stopped call must not stay open.
+  var openStreams: Int { state.withLock { $0.openStreams } }
   var fixCalls: [ModelCall] { calls.filter { $0.instructions.hasPrefix("You are a proofreader") } }
   var contextCalls: [ModelCall] { calls.filter { $0.instructions == Prompts.readContext } }
 
   func failNextFix(with error: EngineError) { state.withLock { $0.failNextFix = error } }
 
   func failContext(with error: EngineError) { state.withLock { $0.context = .failure(error) } }
+
+  func answerContext(with answer: String) { state.withLock { $0.context = .success(answer) } }
 
   /// Keeps the next Fix answers until `release()`, to look at the session while one streams.
   func holdFixes() { state.withLock { $0.holdsFixes = true } }
@@ -69,6 +74,8 @@ final class FakeEngine: CorrectionEngine {
       return .success(state.fixes.removeFirst())
     }
     return AsyncThrowingStream { continuation in
+      state.withLock { $0.openStreams += 1 }
+      continuation.onTermination = { _ in self.state.withLock { $0.openStreams -= 1 } }
       let deliver: @Sendable () -> Void = {
         switch result {
         case .success(let text):
@@ -116,7 +123,7 @@ final class FakeEngine: CorrectionEngine {
     await session(engine).check()
     let input = try #require(engine.fixCalls.first?.input)
     #expect(input.count == 1)
-    #expect(input[0].text.hasPrefix("CONTEXT (the message I am replying to"))
+    #expect(input[0].text.hasPrefix("CONTEXT (who I am writing to"))
     #expect(input[0].text.contains("Do you have pets?"))
     #expect(input[0].text.hasSuffix("TEXT:\n\"\"\"\nI has a cat.\n\"\"\""))
   }
@@ -267,6 +274,19 @@ final class FakeEngine: CorrectionEngine {
     #expect(!session.hasManyImages)
     session.images.append(imageB)
     #expect(session.hasManyImages)
+  }
+
+  @Test func failedCheckDoesNotKeepTheSessionAlive() async {
+    let engine = FakeEngine(fixes: [])
+    engine.failNextFix(with: .network)
+    weak var released: ProofreadingSession?
+    do {
+      let session = session(engine)
+      released = session
+      await session.check()
+      #expect(session.activity == .failed(.network))
+    }
+    #expect(released == nil)
   }
 
   @Test func failedTurnCanBeRetriedWithoutLosingTheText() async {
