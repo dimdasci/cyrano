@@ -1,0 +1,107 @@
+{
+ "window": {
+  "title": "Search (⌘E)"
+ },
+ "theme": "work",
+ "title": "Teams",
+ "sections": [
+  {
+   "title": "Your teams",
+   "items": [
+    {
+     "name": "Data Platform"
+    },
+    {
+     "name": "  General"
+    },
+    {
+     "name": "  Pipelines",
+     "on": true
+    },
+    {
+     "name": "  Releases"
+    },
+    {
+     "name": "Contact Center"
+    },
+    {
+     "name": "  General"
+    },
+    {
+     "name": "  RouteDesk rollout",
+     "unread": true
+    }
+   ]
+  }
+ ],
+ "header": {
+  "name": "Pipelines",
+  "status": "Data Platform · 24 members",
+  "tabs": [
+   "Posts",
+   "Files",
+   "Notes",
+   "+"
+  ]
+ },
+ "messages": [
+  {
+   "from": "Kenji Ito",
+   "time": "Mon 10:14",
+   "texts": [
+    "Heads-up: the nightly load for orders_v2 took 3h 40m last night, almost double. Looking into the cluster size now."
+   ]
+  },
+  {
+   "from": "Dipika Shah",
+   "time": "Mon 10:31",
+   "texts": [
+    "Might be the backfill Marta started on Friday. It runs on the same warehouse."
+   ]
+  },
+  {
+   "from": "Marta Kowalczyk",
+   "time": "Mon 11:02",
+   "texts": [
+    "Yes, that's mine, sorry. I'll move it to the small warehouse and run it at night."
+   ],
+   "reaction": "👍 3"
+  },
+  {
+   "date": "Today"
+  },
+  {
+   "from": "Daniel Ortiz",
+   "time": "09:12",
+   "texts": [
+    "Who owns the interaction_events table now? Product asked for a new column for call reasons and I don't want to break the RouteDesk reports."
+   ]
+  },
+  {
+   "from": "Kenji Ito",
+   "time": "09:40",
+   "texts": [
+    "Reminder: release freeze starts Thursday 18:00 CET. Anything for prod must be merged before that."
+   ]
+  }
+ ],
+ "thread": {
+  "title": "Thread · Daniel Ortiz",
+  "messages": [
+   {
+    "from": "Daniel Ortiz",
+    "time": "09:12",
+    "texts": [
+     "Who owns the interaction_events table now? Product asked for a new column for call reasons and I don't want to break the RouteDesk reports."
+    ]
+   },
+   {
+    "from": "Dipika Shah",
+    "time": "09:20",
+    "texts": [
+     "I think Alex built it, but it moved to the CX team in September?"
+    ]
+   }
+  ]
+ }
+}

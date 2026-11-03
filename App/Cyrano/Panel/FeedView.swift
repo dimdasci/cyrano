@@ -124,7 +124,7 @@ private struct ActivityRow: View {
 
   var body: some View {
     switch session.activity {
-    case .idle, .readingContext:
+    case .idle:
       EmptyView()
     case .checking(let partial):
       Card(title: "Version \(session.versions.count + 1)") {

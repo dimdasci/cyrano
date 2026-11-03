@@ -1,13 +1,14 @@
+import Foundation
 import Testing
 
 @testable import CyranoCore
 
-/// Context type, tone, level and language remembered per app from the panel (05 §2.3, §5).
+/// Context type, tone and level remembered per app from the panel (05 §2.3, §5).
 @MainActor @Suite struct AppDefaultsTests {
   let stored: TestDefaults
   let slack = "com.tinyspeck.slackmacgap"
   let mail = "com.apple.mail"
-  let casual = CheckOptions(tone: .casual, language: .spanish)
+  let casual = CheckOptions(tone: .casual)
   let formal = CheckOptions(textType: .email, tone: .professional, level: .errorsOnly)
 
   init() throws { stored = try TestDefaults() }
@@ -26,6 +27,22 @@ import Testing
     let apps = AppDefaults(defaults: stored.defaults)
     apps.remember(options, for: slack)
     #expect(apps.options(for: slack).customInstructions.isEmpty)
+  }
+
+  /// The language follows the conversation, not the app (02 M7).
+  @Test func languageIsNotRemembered() {
+    var spanish = casual
+    spanish.language = .spanish
+    AppDefaults(defaults: stored.defaults).remember(spanish, for: slack)
+
+    #expect(AppDefaults(defaults: stored.defaults).options(for: slack) == casual)
+  }
+
+  @Test func languageSavedBeforeIsIgnored() throws {
+    let saved = CheckOptions(tone: .casual, language: .russian)
+    stored.defaults.set(try JSONEncoder().encode(saved), forKey: "options.\(slack)")
+
+    #expect(AppDefaults(defaults: stored.defaults).options(for: slack) == casual)
   }
 
   @Test func eachAppIsOneRowWithItsLatestValues() {

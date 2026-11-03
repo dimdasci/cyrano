@@ -1,0 +1,171 @@
+{
+ "window": {
+  "browser": {
+   "tabs": [
+    "Mail - Alex Morgan - Mailbox",
+    "RouteDesk – Dashboards",
+    "Jira – CX-412"
+   ],
+   "active": 0,
+   "url": "mail.brightline-travel.com/mail/inbox/id/AAQkAGI2"
+  }
+ },
+ "app": "Mailbox",
+ "account": "alex.morgan@brightline-travel.com",
+ "reminder": {
+  "title": "RouteDesk – Weekly touchbase",
+  "time": "Tomorrow 4:30 PM · Teams meeting"
+ },
+ "folders": [
+  {
+   "name": "› Favorites",
+   "head": true
+  },
+  {
+   "name": "⌄ alex.morgan@brightline-t…",
+   "head": true
+  },
+  {
+   "name": "Inbox",
+   "on": true
+  },
+  {
+   "name": "Drafts",
+   "count": "[2]"
+  },
+  {
+   "name": "Sent Items"
+  },
+  {
+   "name": "Deleted Items"
+  },
+  {
+   "name": "Junk Email"
+  },
+  {
+   "name": "Notes"
+  },
+  {
+   "name": "Archive"
+  },
+  {
+   "name": "Confluence"
+  },
+  {
+   "name": "Conversation History"
+  },
+  {
+   "name": "Search Folders"
+  },
+  {
+   "name": "Go to Groups"
+  }
+ ],
+ "list": [
+  {
+   "title": "Today",
+   "items": [
+    {
+     "from": "Henrik Solberg; Priya Raman",
+     "subject": "Replace CallFlow with RouteDesk in the Nov 6 status update",
+     "time": "6:48 PM",
+     "preview": "Hello, I will be out of the office until Monday…",
+     "on": true,
+     "attachment": "Solberg_Travel_Update.pdf"
+    }
+   ]
+  },
+  {
+   "title": "Last Week",
+   "items": [
+    {
+     "from": "Brightline No-Reply",
+     "subject": "Reaction Daily Digest - Sat…",
+     "time": "Sat 6:23 PM",
+     "preview": "Mailbox Reactions: Sofia Marin and 3 others…"
+    },
+    {
+     "from": "Atlassian",
+     "subject": "Your API token is about to expire",
+     "time": "Sat 3:07 AM",
+     "preview": "CAUTION: This is an external email and…",
+     "external": true
+    },
+    {
+     "from": "Priya Raman",
+     "subject": "Contact Center Analysis – weekly sync",
+     "time": "Fri 9:58 PM",
+     "preview": "Adding Alex as a second meeting organizer…",
+     "unread": true
+    },
+    {
+     "from": "Priya Raman",
+     "subject": "CX Awareness Detection – feedback",
+     "time": "Fri 2:05 PM",
+     "preview": "Alex – more feedback below on CX dashboards…",
+     "attachment": "SearchReport_Oct.xlsx"
+    },
+    {
+     "from": "Priya Raman",
+     "subject": "CX Awareness — weekly numbers",
+     "time": "Thu 10/29",
+     "preview": "Alex - a bit more feedback on CX numbers…"
+    },
+    {
+     "from": "Marta Kowalczyk",
+     "subject": "PNR Tracker Project",
+     "time": "Thu 10/29",
+     "preview": "Hi Alex, I reached out to Andres to get the export…"
+    },
+    {
+     "from": "Priya Raman",
+     "subject": "QUICK dashboard and mobile view",
+     "time": "Thu 10/29",
+     "preview": "Alex, below is feedback collected from the supervisors…"
+    }
+   ]
+  }
+ ],
+ "thread": {
+  "subject": "AW: Angebot Gruppenreise Messe Hannover 2027",
+  "scroll": "bottom",
+  "messages": [
+   {
+    "from": "Alex Morgan",
+    "time": "Thu 10/29 11:20 AM",
+    "collapsed": true,
+    "body": "Dear Dr. Hoffmann, thank you for your request. Please find attached our offer for the group trip to…"
+   },
+   {
+    "from": "Dr. Katrin Hoffmann",
+    "email": "k.hoffmann@weber-maschinenbau.de",
+    "to": [
+     "Alex Morgan"
+    ],
+    "cc": [
+     "Jens Vogel"
+    ],
+    "time": "Mon 11/2 2:31 PM",
+    "body": "Sehr geehrter Herr Morgan,\n\nvielen Dank für Ihr Angebot vom 29. Oktober. Wir haben es intern besprochen und hätten noch einige Fragen, bevor wir eine Entscheidung treffen können.\n\nErstens: Ist eine kostenfreie Stornierung bis 60 Tage vor Reisebeginn möglich? Unsere Teilnehmerzahl steht erst Ende Januar fest.\n\nZweitens: Können die Hotelzimmer in Hannover auch für eine zusätzliche Nacht vom 19. auf den 20. April verlängert werden?\n\nDrittens: Wir benötigen die Rechnung getrennt nach Kostenstellen (Vertrieb und Technik).\n\nFür eine kurze Rückmeldung bis Ende der Woche wären wir Ihnen sehr dankbar.\n\nMit freundlichen Grüßen",
+    "signature": {
+     "name": "Dr. Katrin Hoffmann",
+     "lines": [
+      "Leiterin Einkauf",
+      "Weber Maschinenbau GmbH · Industriestraße 12 · 30659 Hannover",
+      "Tel. +49 511 555 2040"
+     ]
+    },
+    "disclaimer": "Diese E-Mail kann vertrauliche Informationen enthalten. Sollten Sie nicht der richtige Adressat sein, informieren Sie bitte den Absender."
+   }
+  ]
+ },
+ "compose": {
+  "to": [
+   "Dr. Katrin Hoffmann"
+  ],
+  "cc": [
+   "Jens Vogel"
+  ],
+  "subject": "Re: AW: Angebot Gruppenreise Messe Hannover 2027"
+ }
+}

@@ -4,18 +4,19 @@ import Foundation
 
 enum ResponsesRequest {
   static func body(_ call: ModelCall) -> JSONValue {
-    var body: [String: JSONValue] = [
-      "model": .string(call.model.rawValue),
-      "instructions": .string(call.instructions),
-      "input": .array(call.input.map(message)),
-      "store": false,
-      "stream": true,
-      "reasoning": ["effort": "low"],
+    var body: [JSONValue.Member] = [
+      .init("model", .string(call.model.rawValue)),
+      .init("instructions", .string(call.instructions)),
+      .init("input", .array(call.input.map(message))),
+      .init("store", false),
+      .init("stream", true),
+      .init("reasoning", ["effort": "low"]),
     ]
     if let schema = call.schema {
-      body["text"] = [
-        "format": ["type": "json_schema", "name": "result", "schema": schema, "strict": true]
-      ]
+      body.append(
+        .init(
+          "text",
+          ["format": ["type": "json_schema", "name": "result", "schema": schema, "strict": true]]))
     }
     return .object(body)
   }

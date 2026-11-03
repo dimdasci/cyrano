@@ -1,0 +1,152 @@
+{
+ "window": {
+  "browser": {
+   "tabs": [
+    "Mail - Alex Morgan - Mailbox",
+    "RouteDesk – Dashboards",
+    "Jira – CX-412"
+   ],
+   "active": 0,
+   "url": "mail.brightline-travel.com/mail/inbox/id/AAQkAGI2"
+  }
+ },
+ "app": "Mailbox",
+ "account": "alex.morgan@brightline-travel.com",
+ "reminder": {
+  "title": "RouteDesk – Weekly touchbase",
+  "time": "Tomorrow 4:30 PM · Teams meeting"
+ },
+ "folders": [
+  {
+   "name": "› Favorites",
+   "head": true
+  },
+  {
+   "name": "⌄ alex.morgan@brightline-t…",
+   "head": true
+  },
+  {
+   "name": "Inbox",
+   "on": true
+  },
+  {
+   "name": "Drafts",
+   "count": "[2]"
+  },
+  {
+   "name": "Sent Items"
+  },
+  {
+   "name": "Deleted Items"
+  },
+  {
+   "name": "Junk Email"
+  },
+  {
+   "name": "Notes"
+  },
+  {
+   "name": "Archive"
+  },
+  {
+   "name": "Confluence"
+  },
+  {
+   "name": "Conversation History"
+  },
+  {
+   "name": "Search Folders"
+  },
+  {
+   "name": "Go to Groups"
+  }
+ ],
+ "list": [
+  {
+   "title": "Today",
+   "items": [
+    {
+     "from": "Henrik Solberg; Priya Raman",
+     "subject": "Replace CallFlow with RouteDesk in the Nov 6 status update",
+     "time": "6:48 PM",
+     "preview": "Hello, I will be out of the office until Monday…",
+     "on": true,
+     "attachment": "Solberg_Travel_Update.pdf"
+    }
+   ]
+  },
+  {
+   "title": "Last Week",
+   "items": [
+    {
+     "from": "Brightline No-Reply",
+     "subject": "Reaction Daily Digest - Sat…",
+     "time": "Sat 6:23 PM",
+     "preview": "Mailbox Reactions: Sofia Marin and 3 others…"
+    },
+    {
+     "from": "Atlassian",
+     "subject": "Your API token is about to expire",
+     "time": "Sat 3:07 AM",
+     "preview": "CAUTION: This is an external email and…",
+     "external": true
+    },
+    {
+     "from": "Priya Raman",
+     "subject": "Contact Center Analysis – weekly sync",
+     "time": "Fri 9:58 PM",
+     "preview": "Adding Alex as a second meeting organizer…",
+     "unread": true
+    },
+    {
+     "from": "Priya Raman",
+     "subject": "CX Awareness Detection – feedback",
+     "time": "Fri 2:05 PM",
+     "preview": "Alex – more feedback below on CX dashboards…",
+     "attachment": "SearchReport_Oct.xlsx"
+    },
+    {
+     "from": "Priya Raman",
+     "subject": "CX Awareness — weekly numbers",
+     "time": "Thu 10/29",
+     "preview": "Alex - a bit more feedback on CX numbers…"
+    },
+    {
+     "from": "Marta Kowalczyk",
+     "subject": "PNR Tracker Project",
+     "time": "Thu 10/29",
+     "preview": "Hi Alex, I reached out to Andres to get the export…"
+    },
+    {
+     "from": "Priya Raman",
+     "subject": "QUICK dashboard and mobile view",
+     "time": "Thu 10/29",
+     "preview": "Alex, below is feedback collected from the supervisors…"
+    }
+   ]
+  }
+ ],
+ "thread": {
+  "subject": "Invoice INV-20931 – RouteDesk licenses October",
+  "scroll": 0,
+  "messages": [
+   {
+    "from": "Lukas Brandt",
+    "email": "billing@routedesk.io",
+    "to": [
+     "Alex Morgan"
+    ],
+    "time": "Tue 11/3 7:02 AM",
+    "body": "Dear Alex,\n\nplease find attached the invoice INV-20931 for 85 RouteDesk agent licenses for October 2026. The amount of 12,750.00 USD is due on November 30.\n\nPlease note that 12 licenses were added on October 14 and are billed pro rata.\n\nKind regards,\nLukas Brandt\nBilling, RouteDesk Inc.",
+    "disclaimer": "CAUTION: This email originated from outside the organization. Do not click links or open attachments unless you recognize the sender."
+   }
+  ]
+ },
+ "compose": {
+  "to": [
+   "Hannah Okafor"
+  ],
+  "subject": "FW: Invoice INV-20931 – RouteDesk licenses October",
+  "quoted": "From: Lukas Brandt <billing@routedesk.io>\nSent: Tuesday, November 3, 2026 7:02 AM\nTo: Alex Morgan\nSubject: Invoice INV-20931 – RouteDesk licenses October\n\nDear Alex, please find attached the invoice INV-20931 for 85 RouteDesk agent licenses…"
+ }
+}

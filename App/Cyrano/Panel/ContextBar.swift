@@ -1,4 +1,5 @@
-// What the user is replying to: text and images, above the feed. See docs/specs/05-ui.md §2.3a.
+// Who the user is writing to, what about, in which language: text and images, above the feed.
+// See docs/specs/05-ui.md §2.3a.
 
 import AppKit
 import CyranoCore
@@ -7,7 +8,7 @@ import SwiftUI
 import TipKit
 
 /// Context input: text, images, 📷. Before the first check it is open and focused, so the user
-/// can paste what they are replying to before anything is sent; the check starts by the dialog field.
+/// can say who they are writing to before anything is sent; the check starts by the dialog field.
 struct ContextBar: View {
   let model: PanelModel
   @Bindable var session: ProofreadingSession
@@ -34,7 +35,9 @@ struct ContextBar: View {
         Button(expanded ? "▾ Context" : "▸ Context") { expanded.toggle() }
           .buttonStyle(.plain)
           .fontWeight(.semibold)
-        if !expanded {
+        if let status = session.contextStatus {
+          ContextStatusLine(session: session, status: status)
+        } else if !expanded {
           collapsedSummary
         }
         Spacer()
@@ -52,7 +55,7 @@ struct ContextBar: View {
     .padding(.vertical, 8)
     // A request folds Context away; reading it does not.
     .onChange(of: session.isBusy) { _, busy in
-      if busy && session.activity != .readingContext { expanded = false }
+      if busy && !session.isReadingContext { expanded = false }
     }
     .quickLookPreview($previewing)
   }
@@ -67,17 +70,6 @@ struct ContextBar: View {
       .padding(.vertical, 6)
       .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
       .overlay(RoundedRectangle(cornerRadius: 6).stroke(.separator))
-      .overlay(alignment: .topLeading) {
-        if session.activity == .readingContext {
-          HStack(spacing: 6) {
-            ProgressView().controlSize(.small)
-            Text("Reading context from the window…").foregroundStyle(.tertiary)
-          }
-          .padding(.horizontal, 9)
-          .padding(.vertical, 6)
-          .allowsHitTesting(false)
-        }
-      }
       .focused($editing)
       // Without captured text the cursor goes to Text to check instead.
       .onAppear { editing = session.versions.isEmpty && !session.original.isEmpty }
@@ -99,7 +91,7 @@ struct ContextBar: View {
       Text(firstLine).foregroundStyle(.secondary).lineLimit(1)
         .onTapGesture { expanded = true }
     } else if session.images.isEmpty {
-      Text("Add what you're replying to").foregroundStyle(.tertiary).lineLimit(1)
+      Text("Add who you're writing to").foregroundStyle(.tertiary).lineLimit(1)
         .onTapGesture { expanded = true }
     }
     thumbnails(size: CGSize(width: 30, height: 22), removable: false)
@@ -169,7 +161,7 @@ struct ContextBar: View {
       Image(systemName: "camera")
     }
     .buttonStyle(.borderless)
-    .help("Add a screenshot of the window you're replying in")
+    .help("Add a screenshot of the window you're writing in")
     .accessibilityLabel("Capture window")
     .disabled(session.isBusy)
     .popover(isPresented: $explainingCapture, arrowEdge: .bottom) {
@@ -191,7 +183,7 @@ private struct CaptureAccessPrompt: View {
 
   var body: some View {
     VStack(alignment: .trailing, spacing: 10) {
-      Text("To see the conversation you're replying to, Cyrano needs to capture this window once.")
+      Text("To see the conversation you're writing in, Cyrano needs to capture this window once.")
         .fixedSize(horizontal: false, vertical: true)
         .frame(width: 260, alignment: .leading)
       Button("Continue", action: proceed)

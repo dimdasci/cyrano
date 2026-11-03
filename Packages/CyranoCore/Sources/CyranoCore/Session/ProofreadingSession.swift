@@ -9,8 +9,6 @@ public import Observation
 public final class ProofreadingSession {
   public enum Activity: Hashable, Sendable {
     case idle
-    /// Context is being read from a screenshot of the window; Check waits for it (02 C6).
-    case readingContext
     case checking(partial: String)
     /// A dialog message waits for its kind; it is not in the feed yet.
     case classifying(request: String)
@@ -29,14 +27,16 @@ public final class ProofreadingSession {
 
   /// The text to check; the user may edit it until the first check.
   public var original: String
-  /// What the user is replying to; used from the next check on. Typing here stops reading it.
+  /// Who the text is for, what about, or the message it replies to; used from the next check on.
+  /// Typing here stops reading it.
   public var context: String {
     didSet {
-      guard activity == .readingContext else { return }
-      contextReading?.cancel()
-      activity = .idle
+      if context != oldValue { stopReadingContext() }
     }
   }
+  /// Reading the context from the window, or why it gave nothing; nil when there is nothing to
+  /// say (02 C6).
+  public private(set) var contextStatus: ContextStatus?
   /// PNG images of what the user is replying to; sent with the first message (M10).
   public var images: [Data] = []
   public var options: CheckOptions
@@ -54,6 +54,8 @@ public final class ProofreadingSession {
   /// The context as it went out in the last Fix request.
   private var sentContext: (text: String, images: [Data])?
   private var contextReading: Task<String, any Error>?
+  /// The window as it was when the panel opened, for Try Again after a failed read.
+  private var contextScreenshot: Data?
 
   public init(
     original: String, context: String = "", options: CheckOptions,
@@ -79,10 +81,11 @@ public final class ProofreadingSession {
   /// Many images make a check slower and use more of the plan limit (M10).
   public var hasManyImages: Bool { images.count > 10 }
 
+  /// Check waits while the context is read.
   public var isBusy: Bool {
     switch activity {
-    case .readingContext, .checking, .classifying, .replying: true
-    case .idle, .failed: false
+    case .checking, .classifying, .replying: true
+    case .idle, .failed: isReadingContext
     }
   }
 
@@ -100,27 +103,6 @@ public final class ProofreadingSession {
     }
   }
 
-  /// Fills Context with who is in the conversation and what the text replies to, read by Luna
-  /// from a screenshot of the window. Nothing on screen, an error or the timeout leave it empty.
-  public func readContext(from screenshot: Data, timeout: Duration = .seconds(10)) async {
-    activity = .readingContext
-    let call = ModelCall(
-      model: models.context, instructions: Prompts.readContext,
-      input: [ChatMessage(.user, Prompts.contextInput(original), images: [screenshot])])
-    let reading = Task { try await run(call) }
-    contextReading = reading
-    let timer = Task {
-      try await Task.sleep(for: timeout)
-      reading.cancel()
-    }
-    let text = try? await reading.value
-    timer.cancel()
-    // The user typed in Context meanwhile: their text stays.
-    guard activity == .readingContext else { return }
-    activity = .idle
-    context = text?.trimmed ?? ""
-  }
-
   public func perform(message: String) async {
     switch action(for: message) {
     case .check: await check()
@@ -136,7 +118,8 @@ public final class ProofreadingSession {
   /// The first check, or a recheck of the latest version after settings or context changed.
   public func check() async {
     let origin: Version.Origin = versions.isEmpty ? .check : .recheck
-    retry = { await self.check() }
+    stopReadingContext()
+    retry = { [weak self] in await self?.check() }
     activity = .checking(partial: "")
     do {
       let text = try await fix(prompt: userPrompt(for: origin)) { .checking(partial: $0) }
@@ -150,7 +133,7 @@ public final class ProofreadingSession {
   public func send(_ message: String) async {
     let message = message.trimmed
     guard !message.isEmpty else { return }
-    retry = { await self.send(message) }
+    retry = { [weak self] in await self?.send(message) }
     activity = .classifying(request: message)
     do {
       let intent = try await classify(message)
@@ -319,5 +302,69 @@ extension ProofreadingSession {
     guard change.terms.contains(term) else { return false }
     reject(change)
     return dictionary.add(term)
+  }
+}
+
+/// Context read from a screenshot of the window before the first check (02 C6).
+extension ProofreadingSession {
+  public var isReadingContext: Bool {
+    if case .reading = contextStatus { true } else { false }
+  }
+
+  /// Fills Context with who the text is for, what about and in which language, read from a
+  /// screenshot of the window, and sets the output language to the conversation's unless the
+  /// user chose one (02 M7). Otherwise `contextStatus` says why Context stays empty.
+  public func readContext(from screenshot: Data, timeout: Duration = .seconds(20)) async {
+    stopReadingContext()
+    contextScreenshot = screenshot
+    contextStatus = .reading(since: Date())
+    let call = ModelCall.readContext(screenshot: screenshot, draft: original, model: models.context)
+    let reading = Task { try await run(call) }
+    contextReading = reading
+    let timer = Task {
+      do { try await Task.sleep(for: timeout) } catch { return false }
+      reading.cancel()
+      return true
+    }
+    let result = await reading.result
+    timer.cancel()
+    let timedOut = await timer.value
+    // Skipped, typed over or read again meanwhile: that already set the status.
+    guard contextReading == reading else { return }
+    contextReading = nil
+    finishReading(result, timedOut: timedOut)
+  }
+
+  /// Try Again after a failed read: the same screenshot, read again.
+  public func readContextAgain() async {
+    guard let contextScreenshot else { return }
+    await readContext(from: contextScreenshot)
+  }
+
+  /// Skip: stops the call, and the check goes without the context.
+  public func stopReadingContext() {
+    contextReading?.cancel()
+    contextReading = nil
+    contextScreenshot = nil
+    contextStatus = nil
+  }
+
+  private func finishReading(_ result: Result<String, any Error>, timedOut: Bool) {
+    switch result {
+    case .success(let answer):
+      guard let read = ConversationContext(answer: answer) else {
+        contextStatus = .failed(.failed("The answer was not the fields asked for."))
+        return
+      }
+      context = read.text
+      if let language = read.language, options.language == .sameAsText {
+        options.language = language
+      }
+      contextStatus = read.text.isEmpty ? .nothingFound : nil
+    case .failure where timedOut:
+      contextStatus = .timedOut
+    case .failure(let error):
+      contextStatus = .failed(error as? EngineError ?? .failed(String(describing: error)))
+    }
   }
 }

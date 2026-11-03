@@ -1,0 +1,85 @@
+{
+ "window": {
+  "title": ""
+ },
+ "theme": "personal",
+ "title": "Chats",
+ "sections": [
+  {
+   "title": null,
+   "items": [
+    {
+     "name": "Courier Express",
+     "preview": "Your parcel 7762225575 is on its way",
+     "time": "06:01"
+    },
+    {
+     "name": "Ирина Белова",
+     "preview": "Ну что, в субботу в силе?",
+     "time": "Yesterday",
+     "on": true
+    },
+    {
+     "name": "Mateo Ruiz",
+     "preview": "¡De nada! Buen día, tío.",
+     "time": "Yesterday"
+    },
+    {
+     "name": "Пётр Соколов",
+     "preview": "С днём рождения, дорогой друг!…",
+     "time": "Sunday"
+    },
+    {
+     "name": "Hannah Okafor",
+     "preview": "See you at the airport then",
+     "time": "Thursday"
+    },
+    {
+     "name": "Airline Info",
+     "preview": "Online check-in is now open for your flight",
+     "time": "05.10.26"
+    }
+   ]
+  }
+ ],
+ "header": {
+  "name": "Ирина Белова",
+  "status": "last seen today at 08:45"
+ },
+ "messages": [
+  {
+   "date": "Thursday"
+  },
+  {
+   "from": "Ирина Белова",
+   "time": "19:02",
+   "texts": [
+    "Привет! Мы с Олегом думаем в субботу поехать на озеро, если погода будет нормальная. Поедешь с нами?"
+   ]
+  },
+  {
+   "from": "me",
+   "time": "19:40",
+   "texts": [
+    "Привет! Звучит здорово, думаю да. Во сколько выезжаете?"
+   ]
+  },
+  {
+   "from": "Ирина Белова",
+   "time": "19:41",
+   "texts": [
+    "Часов в 9, чтобы успеть до жары. Можем тебя забрать по дороге"
+   ]
+  },
+  {
+   "date": "Yesterday"
+  },
+  {
+   "from": "Ирина Белова",
+   "time": "21:15",
+   "texts": [
+    "Ну что, в субботу в силе? Олег спрашивает, брать ли вторую палатку"
+   ]
+  }
+ ]
+}

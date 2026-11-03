@@ -27,7 +27,7 @@ struct StylePane: View {
   }
 }
 
-/// App · Context · Tone · Level · Language, filled from the panel header. Removing a row
+/// App · Context · Tone · Level, filled from the panel header. Removing a row
 /// resets the app to the defaults.
 private struct PerAppDefaults: View {
   let apps: AppDefaults
@@ -43,15 +43,13 @@ private struct PerAppDefaults: View {
             Image(nsImage: row.app.icon).resizable().frame(width: 16, height: 16)
           }
         }
-        // The other columns fit their longest values ("Errors Only", "English (UK)").
+        // The other columns fit their longest values ("Professional", "Errors Only").
         TableColumn("Context") { Text($0.entry.options.textType.title) }
           .width(64)
         TableColumn("Tone") { Text($0.entry.options.tone.title) }
           .width(86)
         TableColumn("Level") { Text($0.entry.options.level.title) }
           .width(80)
-        TableColumn("Language") { Text(language($0.entry.options.language)) }
-          .width(92)
       }
       .frame(height: 150)
       .onDeleteCommand(perform: resetSelected)
@@ -62,7 +60,7 @@ private struct PerAppDefaults: View {
         .disabled(selection.isEmpty)
       Text(
         "Filled from the Proofreading panel. Removing an app resets it to "
-          + "Message · Neutral · Fluency · Auto."
+          + "Message · Neutral · Fluency."
       )
       .font(.caption)
       .foregroundStyle(.secondary)
@@ -80,11 +78,6 @@ private struct PerAppDefaults: View {
     apps.entries
       .map { Row(entry: $0, app: InstalledApp($0.bundleID)) }
       .sorted { $0.app.name.localizedStandardCompare($1.app.name) == .orderedAscending }
-  }
-
-  /// As the language pop-up in the panel header shows it.
-  private func language(_ language: OutputLanguage) -> String {
-    language == .sameAsText ? "Auto" : language.title
   }
 
   private func resetSelected() {

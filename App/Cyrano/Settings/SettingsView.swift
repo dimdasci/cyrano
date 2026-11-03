@@ -34,7 +34,7 @@ private struct GeneralPane: View {
       LaunchAtLogin()
       ReadContextToggle(app: app)
       Section("Models") {
-        modelPicker("Read context", "Who you're replying to, from a screenshot", \.context)
+        modelPicker("Read context", "Describes the conversation from a screenshot", \.context)
         modelPicker("Proofreading", "Checks and the dialog", \.proofreading)
         modelPicker("Explanations", "Reasons for each change", \.explanations)
       }
@@ -44,7 +44,7 @@ private struct GeneralPane: View {
       Section("Permissions") {
         PermissionStatus.accessibility
         PermissionStatus.screenRecording
-        Text("Screen Recording is used to read who you're replying to and for the camera button.")
+        Text("Screen Recording is used to read who you're writing to and for the camera button.")
           .font(.caption)
           .foregroundStyle(.secondary)
       }
@@ -71,7 +71,9 @@ struct ReadContextToggle: View {
   var body: some View {
     Toggle(isOn: $app.readsContext) {
       Text("Read context from the window")
-      Text("A screenshot of the window goes to OpenAI to find who you're replying to.")
+      Text(
+        "A screenshot of the window goes to OpenAI to find who you're writing to, what about "
+          + "and in which language.")
     }
   }
 }

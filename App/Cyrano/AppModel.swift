@@ -22,7 +22,8 @@ final class AppModel {
   var customInstructions: String = StoredSettings.customInstructions {
     didSet { StoredSettings.customInstructions = customInstructions }
   }
-  /// Read who the user is replying to from a screenshot of the window (02 C6).
+  /// Read who the user is writing to, what about and in which language from a screenshot of
+  /// the window (02 C6).
   var readsContext: Bool = StoredSettings.readsContext {
     didSet { StoredSettings.readsContext = readsContext }
   }

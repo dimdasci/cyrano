@@ -59,6 +59,19 @@ public enum OutputLanguage: String, CaseIterable, Codable, Sendable {
     }
   }
 
+  /// The language a conversation is in, by its English name; English is US English (02 M7).
+  init?(conversation name: String) {
+    let name = name.trimmed.lowercased()
+    if name.hasPrefix("english") {
+      self = .englishUS
+      return
+    }
+    guard let language = Self.allCases.first(where: { $0.title.lowercased() == name }) else {
+      return nil
+    }
+    self = language
+  }
+
   /// How the language is named inside prompts.
   var promptName: String {
     self == .sameAsText ? "the same language as the TEXT" : title

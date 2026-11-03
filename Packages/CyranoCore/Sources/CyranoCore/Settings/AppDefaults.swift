@@ -1,5 +1,5 @@
-// Context type, tone, level and language per app, remembered from the panel header and listed
-// in Settings → Style. See docs/specs/02 S2 and 05-ui.md §2.3, §5.
+// Context type, tone and level per app, remembered from the panel header and listed in
+// Settings → Style. See docs/specs/02 S2 and 05-ui.md §2.3, §5.
 
 public import Foundation
 public import Observation
@@ -27,15 +27,12 @@ public final class AppDefaults {
     entries.first { $0.bundleID == bundleID }?.options ?? CheckOptions()
   }
 
-  /// Custom instructions belong to Style, not to the app.
   public func remember(_ options: CheckOptions, for bundleID: String?) {
-    var stored = options
-    stored.customInstructions = ""
-    defaults.set(try? JSONEncoder().encode(stored), forKey: Self.key(bundleID))
+    defaults.set(try? JSONEncoder().encode(Self.ofApp(options)), forKey: Self.key(bundleID))
     entries = Self.read(defaults)
   }
 
-  /// The app goes back to Message · Neutral · Fluency · Same as Text.
+  /// The app goes back to Message · Neutral · Fluency.
   public func reset(_ bundleID: String?) {
     defaults.removeObject(forKey: Self.key(bundleID))
     entries = Self.read(defaults)
@@ -48,13 +45,22 @@ public final class AppDefaults {
     prefix + (bundleID ?? manual)
   }
 
+  /// What belongs to the app. Custom instructions belong to Style; the language follows the
+  /// conversation (02 M7), and one saved before 0.6 is ignored.
+  nonisolated private static func ofApp(_ options: CheckOptions) -> CheckOptions {
+    var options = options
+    options.customInstructions = ""
+    options.language = .sameAsText
+    return options
+  }
+
   private static func read(_ defaults: UserDefaults) -> [Entry] {
     defaults.dictionaryRepresentation().compactMap { key, value in
       guard key.hasPrefix(prefix), let data = value as? Data,
         let options = try? JSONDecoder().decode(CheckOptions.self, from: data)
       else { return nil }
       let app = String(key.dropFirst(prefix.count))
-      return Entry(bundleID: app == manual ? nil : app, options: options)
+      return Entry(bundleID: app == manual ? nil : app, options: ofApp(options))
     }
     .sorted { $0.id < $1.id }
   }

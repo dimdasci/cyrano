@@ -67,7 +67,9 @@ enum Prompts {
   ) -> String {
     var message = ""
     if !context.trimmed.isEmpty {
-      message += "CONTEXT (the message I am replying to; DO NOT correct or repeat it):\n"
+      message +=
+        "CONTEXT (who I am writing to, about what, or the message I am replying to; "
+        + "DO NOT correct or repeat it; it does not set the output language):\n"
       message += quoted(context.trimmed) + "\n\n"
     }
     message += "TEXT:\n" + quoted(text)
@@ -128,17 +130,39 @@ enum Prompts {
       .joined(separator: "\n")
   }
 
-  /// Who is in the conversation and what the draft replies to, from a screenshot (04 §4.5).
+  /// Who the draft is for, what about and in which language, from a screenshot (04 §4.5).
   static let readContext = """
-    The image is a screenshot of the app window where the user is writing a reply. TEXT is the \
-    user's draft.
-    Find the conversation the draft belongs to and output, in plain text:
-    People: everyone taking part, by the names shown on screen, and where it happens (channel, \
-    group, email thread) if visible.
-    Replying to: the message or messages the draft answers, word for word, each with its \
-    sender's name.
-    Copy messages in their original language. DO NOT include the draft. DO NOT add explanations.
-    If the screenshot shows no conversation the draft belongs to, output nothing.
+    The image is a screenshot of the app window where the user is writing. TEXT is the user's \
+    draft, typed in the window's input field.
+    Describe the conversation the draft belongs to, so a proofreader can choose the language, \
+    tone and words. The draft only shows which conversation it is: describe the conversation, \
+    not the draft. Use only what is visible: set a field you can't tell to null. Do not guess.
+    with: who the user writes to, by the names shown on screen; a job title only if it is \
+    written (signature, profile). With many recipients, name the person the draft answers and \
+    say how many others there are. DO NOT say how they relate to the user.
+    language: the language of the conversation in English, for example "Spanish". Not the \
+    language of the draft.
+    format: the app and the kind of exchange (email thread, new email, forwarded email, 1:1 \
+    chat, channel thread, ticket), and whether the draft replies, follows up on the user's own \
+    earlier message, or starts a new topic. Forwarding an email is not a new topic. A channel \
+    or group name in the header means a channel or group, not a 1:1 chat.
+    about: the topic of the conversation, from the messages, subject or title on screen, in one \
+    sentence of your own words. DO NOT say what the draft says or does. null if the draft \
+    starts a new topic: the earlier messages are another conversation. null if the topic is \
+    unclear. In a forwarded email, the forwarded message is the topic.
+    style: how people write there, judged by the messages on screen, not by the draft: short \
+    messages or long emails, technical terms, emoji.
+    formality: formal, neutral or informal.
+    One chat holds many conversations. If the last message is recent and from the other \
+    person, the draft likely answers it. After a pause (a date separator, the user's own \
+    messages last), a draft about something else starts a new topic: leave the old messages \
+    out of about. If the draft refers to the user's own unanswered message, it is a follow-up: \
+    about says what that message was about.
+    When only part of a conversation is visible, rely on the To field and the subject of the \
+    reply, the sender and their signature, the thread or channel title.
+    DO NOT copy messages or sentences from the screen. DO NOT describe the draft, the app's \
+    interface or other conversations (lists, previews, notifications).
+    If nothing on screen relates to the draft, set every field to null.
     """
 
   static func contextInput(_ text: String) -> String { "TEXT:\n" + quoted(text) }

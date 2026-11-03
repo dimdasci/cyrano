@@ -1,0 +1,48 @@
+{
+  "window": { "browser": { "tabs": ["Mail - Alex Morgan - Mailbox", "RouteDesk – Dashboards", "Jira – CX-412"], "active": 0, "url": "mail.brightline-travel.com/mail/inbox/id/AAQkAGI2" } },
+  "app": "Mailbox",
+  "account": "alex.morgan@brightline-travel.com",
+  "reminder": { "title": "RouteDesk – Weekly touchbase", "time": "Tomorrow 4:30 PM · Teams meeting" },
+  "folders": [
+    { "name": "› Favorites", "head": true },
+    { "name": "⌄ alex.morgan@brightline-t…", "head": true },
+    { "name": "Inbox", "on": true },
+    { "name": "Drafts", "count": "[2]" },
+    { "name": "Sent Items" }, { "name": "Deleted Items" }, { "name": "Junk Email" },
+    { "name": "Notes" }, { "name": "Archive" }, { "name": "Confluence" },
+    { "name": "Conversation History" }, { "name": "Search Folders" }, { "name": "Go to Groups" }
+  ],
+  "list": [
+    { "title": "Today", "items": [
+      { "from": "Henrik Solberg; Priya Raman", "subject": "Replace CallFlow with RouteDesk in the Nov 6 status update", "time": "6:48 PM", "preview": "Hello, I will be out of the office until Monday…", "on": true, "attachment": "Solberg_Travel_Update.pdf" }
+    ] },
+    { "title": "Last Week", "items": [
+      { "from": "Brightline No-Reply", "subject": "Reaction Daily Digest - Sat…", "time": "Sat 6:23 PM", "preview": "Mailbox Reactions: Sofia Marin and 3 others…" },
+      { "from": "Atlassian", "subject": "Your API token is about to expire", "time": "Sat 3:07 AM", "preview": "CAUTION: This is an external email and…", "external": true },
+      { "from": "Priya Raman", "subject": "Contact Center Analysis – weekly sync", "time": "Fri 9:58 PM", "preview": "Adding Alex as a second meeting organizer…", "unread": true },
+      { "from": "Priya Raman", "subject": "CX Awareness Detection – feedback", "time": "Fri 2:05 PM", "preview": "Alex – more feedback below on CX dashboards…", "attachment": "SearchReport_Oct.xlsx" },
+      { "from": "Priya Raman", "subject": "CX Awareness — weekly numbers", "time": "Thu 10/29", "preview": "Alex - a bit more feedback on CX numbers…" },
+      { "from": "Marta Kowalczyk", "subject": "PNR Tracker Project", "time": "Thu 10/29", "preview": "Hi Alex, I reached out to Andres to get the export…" },
+      { "from": "Priya Raman", "subject": "QUICK dashboard and mobile view", "time": "Thu 10/29", "preview": "Alex, below is feedback collected from the supervisors…" }
+    ] }
+  ],
+  "thread": {
+    "subject": "Replace CallFlow with RouteDesk in the Nov 6 status update.",
+    "scroll": "bottom",
+    "messages": [
+      { "from": "Henrik Solberg", "time": "Mon 11/2 9:14 AM", "collapsed": true, "body": "Hello, I will be out of the office until Monday, November 9. For urgent matters please contact…" },
+      { "from": "Priya Raman", "email": "priya.raman@brightline-travel.com", "to": ["Alex Morgan"], "cc": ["Henrik Solberg", "Contact Center Leads"], "time": "Mon 11/2 6:48 PM",
+        "body": "Hi Alex,\n\nThe RouteDesk integration failed again this morning with \"invalid parameter\" when the supervisors opened the queue report. I looked at the logs with Daniel and we think it is the dataset, not the app itself. The integration has been stable for three weeks, so something changed on the data side over the weekend.\n\nWhat we know so far:\n\n1. A column name changed or was removed — if the underlying cc-interaction-source dataset was recently updated (columns renamed, removed, or restructured), the SQL queries in the app would reference fields that no longer exist, causing the integration to reject the request as \"invalid parameter.\"\n\n2. The dataset was replaced or republished — if someone republished the dataset with a new schema, the dataset ID (cc-interaction-source) still resolves, but the field references inside the queries may no longer match.\n\n3. A data type mismatch — for example, the app casts interaction_business_date as a DATE. If that column's type changed upstream, the cast could fail.\n\nWhat to do\n\n• Check with your data team whether the cc-interaction-source dataset was recently modified, republished, or had any schema changes (column renames, removals, type changes).\n• Try refreshing the page — if it was a transient issue on the dataset service side, a retry may work.\n• If the error persists, the app's SQL queries likely need to be updated to match the current dataset schema.\n\nI'd like to have this sorted before the Nov 6 status update so we can say RouteDesk fully replaces CallFlow.",
+        "signature": { "name": "Priya Raman", "lines": ["Contact Center Technology Manager", "812.650.7188  ·  www.brightline-travel.com", "US: 304 W Kirkwood Ave. Ste. 101 Bloomington, IN 47404", "CAN: 1300-1969 Upper Water St. Halifax, NS B3J 3R7"], "slogan": "One Another | Customer | Interdependency | Integrity | Profitability" },
+        "disclaimer": "This message may contain confidential information. If you are not the intended recipient, please notify the sender and delete it." }
+    ]
+  },
+  "compose": {
+    "to": ["Priya Raman"],
+    "subject": "Re: Replace CallFlow with RouteDesk in the Nov 6 status update.",
+    "banners": [
+      { "text": "⚠ You are not responding to the latest message in this conversation" },
+      { "text": "◇ Send this email during your work hours: Tue, Nov 03 at 9:30 AM", "info": true }
+    ]
+  }
+}

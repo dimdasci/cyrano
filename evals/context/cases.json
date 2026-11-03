@@ -1,0 +1,280 @@
+[
+  {
+    "id": "mail-tail",
+    "page": {
+      "template": "templates/mail.html",
+      "data": "cases/mail-tail.json"
+    },
+    "text": "Hi Priya, thanks, I will check with the data team and reply soon",
+    "target": "With: Priya Raman, Contact Center Technology Manager.\nLanguage: English.\nAbout: the RouteDesk integration fails with an invalid parameter error, probably after a dataset schema change; needed before the Nov 6 status update.\nFormat: reply in an email thread.\nStyle: long structured emails, technical terms.\nFormality: neutral.",
+    "expect": {
+      "mustContain": [
+        "Priya Raman",
+        "RouteDesk"
+      ],
+      "mustNotContain": [
+        "check with the data team",
+        "Henrik Solberg",
+        "PNR Tracker",
+        "Atlassian"
+      ]
+    }
+  },
+  {
+    "id": "mail-reply-all",
+    "page": {
+      "template": "templates/mail.html",
+      "data": "cases/mail-reply-all.json"
+    },
+    "text": "Hi Marta, sure, I can take the topic 1 about RouteDesk. I will prepare the numbers till Friday.",
+    "target": "With: Marta Kowalczyk, Senior Program Manager, Partner Operations, and the other recipients of the thread.\nLanguage: English.\nAbout: the agenda of the Q4 vendor review on Nov 12; Marta asks Alex to own the contact center tooling topic and confirm by Wednesday.\nFormat: reply all in an email thread.\nStyle: structured emails with lists.\nFormality: neutral.",
+    "expect": {
+      "mustContain": [
+        "Marta",
+        "vendor review"
+      ],
+      "mustNotContain": [
+        "prepare the numbers",
+        "Henrik Solberg",
+        "Erin Walsh",
+        "Friday"
+      ]
+    }
+  },
+  {
+    "id": "mail-forward",
+    "page": {
+      "template": "templates/mail.html",
+      "data": "cases/mail-forward.json"
+    },
+    "text": "Hi Hannah, please see the invoice below for the RouteDesk licenses. Can you check it with the budget, 12 licenses were added in October.",
+    "target": "With: Hannah Okafor.\nLanguage: English.\nAbout: forwarding a vendor invoice for RouteDesk agent licenses for October.\nFormat: forwarded email.\nFormality: neutral.",
+    "expect": {
+      "mustContain": [
+        "Hannah Okafor",
+        "invoice"
+      ],
+      "mustNotContain": [
+        "Dear Alex",
+        "check it with the budget",
+        "budget"
+      ]
+    }
+  },
+  {
+    "id": "mail-new",
+    "page": {
+      "template": "templates/mail.html",
+      "data": "cases/mail-new.json"
+    },
+    "text": "Hi Kenji, for the vendor review could you prepare the data platform costs by month for Q3 and Q4? Marta needs the slides till Wednesday.",
+    "target": "With: Kenji Ito.\nLanguage: English.\nAbout: data platform costs for the Q4 vendor review.\nFormat: new email.",
+    "expect": {
+      "mustContain": [
+        "Kenji",
+        "new"
+      ],
+      "mustNotContain": [
+        "Priya",
+        "dataset",
+        "invalid parameter",
+        "Q3",
+        "slides"
+      ]
+    }
+  },
+  {
+    "id": "mail-popout",
+    "page": {
+      "template": "templates/mail.html",
+      "data": "cases/mail-popout.json"
+    },
+    "text": "Hi Priya, yes, add me as organizer, no problem. I will also send the agenda before the meeting.",
+    "target": "With: Priya Raman.\nLanguage: English.\nAbout: the Contact Center Analysis weekly sync.\nFormat: reply in an email thread.",
+    "expect": {
+      "mustContain": [
+        "Priya Raman",
+        "sync"
+      ],
+      "mustNotContain": [
+        "dataset",
+        "invalid parameter",
+        "add me as organizer",
+        "organizer",
+        "agenda"
+      ]
+    }
+  },
+  {
+    "id": "mail-client-german",
+    "page": {
+      "template": "templates/mail.html",
+      "data": "cases/mail-client-german.json"
+    },
+    "text": "Sehr geehrte Frau Dr. Hoffmann, vielen Dank fur Ihre Fragen. Die kostenlose Stornierung ist bis 60 Tage vor Reisebeginn moglich und die zusätzliche Nacht wir können auch buchen.",
+    "target": "With: Dr. Katrin Hoffmann, Leiterin Einkauf, Weber Maschinenbau GmbH; Jens Vogel in Cc.\nLanguage: German.\nAbout: questions about the offer for a group trip to the Hannover trade fair 2027: free cancellation, an extra hotel night, invoices per cost center.\nFormat: reply in an email thread.\nStyle: long, structured business emails.\nFormality: formal.",
+    "expect": {
+      "mustContain": [
+        "Hoffmann",
+        "German",
+        "formal"
+      ],
+      "mustNotContain": [
+        "Sehr geehrter Herr Morgan",
+        "Für eine kurze Rückmeldung"
+      ]
+    }
+  },
+  {
+    "id": "chat-today-question",
+    "page": {
+      "template": "templates/chat.html",
+      "data": "cases/chat-today-question.json"
+    },
+    "text": "Hi Rahul, sure: aws account is 381946027715. And Quick URL is https://us-east-1.quicksight.aws.amazon.com/sn/account/dev-data-quicksight/start/home",
+    "target": "With: Rahul Mehta.\nLanguage: English.\nAbout: Rahul is doing a proof of concept on Amazon Quick and asks which AWS account Alex set it up in for development.\nFormat: reply in a 1:1 work chat.\nStyle: short messages.\nFormality: informal.",
+    "expect": {
+      "mustContain": [
+        "Rahul Mehta",
+        "AWS"
+      ],
+      "mustNotContain": [
+        "381946027715",
+        "quicksight.aws",
+        "2pm",
+        "availab",
+        "URL"
+      ]
+    }
+  },
+  {
+    "id": "chat-new-topic",
+    "page": {
+      "template": "templates/chat.html",
+      "data": "cases/chat-own-messages.json"
+    },
+    "text": "Hi Tomas, I added the new RouteDesk dashboards to the shared folder. Could you have a look before Friday?",
+    "target": "With: Tomas Lindqvist.\nLanguage: English.\nFormat: new topic in a 1:1 work chat; the user's earlier messages have no answer.\nStyle: short to medium messages.\nFormality: neutral.",
+    "expect": {
+      "mustContain": [
+        "Tomas Lindqvist",
+        "new"
+      ],
+      "mustNotContain": [
+        "contract",
+        "user directory",
+        "access",
+        "shared folder",
+        "dashboards"
+      ]
+    }
+  },
+  {
+    "id": "chat-follow-up",
+    "page": {
+      "template": "templates/chat.html",
+      "data": "cases/chat-own-messages.json"
+    },
+    "text": "Hi Tomas, just following up on my question from yesterday about the contract. Do we need to sign a new one?",
+    "target": "With: Tomas Lindqvist.\nLanguage: English.\nAbout: follow-up on yesterday's unanswered question about the contract: 9 of 10 weeks billed, the contract period ended Oct 31, whether a new contract is needed.\nFormat: reminder in a 1:1 work chat.\nFormality: neutral.",
+    "expect": {
+      "mustContain": [
+        "Tomas Lindqvist",
+        "contract"
+      ],
+      "mustNotContain": [
+        "user directory",
+        "following up on my question"
+      ]
+    }
+  },
+  {
+    "id": "channel-thread",
+    "page": {
+      "template": "templates/chat.html",
+      "data": "cases/channel-thread.json"
+    },
+    "text": "Hi Daniel, I built it originally, but since September the CX team owns it. Adding a column is fine, just let Priya know because RouteDesk reports read from it.",
+    "target": "With: Daniel Ortiz, in a thread of the Pipelines channel (Data Platform); Dipika Shah replied in the thread.\nLanguage: English.\nAbout: who owns the interaction_events table; Daniel needs to add a call reason column without breaking the RouteDesk reports.\nFormat: reply in a channel thread.\nStyle: short technical messages.\nFormality: informal.",
+    "expect": {
+      "mustContain": [
+        "Daniel",
+        "interaction_events",
+        "channel"
+      ],
+      "mustNotContain": [
+        "nightly load",
+        "release freeze",
+        "backfill",
+        "warehouse"
+      ]
+    }
+  },
+  {
+    "id": "chat-cut-toast",
+    "page": {
+      "template": "templates/chat.html",
+      "data": "cases/chat-cut-toast.json",
+      "width": 1280,
+      "height": 720
+    },
+    "text": "Hi Priya, thanks for the list. Excel export is the first, I will fix it this week. Pre-compute and second refresh are possible before Nov 6, red color too. Map view we hide.",
+    "target": "With: Priya Raman.\nLanguage: English.\nAbout: a list of report changes the supervisors asked for — refresh times, the Excel export without the call reason, colors, filters, the map view; Priya promised them an answer this week on what can be done before the Nov 6 status update.\nFormat: reply in a 1:1 work chat.\nStyle: long structured messages.\nFormality: neutral.",
+    "expect": {
+      "mustContain": [
+        "Priya",
+        "report"
+      ],
+      "mustNotContain": [
+        "Erin",
+        "slide 7",
+        "deck"
+      ]
+    }
+  },
+  {
+    "id": "personal-russian",
+    "page": {
+      "template": "templates/chat.html",
+      "data": "cases/personal-russian.json"
+    },
+    "text": "Привет! Да, в силе. Вторую палатку брать не надо, у меня своя есть",
+    "target": "With: Ирина Белова.\nLanguage: Russian.\nAbout: a trip to the lake on Saturday; Irina asks if it is still on and whether Oleg should take a second tent.\nFormat: personal chat.\nStyle: short messages.\nFormality: informal.",
+    "expect": {
+      "mustContain": [
+        "Ирина",
+        "Russian"
+      ],
+      "mustNotContain": [
+        "Mateo",
+        "parcel",
+        "Hannah",
+        "у меня своя",
+        "needed"
+      ]
+    }
+  },
+  {
+    "id": "personal-spanish",
+    "page": {
+      "template": "templates/chat.html",
+      "data": "cases/personal-spanish.json"
+    },
+    "text": "Hola Mateo! Para miércoles tenemos que hacer los ejercicios de la unidad 5 en el libro, paginas 62 y 63",
+    "target": "With: Mateo Ruiz.\nLanguage: Spanish.\nAbout: Mateo asks what homework is due for Wednesday's class; earlier Alex shared the textbook, Aula Internacional Plus 2.\nFormat: personal chat.\nStyle: short messages.\nFormality: informal.",
+    "expect": {
+      "mustContain": [
+        "Mateo",
+        "Spanish",
+        "homework"
+      ],
+      "mustNotContain": [
+        "Ирина",
+        "Courier",
+        "unidad 5",
+        "unidad",
+        "62"
+      ]
+    }
+  }
+]
