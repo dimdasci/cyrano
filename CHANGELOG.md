@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-03
+
 ### Changed
 
 - Context read from the window now describes the conversation instead of copying messages from
@@ -178,7 +180,8 @@ The first preview: check a short text in any app with your ChatGPT plan.
 - Sign in with ChatGPT (Plus or Pro). Text goes only to OpenAI and isn't stored there.
 - Menu bar menu: Check Text…, Check Clipboard, model choice, account, Settings.
 
-[Unreleased]: https://github.com/dimdasci/cyrano/compare/v0.5.0...HEAD
+[Unreleased]: https://github.com/dimdasci/cyrano/compare/v0.6.0...HEAD
+[0.6.0]: https://github.com/dimdasci/cyrano/compare/v0.5.0...v0.6.0
 [0.5.0]: https://github.com/dimdasci/cyrano/compare/v0.4.0...v0.5.0
 [0.4.0]: https://github.com/dimdasci/cyrano/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/dimdasci/cyrano/compare/v0.2.0...v0.3.0
