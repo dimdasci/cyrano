@@ -1,18 +1,20 @@
-# Документация
+# Documentation
 
-| Документ | Содержание | Статус |
+| Document | Contents | Status |
 |---|---|---|
-| [specs/01-options.md](specs/01-options.md) | Исходные варианты реализации и UX | исторический |
-| [specs/02-tech-decisions.md](specs/02-tech-decisions.md) | Стек, авторизация, модель, захват текста, хранение, тесты | согласовано |
-| [specs/03-mvp-scope.md](specs/03-mvp-scope.md) | Сценарии, настройки, критерии готовности MVP | согласовано |
-| [specs/04-prompts.md](specs/04-prompts.md) | Конвейер, встроенные промпты, выбор модели, eval | согласовано |
-| [specs/05-ui.md](specs/05-ui.md) | Экраны, панель-чат, состояния, клавиатура, Settings, сверка с HIG | согласовано |
-| [plan.md](plan.md) | Декомпозиция MVP на пакеты работ, что сделано, следующий пакет, отступления от спеки | в работе |
-| [quality.md](quality.md) | Проверки качества кода: `scripts/check`, инструменты, пороги | принято |
-| [releases.md](releases.md) | Версия и номер сборки, changelog и release notes, выпуск релиза, защита `main`, распространение | принято |
-| [wireframes/](wireframes/) | Wireframes всех экранов и как их использовать в разработке | согласовано |
-| [research/openai-sign-in-with-chatgpt.md](research/openai-sign-in-with-chatgpt.md) | Sign in with ChatGPT: протокол, ограничения, оценка | принято |
+| [specs/02-tech-decisions.md](specs/02-tech-decisions.md) | Stack, authorization, model, text capture, storage, tests | agreed |
+| [specs/03-mvp-scope.md](specs/03-mvp-scope.md) | Scenarios, settings, MVP acceptance criteria | agreed |
+| [specs/04-prompts.md](specs/04-prompts.md) | Pipeline, built-in prompts, model choice, eval | agreed |
+| [specs/05-ui.md](specs/05-ui.md) | Screens, chat panel, states, keyboard, Settings, HIG review | agreed |
+| [plan.md](plan.md) | MVP broken down into work packages, what's done, the next package, deviations from the spec | in progress |
+| [quality.md](quality.md) | Code quality checks: `scripts/check`, tools, thresholds | accepted |
+| [releases.md](releases.md) | Version and build number, changelog and release notes, releasing, `main` protection, distribution | accepted |
+| [style.md](style.md) | Writing style: voice, formatting rules | accepted |
+| [wireframes/](wireframes/) | Wireframes of all screens and how to use them in development | agreed |
+| [research/openai-sign-in-with-chatgpt.md](research/openai-sign-in-with-chatgpt.md) | Sign in with ChatGPT: protocol, limitations, assessment | accepted |
 
-Порядок чтения для разработки: 03 (что делаем) → 02 (как) → 05 + wireframes (как выглядит) → 04 (что отправляем модели). Что уже сделано и что делать дальше — [plan.md](plan.md), раздел «Дальше».
+Reading order for development: 03 (what we build) → 02 (how) → 05 + wireframes (what it looks like) → 04 (what we send to the model). What's already done and what to do next is in [plan.md](plan.md), section [Next](plan.md#next). Before writing docs, read [style.md](style.md).
 
-Кейсы eval для проверки промптов — в [`/evals`](../evals/): исправления в `evals/fix/`, чтение контекста в `evals/context/`; раннер — `cyrano-eval` в `CyranoCore`.
+The specs are numbered from 02: 01 was the historical draft of implementation and UX options written for a local model; it was removed on 2026-11-05 and stays in git history.
+
+Eval cases for testing prompts live in [`/evals`](../evals/): fixes in `evals/fix/`, context reading in `evals/context/`; the runner is `cyrano-eval` in `CyranoCore`.

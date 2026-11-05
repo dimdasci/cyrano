@@ -1,78 +1,78 @@
 # Cyrano
 
-Нативное приложение для macOS, которое проверяет и улучшает короткие сообщения в любом приложении: хоткей → панель с исправленным текстом, пояснениями и диалогом с моделью → копирование результата, вставляете сами. Работает через вашу подписку ChatGPT (Plus или Pro) по официальному «Sign in with ChatGPT».
+A native macOS app that checks and improves short messages in any app: hotkey → a panel with the corrected text, explanations and a dialog with the model → copy the result and paste it yourself. It works through your ChatGPT subscription (Plus or Pro) with the official Sign in with ChatGPT.
 
-Статус: preview — основной сценарий, изображения как контекст, чтение контекста со скриншота окна, словарь «Never change» и выбор модели для каждой операции работают; что сделано, следующий пакет и отступления от спеки — в [docs/plan.md](docs/plan.md).
+Status: preview. The main flow, images as context, reading context from a window screenshot, the "Never change" dictionary and choosing a model for each operation all work. What's done, the next package and deviations from the spec are in [docs/plan.md](docs/plan.md).
 
-## Структура
+## Repository layout
 
 ```
-docs/                  спецификация, wireframes, исследования (начать с docs/README.md)
-Packages/CyranoCore/  Swift Package: клиент OpenAI, промпты, diff, словарь, настройки (тестируется без UI)
-App/                   Xcode-проект приложения: UI, AX, хоткеи, окна
-evals/                 набор примеров и раннер для проверки промптов на моделях ChatGPT
-scripts/check          проверка качества кода: формат, сборка, тесты, линтер, дубликаты, мёртвый код
-scripts/release        выпуск версии, см. docs/releases.md
+docs/                  spec, wireframes, research (start with docs/README.md)
+Packages/CyranoCore/  Swift Package: OpenAI client, prompts, diff, dictionary, settings (tested without UI)
+App/                   Xcode project of the app: UI, AX, hotkeys, windows
+evals/                 example set and runner for testing prompts on ChatGPT models
+scripts/check          code quality check: format, build, tests, linter, duplicates, dead code
+scripts/release        releasing a version, see docs/releases.md
 ```
 
-## Требования
+## Requirements
 
 - macOS 27+, Apple Silicon, Xcode 27+
-- Подписка ChatGPT Plus или Pro
+- A ChatGPT Plus or Pro subscription
 
-## Сборка
+## Building
 
 ```bash
-open App/Cyrano.xcodeproj    # схема Cyrano, Run
+open App/Cyrano.xcodeproj    # Cyrano scheme, Run
 ```
 
-Или из терминала:
+Or from the terminal:
 
 ```bash
 xcodebuild -project App/Cyrano.xcodeproj -scheme Cyrano -derivedDataPath .build/xcode build
 open .build/xcode/Build/Products/Debug/Cyrano.app
 ```
 
-Один раз перед первой сборкой создайте локальный сертификат подписи, иначе разрешение Accessibility будет сбрасываться при каждой пересборке:
+Once, before the first build, create a local signing certificate; otherwise the Accessibility permission is reset on every rebuild:
 
 ```bash
 scripts/make-signing-identity
 ```
 
-При первом запуске: Continue with ChatGPT → разрешение Accessibility → Screen Recording, если оставить включённым чтение контекста из окна → ⌥⌘G в любом текстовом поле. Тесты ядра:
+On first launch: Continue with ChatGPT → the Accessibility permission → Screen Recording, if you keep reading context from the window turned on → ⌥⌘G in any text field. Core tests:
 
 ```bash
 cd Packages/CyranoCore && swift test
 ```
 
-Проверка качества перед коммитом (инструменты и пороги — [docs/quality.md](docs/quality.md)):
+Code quality check before a commit (tools and thresholds are in [docs/quality.md](docs/quality.md)):
 
 ```bash
 brew install swiftlint periphery && npm install -g jscpd
 scripts/check
 ```
 
-Eval чтения контекста со скриншота — тем же кодом, что и приложение (кейсы и формат — [evals/context/README.md](evals/context/README.md)):
+Eval of reading context from a screenshot, with the same code the app uses (cases and format are in [evals/context/README.md](evals/context/README.md)):
 
 ```bash
 swift build --package-path Packages/CyranoCore --product cyrano-eval
 Packages/CyranoCore/.build/debug/cyrano-eval context evals/context/cases.json
 ```
 
-Eval исправлений — Fix, Explain и диалог тем же кодом, что и панель; раннер пишет отчёт, оценку ставит агент, спорное согласует с пользователем ([evals/fix/README.md](evals/fix/README.md)):
+Eval of fixes: Fix, Explain and the dialog, with the same code the panel uses. The runner writes a report, the agent grades it and settles disputed cases with the user ([evals/fix/README.md](evals/fix/README.md)):
 
 ```bash
 Packages/CyranoCore/.build/debug/cyrano-eval fix evals/fix/cases.json gpt-6.1-sol > evals/private/fix-runs/gpt-6.1-sol.md
 ```
 
-## Релизы
+## Releases
 
 ```bash
-scripts/release 0.2.0    # на main: PR с версией и release notes, после слияния CI ставит тег и публикует релиз
+scripts/release 0.2.0    # on main: a PR with the version and release notes; after the merge CI tags and publishes the release
 ```
 
-Что изменилось в каждой версии — [CHANGELOG.md](CHANGELOG.md). Версии, changelog, порядок выпуска и распространение — [docs/releases.md](docs/releases.md).
+What changed in each version is in [CHANGELOG.md](CHANGELOG.md). Versions, the changelog, the release procedure and distribution are in [docs/releases.md](docs/releases.md).
 
-## Лицензия
+## License
 
-MIT © 2026 Dim Kharitonov. См. [LICENSE](LICENSE).
+MIT © 2026 Dim Kharitonov. See [LICENSE](LICENSE).

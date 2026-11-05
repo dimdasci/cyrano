@@ -1,41 +1,41 @@
 # Wireframes
 
-Визуальная часть спецификации UI. Текст и правила — в [05-ui.md](../specs/05-ui.md), здесь — как это выглядит и как этим пользоваться при разработке.
+The visual part of the UI spec. The text and rules are in [05-ui.md](../specs/05-ui.md); here is what it looks like and how to use it in development.
 
-Wireframes — исходное намерение, эталон — спеки: здесь ещё есть Insert и сочетания клавиш внутри панели, которых в приложении больше нет (05 §2.9).
+Wireframes record the original intent, and the specs are the reference: the wireframes still show Insert and keyboard shortcuts inside the panel, which the app no longer has (05 §2.9).
 
-## Где что лежит
+## Where things are
 
-| Что | Где | Зачем |
+| What | Where | What for |
 |---|---|---|
-| Живой канвас | [Cyrano UI wireframes](https://claude.ai/artifact/WC2VDYDdgmstvtfedoeizC) (приватный) | Смотреть, кликать интерактивные артборды, оставлять заметки и комментарии |
-| Исходники артбордов | `*.dc.html` в этой папке | Версионируются в git вместе со спекой; по ним видны точные размеры, тексты и состояния |
-| Раскладка канваса | `canvas.json` | Положение и названия артбордов |
-| Скриншоты | `png/` (пока пусто) | Быстрый просмотр без канваса, ссылки из спек и PR |
+| Live canvas | [Cyrano UI wireframes](https://claude.ai/artifact/WC2VDYDdgmstvtfedoeizC) (private) | Look, click the interactive artboards, leave notes and comments |
+| Artboard sources | `*.dc.html` in this folder | Versioned in git together with the spec; they show the exact sizes, texts and states |
+| Canvas layout | `canvas.json` | Positions and names of the artboards |
+| Screenshots | `png/` (empty for now) | Quick viewing without the canvas, links from specs and PRs |
 
-Правило синхронизации: правки делаются на канвасе, затем исходники копируются сюда, а [05-ui.md](../specs/05-ui.md) обновляется в том же коммите. Если wireframe и спека расходятся — это баг документации, исправляем оба.
+Sync rule: edits are made on the canvas, then the sources are copied here, and [05-ui.md](../specs/05-ui.md) is updated in the same commit. If a wireframe and the spec disagree, that's a documentation bug, and we fix both.
 
-## Артборды → спека → SwiftUI
+## Artboards → spec → SwiftUI
 
-| Артборд | Интерактивный | Раздел 05-ui | Будущие SwiftUI-вью |
+| Artboard | Interactive | 05-ui section | Future SwiftUI views |
 |---|---|---|---|
-| `Main.dc.html` — панель проверки | да: Context, скриншоты, раскрытие изменений, Never Change, язык, поле ввода и Send, тёмная тема (Tweaks) | §2.1–2.7, §2.9 | `ProofreadingPanel`, `PanelHeader`, `ContextBar`, `ConversationView`, `VersionCard`, `ChangeList`, `MessageBubble`, `Composer`, `StatusLine` |
-| `States.dc.html` — состояния панели | нет | §2.8 | состояния `ProofreadingPanel` (checking, no changes, nothing to check, network error, plan limit, signed out, no Accessibility) |
-| `Onboarding.dc.html` — первый запуск | да: шаги, вход, разрешение | §1 | `OnboardingWindow`, `SignInStep`, `AccessibilityStep`, `ShortcutStep` |
-| `MenuBar.dc.html` — меню в строке меню | нет | §4 | `MenuBarExtra` content |
-| `Settings.dc.html` — настройки | да: вкладки, переключатели, поиск в словаре, редактор промптов | §5 | `SettingsView` + `GeneralPane`, `StylePane`, `DictionaryPane`, `PromptsPane`, `AccountPane` |
-| `About.dc.html` — окно About | нет | Карта экранов | стандартная About-панель (`orderFrontStandardAboutPanel`) с credits |
+| `Main.dc.html` — proofreading panel | yes: Context, screenshots, expanding changes, Never Change, language, input field and Send, dark theme (Tweaks) | §2.1–2.7, §2.9 | `ProofreadingPanel`, `PanelHeader`, `ContextBar`, `ConversationView`, `VersionCard`, `ChangeList`, `MessageBubble`, `Composer`, `StatusLine` |
+| `States.dc.html` — panel states | no | §2.8 | `ProofreadingPanel` states (checking, no changes, nothing to check, network error, plan limit, signed out, no Accessibility) |
+| `Onboarding.dc.html` — first launch | yes: steps, sign-in, permission | §1 | `OnboardingWindow`, `SignInStep`, `AccessibilityStep`, `ShortcutStep` |
+| `MenuBar.dc.html` — menu bar menu | no | §4 | `MenuBarExtra` content |
+| `Settings.dc.html` — settings | yes: tabs, toggles, dictionary search, prompt editor | §5 | `SettingsView` + `GeneralPane`, `StylePane`, `DictionaryPane`, `PromptsPane`, `AccountPane` |
+| `About.dc.html` — About window | no | Screen map | the standard About panel (`orderFrontStandardAboutPanel`) with credits |
 
-## Как переносить в SwiftUI
+## Moving to SwiftUI
 
-Wireframe — эскиз, а не макет для попиксельного копирования. При реализации:
+A wireframe is a sketch; we take its structure and texts and leave pixel-exact copying aside. When implementing:
 
-- **Цвета** берём системные, а не hex из wireframe: фон панели — `windowBackgroundColor`, карточки — `controlBackgroundColor`, вторичный текст — `secondaryLabelColor`, разделители — `separatorColor`, акцент — `accentColor`. Подсветка diff: `systemGreen` 20% (ошибки, сплошное подчёркивание), `systemBlue` 15% (стиль, пунктирное), удалённое — зачёркнутое `secondaryLabelColor`.
-- **Контролы** — стандартные: `Picker` со стилем `.menu` (pop-up buttons в шапке), `Toggle` (switch в Settings), `Form` со стилем `.grouped` (Settings), `Table` (словарь), `TextEditor` (поле диалога, Context, редактор промптов), `KeyboardShortcuts.Recorder` (сочетания клавиш).
-- **Размеры** — регулярные системные: высота контролов 22 pt, строки Settings 40–44 pt, ширина панели 520–560 pt, шрифт текста версии 14 pt, остальное 13 pt системный.
-- **Тексты** — копируются из wireframe как есть (они уже в title case / sentence case по HIG, §6 05-ui).
-- **Поведение** берём из 05-ui, а не из JS wireframe: в wireframe интерактивность имитационная.
+- Colors are system ones, instead of the hex values from the wireframe: panel background `windowBackgroundColor`, cards `controlBackgroundColor`, secondary text `secondaryLabelColor`, separators `separatorColor`, accent `accentColor`. Diff highlighting: `systemGreen` 20% (errors, solid underline), `systemBlue` 15% (style, dashed), removed text struck through in `secondaryLabelColor`.
+- Controls are standard: `Picker` with the `.menu` style (pop-up buttons in the header), `Toggle` (switches in Settings), `Form` with the `.grouped` style (Settings), `Table` (dictionary), `TextEditor` (dialog field, Context, prompt editor), `KeyboardShortcuts.Recorder` (keyboard shortcuts).
+- Sizes are regular system ones: controls 22 pt high, Settings rows 40–44 pt, panel width 520–560 pt, version text font 14 pt, everything else 13 pt system.
+- Texts are copied from the wireframe as they are (they're already in title case / sentence case per the HIG, 05-ui §6).
+- Behavior comes from 05-ui: the interactivity in the wireframe's JS only imitates it.
 
-## Дальше
+## Next
 
-Как только появятся SwiftUI-вью, у каждого экрана и состояния будет `#Preview` с теми же данными, что в wireframe (пример с Ravi, Version 1 / Version 2, «Is this polite?»). С этого момента живым эталоном UI становятся превью в Xcode, а wireframes остаются как исходное намерение.
+Once SwiftUI views appear, every screen and state gets a `#Preview` with the same data as in the wireframe (the example with Ravi, Version 1 / Version 2, "Is this polite?"). From then on the live UI reference is the previews in Xcode, and the wireframes stay as the original intent.

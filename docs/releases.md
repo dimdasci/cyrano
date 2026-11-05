@@ -1,63 +1,63 @@
-# Релизы
+# Releases
 
-Статус: **принято** 2026-10-28.
+Status: accepted 2026-10-28.
 
-Как устроены версии, changelog и release notes, как выпускается релиз и как приложение будет попадать к людям. Единственное место, где это описано; README, план и скрипты ссылаются сюда.
+How versions, the changelog and release notes work, how a release goes out and how the app will reach people. This is the only place where it's described; the README, the plan and the scripts link here.
 
-## Версия и номер сборки
+## Version and build number
 
-В About видно «Version 0.1.1 (9)»: версия и номер сборки.
+About shows "Version 0.1.1 (9)": the version and the build number.
 
-- **Версия** (`CFBundleShortVersionString`) — semver `major.minor.patch`, хранится в одном месте: [App/Version.xcconfig](../App/Version.xcconfig). Руками не меняется, её ставит `scripts/release`. Пока идут preview, растёт `minor` (0.2.0, 0.3.0), исправления внутри preview — `patch` (0.2.1); 1.0.0 — первый релиз, который считаем готовым.
-- **Номер сборки** (`CFBundleVersion`) — число коммитов на `HEAD`. Его пишет в собранное приложение шаг сборки [scripts/set-build-number](../scripts/set-build-number), руками не меняется. Одна и та же версия у разных коммитов различается номером, а по номеру можно найти коммит: `git rev-list --reverse HEAD | sed -n <номер>p`.
-  - CI скачивает полную историю (`fetch-depth: 0`), иначе номер был бы 1.
-  - В pull request CI собирает merge-коммит ветки с `main`, поэтому там номер на единицу больше, чем у последнего коммита ветки.
+- Version (`CFBundleShortVersionString`) — semver `major.minor.patch`, stored in one place: [App/Version.xcconfig](../App/Version.xcconfig). It isn't changed by hand; `scripts/release` sets it. During previews `minor` grows (0.2.0, 0.3.0), fixes within a preview bump `patch` (0.2.1); 1.0.0 is the first release we consider ready.
+- Build number (`CFBundleVersion`) — the number of commits on `HEAD`. The build step [scripts/set-build-number](../scripts/set-build-number) writes it into the built app; it isn't changed by hand. The same version on different commits differs by build number, and the number leads back to the commit: `git rev-list --reverse HEAD | sed -n <number>p`.
+  - CI fetches the full history (`fetch-depth: 0`), otherwise the number would be 1.
+  - In a pull request CI builds the merge commit of the branch with `main`, so the number there is one more than for the branch's last commit.
 
-## Changelog и release notes
+## Changelog and release notes
 
-Адресат — человек, который пользуется Cyrano, а не разработчик. Он хочет знать, что изменилось у него в руках, что починили и что пока работает не так.
+They're written for the person who uses Cyrano. That person wants to know what changed in their hands, what got fixed and what doesn't work right yet.
 
-- **[CHANGELOG.md](../CHANGELOG.md)** в корне — единственный источник. Формат [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), на английском: всё, что видит пользователь, — на английском, как интерфейс приложения.
-- **Release notes версии** — её раздел в `CHANGELOG.md` плюс постоянный хвост (требования, установка, ссылка на все изменения). Их собирает `scripts/changelog notes <version>`; этот же текст — тело release-PR и GitHub Release. Пакет 15 будет брать его же для окна обновления Sparkle.
-- **Кто пишет:** PR с изменением, которое заметит пользователь, сам добавляет пункты в `## [Unreleased]`. CI не пропускает PR без изменения `CHANGELOG.md`; PR без видимых изменений (документация, CI, рефакторинг) помечается меткой `skip-changelog`.
-- **Раздел версии:** одна-две фразы о главном, затем группы `### Added`, `### Changed`, `### Fixed`, `### Removed`, `### Known issues` — только непустые, в этом порядке.
+- [CHANGELOG.md](../CHANGELOG.md) in the root is the single source. [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format, in English, like everything else in the project.
+- A version's release notes are its section in `CHANGELOG.md` plus a fixed tail (requirements, installation, a link to all changes). `scripts/changelog notes <version>` assembles them; the same text is the body of the release PR and of the GitHub Release. Package 15 will take it for the Sparkle update window too.
+- Who writes them: a PR with a change the user will notice adds the entries under `## [Unreleased]` itself. CI doesn't let a PR through without a change to `CHANGELOG.md`; a PR without visible changes (docs, CI, refactoring) gets the `skip-changelog` label.
+- A version section: one or two sentences about the main thing, then the groups `### Added`, `### Changed`, `### Fixed`, `### Removed`, `### Known issues` — only the non-empty ones, in this order.
 
-Как писать пункты:
+How to write entries:
 
-- Что пользователь видит или делает, его словами и названиями из интерфейса: «Press the camera button in Context…», а не «ContextBar gets a capture button».
-- Без имён файлов, типов, PR, пакетов плана и внутренних терминов. Исправление — какое поведение было не так, а не что поменяли в коде.
-- Одна мысль — один пункт, глагол в настоящем времени. Ограничения и обходные пути — в `Known issues`, честно.
-- Строки можно переносить по ширине файла: при сборке release notes переносы склеиваются.
+- What the user sees or does, in their words and with the names from the interface: "Press the camera button in Context…" rather than "ContextBar gets a capture button".
+- No file names, types, PRs, plan packages or internal terms. A fix describes which behavior was wrong; what changed in the code stays out.
+- One thought per entry, verb in the present tense. Limitations and workarounds go to `Known issues`, honestly.
+- Lines may be wrapped to the file width: line breaks are joined when the release notes are assembled.
 
-Ошибку в уже опубликованных notes исправляют в `CHANGELOG.md` через PR, потом запускают workflow `release` вручную с этой версией — он перепишет GitHub Release.
+A mistake in notes already published is fixed in `CHANGELOG.md` through a PR; then the `release` workflow is run by hand with that version, and it rewrites the GitHub Release.
 
-## Выпуск
+## Releasing
 
-Одна команда на чистом `main`, синхронизированном с `origin/main`; в `## [Unreleased]` должны быть изменения:
+One command on a clean `main` synced with `origin/main`; `## [Unreleased]` must have changes:
 
 ```bash
 scripts/release 0.2.0
 ```
 
-1. [scripts/release](../scripts/release) проверяет, что версия новее текущей, а тега и ветки `release/0.2.0` ещё нет.
-2. В ветке `release/0.2.0` переносит `## [Unreleased]` в `## [0.2.0] - <сегодня>` ([scripts/changelog](../scripts/changelog)), ставит версию, прогоняет `scripts/check`. Если `[Unreleased]` пуст или проверка упала, возвращается на чистый `main`.
-3. Коммитит версию и `CHANGELOG.md` и открывает PR «Release 0.2.0» в `main`; тело PR — release notes версии.
-4. Человек читает notes в PR и сливает его, после того как CI прошёл.
-5. Workflow [release.yml](../.github/workflows/release.yml) видит изменение `App/Version.xcconfig` в `main`, ставит тег `v0.2.0` на этот коммит и публикует GitHub Release «Cyrano 0.2.0» с release notes. Номер сборки — в сводке запуска.
+1. [scripts/release](../scripts/release) checks that the version is newer than the current one and that there is no tag or `release/0.2.0` branch yet.
+2. In the `release/0.2.0` branch it moves `## [Unreleased]` to `## [0.2.0] - <today>` ([scripts/changelog](../scripts/changelog)), sets the version and runs `scripts/check`. If `[Unreleased]` is empty or the check fails, it returns to a clean `main`.
+3. It commits the version and `CHANGELOG.md` and opens the PR "Release 0.2.0" into `main`; the PR body is the version's release notes.
+4. A person reads the notes in the PR and merges it once CI has passed.
+5. The [release.yml](../.github/workflows/release.yml) workflow sees the change to `App/Version.xcconfig` in `main`, puts the tag `v0.2.0` on that commit and publishes the GitHub Release "Cyrano 0.2.0" with the release notes. The build number is in the run summary.
 
-Локально после этого нужен только `git pull`. Тег и GitHub Release руками не создаются.
+Locally, all that's needed afterwards is `git pull`. Tags and GitHub Releases aren't created by hand.
 
-## Правила
+## Rules
 
-- `main` защищён: изменения только через PR, обязательная проверка `check`, ветка должна быть свежей относительно `main`, force push и удаление запрещены, в том числе для админов.
-- Релизы — только из `main`, тег — только на коммит в `main`. Поэтому номер сборки релизов только растёт, а PR можно сливать любым способом, в том числе squash.
-- Сборки для пользователей делает только CI из тега. Пока этого нет (см. ниже), релиз — это тег и GitHub Release с notes, а приложение собирается локально.
+- `main` is protected: changes only through a PR, the `check` status is required, the branch must be up to date with `main`, force push and deletion are forbidden, admins included.
+- Releases come only from `main`, a tag goes only on a commit in `main`. So release build numbers only grow, and a PR can be merged any way, squash included.
+- Builds for users are made only by CI from a tag. Until that exists (see below), a release is a tag and a GitHub Release with notes, and the app is built locally.
 
-## Распространение
+## Distribution
 
-Решено 2026-10-28, делается пакетом 15 [плана](plan.md) до раздачи приложения людям.
+Decided 2026-10-28; package 15 of the [plan](plan.md) does it before the app goes to people.
 
-- **`.dmg` напрямую, без Mac App Store.** В App Store обязательна App Sandbox, а из неё нельзя читать текст в чужих приложениях через Accessibility и эмулировать ⌘C — на этом стоит весь захват.
-- Путь: подпись Developer ID → нотаризация Apple → `.dmg` → GitHub Releases → автообновление (Sparkle). Всё это — шаги workflow по тегу.
-- **Apple Developer Program** ($99 в год) покупаем, когда начнём пакет: без Developer ID сборку нельзя нотаризовать, macOS блокирует её при первом запуске, а разрешение Accessibility слетает с каждой версией.
-- До этого подпись локальная: самоподписанный сертификат из [scripts/make-signing-identity](../scripts/make-signing-identity), см. [README](../README.md). Без него Xcode подписывает ad-hoc, и macOS сбрасывает разрешение Accessibility при каждой пересборке (02 T4).
+- A `.dmg` directly, without the Mac App Store. The App Store requires App Sandbox, and from inside it you can't read text in other apps through Accessibility or emulate ⌘C, and the whole capture rests on that.
+- The path: Developer ID signing → Apple notarization → `.dmg` → GitHub Releases → automatic updates (Sparkle). All of these are steps of the workflow run on a tag.
+- We buy the Apple Developer Program ($99 a year) when the package starts: without a Developer ID a build can't be notarized, macOS blocks it on first launch, and the Accessibility permission is lost with every version.
+- Until then signing is local: a self-signed certificate from [scripts/make-signing-identity](../scripts/make-signing-identity), see the [README](../README.md). Without it Xcode signs ad-hoc, and macOS resets the Accessibility permission on every rebuild (02 T4).

@@ -1,18 +1,18 @@
-# Синтетические окна для eval контекста
+# Synthetic windows for the context eval
 
-Кейсы для чтения контекста со скриншота ([04 §4.5, §5](../../docs/specs/04-prompts.md)). Имена, компании и переписки выдуманные, поэтому набор лежит в репозитории. Настоящие скриншоты — в `evals/private/context/`, вне git.
+Cases for reading context from a screenshot ([04 §4.5, §5](../../docs/specs/04-prompts.md)). The names, companies and conversations are made up, so the set lives in the repository. Real screenshots are in `evals/private/context/`, outside git.
 
-- `cases.json` — кейсы: окно, черновик (`text`), целевой контекст (`target`, для чтения глазами) и проверки (`expect`).
-- `templates/` — HTML-шаблоны окон: `mail.html` (веб-почта: папки, список писем, письмо, ответ), `chat.html` (мессенджер: темы `work` и `personal`, тред канала справа). Общая рамка окна, уведомления и аватары — `common.css`, `common.js`. Шаблон рисует окно функцией `render(data, draft)`; черновик ставится в поле ввода сам.
-- `cases/` — данные окон, по файлу на окно; один файл может служить нескольким кейсам с разными черновиками.
+- `cases.json` — the cases: a window, a draft (`text`), the target context (`target`, for reading by eye) and checks (`expect`).
+- `templates/` — HTML window templates: `mail.html` (webmail: folders, message list, message, reply), `chat.html` (messenger: `work` and `personal` themes, a channel thread on the right). The shared window frame, notifications and avatars are in `common.css` and `common.js`. A template draws the window with the function `render(data, draft)`; the draft goes into the input field by itself.
+- `cases/` — window data, one file per window; one file can serve several cases with different drafts.
 
-Окна намеренно плотные и шумные, как настоящие: мелкий шрифт, панели, баннеры, обрезанные длинные сообщения, чужие беседы рядом.
+The windows are deliberately dense and noisy, like real ones: small font, sidebars, banners, long messages cut off, other conversations next to the one that matters.
 
-Запуск из корня репозитория (сборка — `swift build --package-path Packages/CyranoCore --product cyrano-eval`):
+Run from the repository root (build with `swift build --package-path Packages/CyranoCore --product cyrano-eval`):
 
 ```bash
 Packages/CyranoCore/.build/debug/cyrano-eval context evals/context/cases.json [gpt-6-luna|gpt-6.1-sol|gpt-6.1-terra]
-Packages/CyranoCore/.build/debug/cyrano-eval render evals/context/cases.json <папка>
+Packages/CyranoCore/.build/debug/cyrano-eval render evals/context/cases.json <folder>
 ```
 
-`context` рисует каждое окно в PNG с плотностью Retina (1440 × 900 точек по умолчанию), читает контекст тем же кодом, что и панель приложения (`ProofreadingSession.readContext`, таймаут 60 с вместо 20), и печатает Context, язык, на который встал бы pop-up, время и результат проверок. Нет ответа (ошибка или таймаут) — `ERROR`, а не пустой Context. `render` только сохраняет картинки — посмотреть окно так, как его видит модель. Первый запуск `context` просит разрешить доступ к записи Cyrano в Keychain.
+`context` draws each window into a PNG at Retina density (1440 × 900 points by default), reads the context with the same code as the app's panel (`ProofreadingSession.readContext`, with a 60 s timeout instead of 20) and prints the Context, the language the pop-up would switch to, the time and the result of the checks. No answer (an error or a timeout) shows as `ERROR`, so it can't be mistaken for an empty Context. `render` only saves the images, to see a window the way the model sees it. The first `context` run asks for access to Cyrano's Keychain item.
