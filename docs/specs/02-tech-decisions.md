@@ -29,7 +29,7 @@
 | A6 | Выход: revoke refresh token через `revocation_endpoint`, удалить запись из Keychain |
 | A7 | Кнопка «Continue with ChatGPT» по гайдлайнам OpenAI. Экран входа показывается при первом запуске и после отзыва доступа |
 
-Прототип всего A1–A5 работает: [evals/cloud-runner/OpenAI.swift](../../evals/cloud-runner/OpenAI.swift).
+A1–A7 реализованы в [CyranoCore/Auth](../../Packages/CyranoCore/Sources/CyranoCore/Auth); прототип из `evals/cloud-runner` удалён в пакете 17.
 
 ## Модель
 
@@ -71,5 +71,5 @@
 ## Тестирование
 
 - `CyranoCore`: юнит-тесты diff, сборки промптов, разбора SSE и ошибок, PKCE/JWT-валидации (на фикстурах).
-- Eval-набор [evals/cases.json](../../evals/cases.json) и раннер [evals/cloud-runner](../../evals/cloud-runner) для регрессии промптов. Перед каждым изменением промптов — прогон на моделях из M1.
+- Eval `cyrano-eval` на коде приложения: исправления ([evals/fix](../../evals/fix/README.md)) и чтение контекста ([evals/context](../../evals/context/README.md)) для регрессии промптов (04 §5). Перед каждым изменением промптов — прогон на моделях из M1.
 - Ручной чек-лист захвата: Safari, Chrome, Slack, Telegram, Mail, Notes, Messages.

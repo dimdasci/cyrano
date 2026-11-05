@@ -59,12 +59,10 @@ swift build --package-path Packages/CyranoCore --product cyrano-eval
 Packages/CyranoCore/.build/debug/cyrano-eval context evals/context/cases.json
 ```
 
-Раннер примеров исправлений (Fix, Explain, классификатор; переедет в `cyrano-eval` в пакете 17):
+Eval исправлений — Fix, Explain и диалог тем же кодом, что и панель; раннер пишет отчёт, оценку ставит агент, спорное согласует с пользователем ([evals/fix/README.md](evals/fix/README.md)):
 
 ```bash
-cd evals/cloud-runner && swiftc -parse-as-library -O OpenAI.swift Shared.swift main.swift -o /tmp/openai-runner
-/tmp/openai-runner login
-MODEL=gpt-6.1-sol EFFORT=low /tmp/openai-runner run ../cases.json
+Packages/CyranoCore/.build/debug/cyrano-eval fix evals/fix/cases.json gpt-6.1-sol > evals/private/fix-runs/gpt-6.1-sol.md
 ```
 
 ## Релизы
