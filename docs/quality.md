@@ -18,7 +18,7 @@ brew install swiftlint periphery
 npm install -g jscpd
 ```
 
-Проверяется код продукта: `App/` и `Packages/`. `evals/cloud-runner` — прототип раннера, в проверку не входит.
+Проверяется код: `App/` и `Packages/`, в том числе раннер eval `cyrano-eval`. В `evals/` только данные кейсов и HTML-шаблоны окон, они в проверку не входят.
 
 В CI тот же `scripts/check` запускается на каждый push в `main` и на каждый pull request: [.github/workflows/check.yml](../.github/workflows/check.yml). В pull request перед ним проверяется, что изменён `CHANGELOG.md` (или у PR метка `skip-changelog`), см. [releases.md](releases.md#changelog-и-release-notes). Раннер — `xcode-27` (preview-образ GitHub с Xcode 27, нужен для SDK macOS 27). SwiftLint и Periphery ставятся из Homebrew последних версий, jscpd закреплён на той же версии, что локально.
 
