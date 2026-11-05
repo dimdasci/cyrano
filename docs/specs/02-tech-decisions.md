@@ -1,75 +1,75 @@
-# 02. Технические решения
+# 02. Technical decisions
 
-Статус: **согласовано** 2026-10-27. Пересмотрено в тот же день: локальные модели (Apple Foundation Models, MLX) отклонены по качеству, единственный движок — модели по подписке ChatGPT. История сравнения: [04](04-prompts.md) §3.
+Status: agreed 2026-10-27. Revised the same day: local models (Apple Foundation Models, MLX) were rejected on quality, and the only engine is models through the ChatGPT subscription. The history of the comparison: [04](04-prompts.md) §3.
 
-## Платформа и стек
+## Platform and stack
 
-| # | Решение | Обоснование |
+| # | Decision | Rationale |
 |---|---|---|
-| T1 | macOS 27+, Apple Silicon | Текущая система пользователя, без оглядки на старые версии |
-| T2 | Swift 6.4, strict concurrency; SwiftUI для UI, AppKit для `NSPanel`, статус-бара и AX | SwiftUI не умеет неактивируемые плавающие панели |
-| T3 | Репозиторий: `App/` — Xcode-проект приложения (UI, AX, хоткеи, окна); `Packages/CyranoCore/` — локальный Swift Package (клиент OpenAI, авторизация, промпты, diff, словарь, настройки); `docs/` — спецификация и wireframes; `evals/` — набор примеров и раннер. Приложение зависит от CyranoCore | Ядро тестируется `swift test` без UI; UI-код не смешивается с логикой |
-| T4 | Без App Sandbox, распространение вне App Store. Пока нет Developer ID, приложение собирается локально и подписывается локальным самоподписанным сертификатом ([releases](../releases.md#распространение)) | Accessibility API для чужих приложений несовместим с sandbox. Без постоянной подписи macOS сбрасывает разрешение Accessibility при каждой пересборке |
-| T5 | `LSUIElement` = агент в menu bar, без иконки в Dock | Утилита «всегда под рукой» |
-| T6 | Одно своё сочетание — глобальное «Check text» (⌥⌘G по умолчанию), настраивается в онбординге и Settings (SPM-пакет `KeyboardShortcuts`, sindresorhus). Внутри панели своих сочетаний нет, только системные: Esc, Tab, ↩, ⌘C, ⌘V | Сочетания, которых не видно и не помнишь, только путают; всё в панели — кнопками. `KeyboardShortcuts` — готовый UI записи хоткея, единственная внешняя зависимость. Нужна версия ≥ 3.1.0: в 1.x, пока открыто меню, библиотека вынимала из очереди и возвращала все события, действие пункта меню опаздывало, и macOS отказывала Cyrano в активации — Settings и About открывались позади другого приложения |
-| T7 | **Движок — модели по подписке ChatGPT** через Sign in with ChatGPT ([research](../research/openai-sign-in-with-chatgpt.md)). Без API-ключа и без локальных моделей | Единственный вариант с нужным качеством: `gpt-6.1-sol` 18/21 против 16/21 у Gemma 4 12B и 13/21 у Apple on-device ([04](04-prompts.md) §3). Локальные модели исправляют ошибки, но не делают текст естественным, а это основная ценность |
-| T8 | Движок за протоколом `CorrectionEngine` в `CyranoCore`. Единственная реализация — `OpenAIEngine` | Тесты с фейковым движком, изоляция API |
-| T9 | **Открытый исходный код, лицензия MIT.** Автор — Dim Kharitonov. Репозиторий `github.com/dimdasci/cyrano`, документация — README и GitHub Pages (`dimdasci.github.io/cyrano`); ссылки на них в окне About | Соответствует self-serve доступу Sign in with ChatGPT для open-source и локальных приложений |
-| T10 | **Название — Cyrano**, пишется как в оригинале. Отсылка к Сирано де Бержераку, который писал письма за другого. Ядро — `CyranoCore` | Помощник со стилем, который помогает сказать ясно и красиво. Имя узнаваемое, по-английски «cy» читается как «с», поэтому написание не меняем |
+| T1 | macOS 27+, Apple Silicon | The user's current system, no regard for older versions |
+| T2 | Swift 6.4, strict concurrency; SwiftUI for the UI, AppKit for `NSPanel`, the status bar and AX | SwiftUI can't do non-activating floating panels |
+| T3 | Repository: `App/` — the app's Xcode project (UI, AX, hotkeys, windows); `Packages/CyranoCore/` — a local Swift Package (OpenAI client, authorization, prompts, diff, dictionary, settings); `docs/` — the spec and wireframes; `evals/` — the example set and the runner. The app depends on CyranoCore | The core is tested with `swift test` without UI; UI code isn't mixed with logic |
+| T4 | No App Sandbox, distribution outside the App Store. Until there is a Developer ID, the app is built locally and signed with a local self-signed certificate ([releases](../releases.md#distribution)) | The Accessibility API for other apps is incompatible with the sandbox. Without a stable signature macOS resets the Accessibility permission on every rebuild |
+| T5 | `LSUIElement`: an agent in the menu bar, no Dock icon | A utility that's always at hand |
+| T6 | One shortcut of its own, the global "Check text" (⌥⌘G by default), configurable in onboarding and Settings (the SPM package `KeyboardShortcuts` by sindresorhus). Inside the panel there are no shortcuts of its own, only system ones: Esc, Tab, ↩, ⌘C, ⌘V | Shortcuts you can't see and don't remember only confuse; everything in the panel is done with buttons. `KeyboardShortcuts` gives a ready UI for recording a hotkey and is the only external dependency. Version ≥ 3.1.0 is needed: in 1.x, while a menu was open, the library took all events off the queue and put them back, the menu item's action came late, and macOS refused to activate Cyrano, so Settings and About opened behind another app |
+| T7 | The engine is the models of the ChatGPT subscription through Sign in with ChatGPT ([research](../research/openai-sign-in-with-chatgpt.md)). No API key and no local models | The only option with the quality we need: `gpt-6.1-sol` 18/21 against 16/21 for Gemma 4 12B and 13/21 for Apple on-device ([04](04-prompts.md) §3). Local models fix errors but don't make the text natural, and that's the main value |
+| T8 | The engine sits behind the `CorrectionEngine` protocol in `CyranoCore`. The only implementation is `OpenAIEngine` | Tests with a fake engine, API isolation |
+| T9 | Open source, MIT license. Author: Dim Kharitonov. Repository `github.com/dimdasci/cyrano`, documentation in the README and on GitHub Pages (`dimdasci.github.io/cyrano`); the About window links to them | Matches the self-serve access of Sign in with ChatGPT for open-source and local apps |
+| T10 | The name is Cyrano, spelled as in the original. A reference to Cyrano de Bergerac, who wrote letters for someone else. The core is `CyranoCore` | An assistant with style who helps say things clearly and beautifully. The name is recognizable, and in English "cy" reads as "s", so we keep the spelling |
 
-## Авторизация
+## Authorization
 
-| # | Решение |
+| # | Decision |
 |---|---|
-| A1 | Self-serve flow для локальных приложений: `client_id=dynamic_agent_client` при первом входе, затем выданный `oaiapp_…`; стабильный `ext_agent_host_id` (`urn:uuid:…`); `agent_name_hint` = имя приложения |
-| A2 | Authorization code + PKCE (S256), `state`, `nonce`. Вход в системном браузере, колбэк на loopback `http://127.0.0.1:1457/auth/callback` (`NWListener`) |
-| A3 | Scope `openid profile email offline_access resource.invoke chatgpt.tokens.use.direct`, `resource=https://api.openai.com/v1`. После обмена проверяем, что `chatgpt.tokens.use.direct` выдан |
-| A4 | ID token: подпись RS256 по JWKS из `/.well-known/openid-configuration`, `iss`, `aud` = выданный client ID, `exp`, `nonce` |
-| A5 | Токены в Keychain (`kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`). Refresh за 2 минуты до истечения; refresh token ротируется и заменяется вместе с access token |
-| A6 | Выход: revoke refresh token через `revocation_endpoint`, удалить запись из Keychain |
-| A7 | Кнопка «Continue with ChatGPT» по гайдлайнам OpenAI. Экран входа показывается при первом запуске и после отзыва доступа |
+| A1 | Self-serve flow for local apps: `client_id=dynamic_agent_client` on the first sign-in, then the issued `oaiapp_…`; a stable `ext_agent_host_id` (`urn:uuid:…`); `agent_name_hint` = the app name |
+| A2 | Authorization code + PKCE (S256), `state`, `nonce`. Sign-in in the system browser, callback on the loopback `http://127.0.0.1:1457/auth/callback` (`NWListener`) |
+| A3 | Scope `openid profile email offline_access resource.invoke chatgpt.tokens.use.direct`, `resource=https://api.openai.com/v1`. After the exchange we check that `chatgpt.tokens.use.direct` was granted |
+| A4 | ID token: RS256 signature against the JWKS from `/.well-known/openid-configuration`, `iss`, `aud` = the issued client ID, `exp`, `nonce` |
+| A5 | Tokens in Keychain (`kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`). Refresh 2 minutes before expiry; the refresh token rotates and is replaced together with the access token |
+| A6 | Sign-out: revoke the refresh token through `revocation_endpoint`, delete the Keychain item |
+| A7 | The "Continue with ChatGPT" button per OpenAI's guidelines. The sign-in screen shows on first launch and after access is revoked |
 
-A1–A7 реализованы в [CyranoCore/Auth](../../Packages/CyranoCore/Sources/CyranoCore/Auth); прототип из `evals/cloud-runner` удалён в пакете 17.
+A1–A7 are implemented in [CyranoCore/Auth](../../Packages/CyranoCore/Sources/CyranoCore/Auth); the prototype from `evals/cloud-runner` was removed in package 17.
 
-## Модель
+## Model
 
-| # | Решение |
+| # | Decision |
 |---|---|
-| M1 | Три модели: **`gpt-6.1-sol`** (качество), **`gpt-6.1-terra`**, **`gpt-6-luna`** (быстрее, 17/21). Модель выбирается в Settings → General отдельно для трёх операций: чтение контекста со скриншота (C6, по умолчанию Luna: задача простая, а пользователь ждёт её до Check), проверка и диалог (по умолчанию Sol; классификатор идёт сюда же), пояснения (по умолчанию Sol). Список фиксирован в приложении, `GET /v1/models` не вызываем: новые модели сначала проверяем на eval, потом добавляем релизом. `gpt-6.1-luna` по подписке недоступна (400 `model_not_found`). Сохранённая модель, которой больше нет в списке, заменяется умолчанием. Выбор 0.4 (одна модель на всё) становится моделью проверки |
-| M2 | `POST /v1/responses`, `store: false`, `stream: true` (SSE). Успех — только по `response.completed`. `reasoning.effort = low` |
-| M3 | Конвейер ([04](04-prompts.md) §2): **Fix** — новая версия текста потоком, **diff** считаем сами (word-level LCS, соседние правки склеиваем), **Explain** — отдельный вызов с `text.format = json_schema` (категория + причина по номеру правки) |
-| M4 | Диалог (S1a): история хранится в приложении и целиком отправляется в `input` на каждом ходу, потому что `previous_response_id` в этом режиме не поддерживается. Контекст модели (500k токенов) с нашими объёмами не переполняется, компакция не нужна |
-| M5 | Тип хода диалога (вопрос или правка) определяет отдельный короткий вызов-классификатор ([04](04-prompts.md) §4.3) |
-| M6 | Неподдерживаемые поля не отправляем: `temperature`, `max_output_tokens`, `metadata`, `previous_response_id`, `system`-сообщения (только `instructions`) |
-| M7 | **Язык результата:** по умолчанию — язык беседы из Context ([04](04-prompts.md) §4.5), каким бы ни был язык черновика: pop-up в шапке панели встаёт на него до Check. Context не прочитан или языка нет в списке — тот же, что у исходного текста (модель определяет сама). Пользователь меняет язык в pop-up; выбор действует только в этой панели и для приложения не запоминается (решено 2026-11-03: в одном приложении пишут на разных языках). Отдельной настройки в Settings нет. Если target отличается от языка текста — модель переводит и правит одновременно. Пояснения к правкам — на английском (язык интерфейса), одна короткая строка; категория `style` отделяет вкусовые правки от ошибок |
-| M8 | **Промпты редактируемые.** Instructions собираются из блоков: базовая роль + протокол диалога + тип текста (Message/Email/Docs) + тон + уровень вмешательства + `{language}` + custom instructions. Все блоки и вызовы конвейера (Proofread, Explain Changes, Classify Request) показаны в Settings → Prompts; пользовательская версия хранится поверх встроенной (`prompts.json` в Application Support), «Restore Default» возвращает встроенную. Пользовательский текст, контекст и словарь идут только в `input` |
-| M9 | **Поле Context** в панели: свободный текст (обычно копипаст сообщения, на которое отвечаю). Передаётся в `input` блоком `CONTEXT (… DO NOT correct or repeat it)` |
-| M10 | **Изображения как контекст**: 📷 снимает активное окно исходного приложения (ScreenCaptureKit), ещё можно вставить картинку (⌘V) или перетащить файл. Жёсткого предела нет, после 10 — предупреждение о скорости и расходе лимита. Каждое уходит отдельным `input_image` в первом сообщении, в исходном разрешении и, как вся история, в каждом следующем ходе; на диск ничего не сохраняется |
-| M11 | **Словарь «Never change»:** отдельный файл `~/Library/Application Support/Cyrano/dictionary.json` — массив `{"term", "added"}`, дата в ISO 8601, рассчитан на сотни и тысячи терминов. Читается при запуске, после каждого изменения записывается целиком (атомарно); файл, который не читается, переименовывается в `dictionary.json.bak`, чтобы не затереть термины. Термины уникальны без учёта регистра. Пополняется из панели (выделение → Never Change, или из строки изменения) и во вкладке Settings → Dictionary с поиском, импортом и экспортом. В запрос попадают только термины, найденные в исходном тексте: без учёта регистра, по границам слов (соседний символ — не буква и не цифра), в порядке появления. Если понадобится хранить историю проверок, перейти на SQLite (решено 2026-10-29: пока JSON) |
-| M12 | **Индикатор** в панели: сколько токенов ушло на текущий диалог (`usage` из `response.completed`) и состояние лимита подписки. Ошибки `subscription_sharing_usage_limit_exceeded` и `subscription_sharing_usage_unavailable` показываем понятным сообщением |
-| M13 | Ошибки и задержки: индикатор работы, таймаут 30 с с одним повтором, при ошибке исходный текст не теряется («Copy original»). Без сети — понятное сообщение, локального запасного движка нет |
+| M1 | Three models: `gpt-6.1-sol` (quality), `gpt-6.1-terra`, `gpt-6-luna` (faster, 17/21). The model is chosen in Settings → General separately for three operations: reading context from a screenshot (C6, Luna by default: the task is simple, and the user waits for it before Check), the check and the dialog (Sol by default; the classifier goes here too), explanations (Sol by default). The list is fixed in the app, we don't call `GET /v1/models`: new models are tested on the eval first, then added in a release. `gpt-6.1-luna` isn't available on the subscription (400 `model_not_found`). A saved model that's no longer in the list is replaced with the default. The 0.4 choice (one model for everything) becomes the check model |
+| M2 | `POST /v1/responses`, `store: false`, `stream: true` (SSE). Success only on `response.completed`. `reasoning.effort = low` |
+| M3 | Pipeline ([04](04-prompts.md) §2): Fix streams a new version of the text, we compute the diff ourselves (word-level LCS, adjacent changes are merged), Explain is a separate call with `text.format = json_schema` (category + reason per change number) |
+| M4 | Dialog (S1a): the history is kept in the app and sent whole in `input` on every turn, because `previous_response_id` isn't supported in this mode. With our volumes the model's context (500k tokens) doesn't overflow, so compaction isn't needed |
+| M5 | The kind of dialog turn (a question or an edit) is decided by a separate short classifier call ([04](04-prompts.md) §4.3) |
+| M6 | Unsupported fields aren't sent: `temperature`, `max_output_tokens`, `metadata`, `previous_response_id`, `system` messages (only `instructions`) |
+| M7 | Output language: by default the language of the conversation from Context ([04](04-prompts.md) §4.5), whatever the draft's language: the pop-up in the panel header switches to it before Check. If Context wasn't read or the language isn't in the list, it's the same as the source text (the model detects it). The user changes the language in the pop-up; the choice applies to this panel only and isn't remembered for the app (decided 2026-11-03: people write in different languages in the same app). There's no separate setting in Settings. If the target differs from the text's language, the model translates and corrects at the same time. Explanations of changes are in English (the interface language), one short line; the `style` category separates changes of taste from errors |
+| M8 | Prompts are editable. Instructions are assembled from blocks: base role + dialog protocol + text type (Message/Email/Docs) + tone + level of intervention + `{language}` + custom instructions. All blocks and pipeline calls (Proofread, Explain Changes, Classify Request) are shown in Settings → Prompts; the user's version is stored on top of the built-in one (`prompts.json` in Application Support), and "Restore Default" brings back the built-in one. The user's text, context and dictionary go only into `input` |
+| M9 | The Context field in the panel: free text (usually a pasted copy of the message I'm replying to). It's passed in `input` as a `CONTEXT (… DO NOT correct or repeat it)` block |
+| M10 | Images as context: 📷 captures the active window of the source app (ScreenCaptureKit); you can also paste an image (⌘V) or drag a file in. There is no hard limit; after 10 there's a warning about speed and limit usage. Each image goes as a separate `input_image` in the first message, at its original resolution, and, like the whole history, in every following turn; nothing is saved to disk |
+| M11 | The "Never change" dictionary: a separate file `~/Library/Application Support/Cyrano/dictionary.json` — an array of `{"term", "added"}`, the date in ISO 8601, designed for hundreds and thousands of terms. It's read on launch and written whole (atomically) after every change; a file that can't be read is renamed to `dictionary.json.bak` so the terms aren't overwritten. Terms are unique case-insensitively. It's filled from the panel (selection → Never Change, or from a change row) and in the Settings → Dictionary tab with search, import and export. Only terms found in the source text go into the request: case-insensitive, on word boundaries (the neighboring character is neither a letter nor a digit), in order of appearance. If we need to keep a history of checks, move to SQLite (decided 2026-10-29: JSON for now) |
+| M12 | The indicator in the panel: how many tokens the current dialog has used (`usage` from `response.completed`) and the subscription limit state. The errors `subscription_sharing_usage_limit_exceeded` and `subscription_sharing_usage_unavailable` are shown as a clear message |
+| M13 | Errors and delays: a progress indicator, a 30 s timeout with one retry, on an error the source text isn't lost ("Copy original"). Without network, a clear message; there's no local fallback engine |
 
-## Захват текста и результат
+## Text capture and result
 
-| # | Решение |
+| # | Decision |
 |---|---|
-| C1 | Приоритет: выделенный текст → всё значение поля |
-| C2 | Чтение по цепочке, без догадок: AX (`kAXSelectedText`/`kAXValue`), для Chromium/Electron включаем `AXManualAccessibility`/`AXEnhancedUserInterface` и ищем поле с фокусом внутри страницы → эмуляция ⌘C, то есть только явное выделение; если в буфер попали файлы, а не текст (Finder), текста нет. ⌘A не нажимаем и черновик со скриншота не читаем: приложение не меняет выделение в чужом окне и не берёт текст, которого пользователь не выбирал. Если ничего не вышло, панель открывается с пустым полем «Text to check»: текст вводят или вставляют сами |
-| C3 | Результат только копируется в буфер обмена (Copy), пользователь вставляет его сам. Автоматической вставки нет: мест и способов вставки слишком много (поле, выделение на странице, редакторы, web-приложения), и запись через AX или ⌘V слишком часто молча не срабатывает |
-| C4 | Запоминаем приложение и рамку поля на момент вызова: по ним панель подписывает источник, выбирает настройки и встаёт рядом с полем |
-| C5 | Онбординг разрешений: Accessibility обязательно. Screen Recording не обязателен, нужен для 📷 и чтения контекста (C6); оба разрешения видны в Settings → General → Permissions |
-| C6 | **Контекст со скриншота.** Если текст прочитан из окна приложения (C2), приложение снимает это окно и отдельным вызовом ([04](04-prompts.md) §4.5, модель из M1) получает описание беседы: с кем, на каком языке, о чём, в каком формате, стиле и насколько формально — без копирования сообщений с экрана. Ответ — поля по схеме; из них приложение собирает строки поля Context, а язык беседы ставит в pop-up языка результата (M7). Результат — обычный текст в поле Context: его видно и можно править до Check; сам скриншот в Fix не уходит, потому что история с картинкой дорога на каждом ходу. Нет текста из окна (рабочий стол, Finder, Check Text…, Check Clipboard) — нет и скриншота. Таймаут 20 с без повтора: ответ обычно приходит за 3–6 с, но примерно каждый восьмой — за 10–17 с ([04](04-prompts.md) §5). Пока идёт чтение, Check ждёт; пользователь может пропустить чтение (Skip) или начать печатать в Context — вызов прерывается, повтора нет. Таймаут, ошибка, ответ не по схеме или отсутствие беседы на экране — Context пуст, а рядом с заголовком Context сказано почему; после таймаута или ошибки можно прочитать тот же скриншот ещё раз ([05](05-ui.md) §2.3a). Без Screen Recording чтения нет. Выключается в Settings → General. Токены вызова входят в общий счётчик (M12) |
+| C1 | Priority: selected text → the whole value of the field |
+| C2 | Reading goes down a chain, without guessing: AX (`kAXSelectedText`/`kAXValue`); for Chromium/Electron we turn on `AXManualAccessibility`/`AXEnhancedUserInterface` and look for the focused field inside the page → emulated ⌘C, that is, only an explicit selection; if files ended up on the clipboard instead of text (Finder), there's no text. We don't press ⌘A and don't read the draft from a screenshot: the app doesn't change the selection in someone else's window and doesn't take text the user didn't choose. If nothing worked, the panel opens with an empty "Text to check" field: the user types or pastes the text |
+| C3 | The result is only copied to the clipboard (Copy), and the user pastes it. There's no automatic insertion: there are too many places and ways to insert (a field, a selection on a page, editors, web apps), and writing through AX or ⌘V too often fails silently |
+| C4 | We remember the app and the field's frame at the moment of the call: from them the panel labels the source, picks the settings and positions itself next to the field |
+| C5 | Permissions onboarding: Accessibility is required. Screen Recording is optional, needed for 📷 and context reading (C6); both permissions are visible in Settings → General → Permissions |
+| C6 | Context from a screenshot. If the text was read from an app window (C2), the app captures that window and with a separate call ([04](04-prompts.md) §4.5, model from M1) gets a description of the conversation: who it's with, the language, what it's about, the format, the style and how formal it is, without copying messages from the screen. The answer is fields by a schema; from them the app builds the lines of the Context field and puts the conversation language into the output language pop-up (M7). The result is plain text in the Context field: it's visible and can be edited before Check; the screenshot itself doesn't go into Fix, because a history with an image is expensive on every turn. No text from a window (desktop, Finder, Check Text…, Check Clipboard) means no screenshot. A 20 s timeout without a retry: an answer usually arrives in 3–6 s, but roughly one in eight takes 10–17 s ([04](04-prompts.md) §5). While reading is going on, Check waits; the user can skip reading (Skip) or start typing in Context, and the call is cancelled with no retry. A timeout, an error, an answer off the schema or no conversation on the screen leave Context empty, and next to the Context title it says why; after a timeout or an error the same screenshot can be read again ([05](05-ui.md) §2.3a). Without Screen Recording there's no reading. It's turned off in Settings → General. The call's tokens count towards the shared counter (M12) |
 
-## Хранение и приватность
+## Storage and privacy
 
-| # | Решение |
+| # | Decision |
 |---|---|
-| S1 | Настройки: `Codable` → JSON в Application Support (пресеты, профили, словарь); хоткеи в `UserDefaults`; токены только в Keychain |
-| S2 | История проверок в MVP не хранится. Тип контекста, тон и уровень запоминаются отдельно для каждого приложения (bundle id); язык результата — нет (M7) |
-| S3 | Текст, контекст и скриншот уходят только в OpenAI (`store: false`). Своей телеметрии и логов текста нет |
+| S1 | Settings: `Codable` → JSON in Application Support (presets, profiles, dictionary); hotkeys in `UserDefaults`; tokens only in Keychain |
+| S2 | The MVP doesn't keep a history of checks. Context type, tone and level are remembered separately for each app (bundle id); the output language isn't (M7) |
+| S3 | Text, context and screenshots go only to OpenAI (`store: false`). No telemetry or text logs of our own |
 
-## Тестирование
+## Testing
 
-- `CyranoCore`: юнит-тесты diff, сборки промптов, разбора SSE и ошибок, PKCE/JWT-валидации (на фикстурах).
-- Eval `cyrano-eval` на коде приложения: исправления ([evals/fix](../../evals/fix/README.md)) и чтение контекста ([evals/context](../../evals/context/README.md)) для регрессии промптов (04 §5). Перед каждым изменением промптов — прогон на моделях из M1.
-- Ручной чек-лист захвата: Safari, Chrome, Slack, Telegram, Mail, Notes, Messages.
+- `CyranoCore`: unit tests for the diff, prompt assembly, SSE and error parsing, PKCE/JWT validation (on fixtures).
+- The `cyrano-eval` eval on the app's code: fixes ([evals/fix](../../evals/fix/README.md)) and context reading ([evals/context](../../evals/context/README.md)) for prompt regression (04 §5). Before every prompt change, a run on the models from M1.
+- A manual capture checklist: Safari, Chrome, Slack, Telegram, Mail, Notes, Messages.

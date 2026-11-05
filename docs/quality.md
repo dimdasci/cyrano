@@ -1,82 +1,82 @@
-# Качество кода
+# Code quality
 
-Статус: **принято** 2026-10-27.
+Status: accepted 2026-10-27.
 
-Цель: после каждой итерации разработки можно одной командой убедиться, что код читаемый и поддерживаемый, а хаос не растёт. Идея взята у Боба Мартина ([ub-mode](https://github.com/unclebob/ub-mode), [crapper](https://github.com/unclebob/crapper), [dryer](https://github.com/unclebob/dryer), [mutator](https://github.com/unclebob/mutator)): агент пишет код, детерминированные инструменты проверяют его по жёстким порогам. Его инструменты Swift не поддерживают, поэтому используем аналоги для Swift.
+Goal: after each development iteration, one command confirms that the code is readable and maintainable and that the mess isn't growing. The idea comes from Bob Martin ([ub-mode](https://github.com/unclebob/ub-mode), [crapper](https://github.com/unclebob/crapper), [dryer](https://github.com/unclebob/dryer), [mutator](https://github.com/unclebob/mutator)): the agent writes code, deterministic tools check it against hard thresholds. His tools don't support Swift, so we use Swift counterparts.
 
-## Запуск
+## Running
 
 ```bash
-scripts/check          # всё сразу; печатает все провалы, exit 1 если есть хоть один
-scripts/check --fix    # сначала переформатировать Swift-файлы, потом проверить
+scripts/check          # everything at once; prints all failures, exit 1 if there is at least one
+scripts/check --fix    # reformat Swift files first, then check
 ```
 
-Инструменты: `swift format` входит в Xcode, остальные ставятся один раз:
+Tools: `swift format` comes with Xcode, the rest are installed once:
 
 ```bash
 brew install swiftlint periphery
 npm install -g jscpd
 ```
 
-Проверяется код: `App/` и `Packages/`, в том числе раннер eval `cyrano-eval`. В `evals/` только данные кейсов и HTML-шаблоны окон, они в проверку не входят.
+The check covers code: `App/` and `Packages/`, including the eval runner `cyrano-eval`. `evals/` holds only case data and HTML window templates, and they aren't checked.
 
-В CI тот же `scripts/check` запускается на каждый push в `main` и на каждый pull request: [.github/workflows/check.yml](../.github/workflows/check.yml). В pull request перед ним проверяется, что изменён `CHANGELOG.md` (или у PR метка `skip-changelog`), см. [releases.md](releases.md#changelog-и-release-notes). Раннер — `xcode-27` (preview-образ GitHub с Xcode 27, нужен для SDK macOS 27). SwiftLint и Periphery ставятся из Homebrew последних версий, jscpd закреплён на той же версии, что локально.
+In CI the same `scripts/check` runs on every push to `main` and on every pull request: [.github/workflows/check.yml](../.github/workflows/check.yml). In a pull request it is preceded by a check that `CHANGELOG.md` has changed (or that the PR has the `skip-changelog` label), see [releases.md](releases.md#changelog-and-release-notes). The runner is `xcode-27` (a GitHub preview image with Xcode 27, needed for the macOS 27 SDK). SwiftLint and Periphery are installed from Homebrew at their latest versions, jscpd is pinned to the same version as locally.
 
-## Что проверяется
+## What is checked
 
-| Шаг | Инструмент | Конфиг | Что ловит |
+| Step | Tool | Config | What it catches |
 |---|---|---|---|
-| Форматирование | `swift format lint --strict` | [.swift-format](../.swift-format) | Стиль: 2 пробела, строка до 100 символов, порядок импортов. Исправляется `--fix` |
-| Компиляция | `swift build` | [Package.swift](../Packages/CyranoCore/Package.swift) | Предупреждения — ошибки; strict concurrency (Swift 6); `ExistentialAny`, `MemberImportVisibility`, `InternalImportsByDefault`; функции и выражения, которые тайпчекаются дольше 200 мс |
-| Тесты | `swift test` | — | Поведение CyranoCore |
-| Неиспользуемый код | Periphery | [.periphery.yml](../Packages/CyranoCore/.periphery.yml) | Неиспользуемые типы, функции, свойства, параметры. Публичный API CyranoCore считается используемым: это контракт с App |
-| Сложность и размеры | SwiftLint | [.swiftlint.yml](../.swiftlint.yml) | Пороги ниже; плюс `!`, `try!`, `as!`, IUO |
-| Дубликаты | jscpd | [.jscpd.json](../.jscpd.json) | Совпадающие фрагменты от 6 строк и 60 токенов; любой найденный клон — провал |
+| Formatting | `swift format lint --strict` | [.swift-format](../.swift-format) | Style: 2 spaces, lines up to 100 characters, import order. Fixed by `--fix` |
+| Compilation | `swift build` | [Package.swift](../Packages/CyranoCore/Package.swift) | Warnings are errors; strict concurrency (Swift 6); `ExistentialAny`, `MemberImportVisibility`, `InternalImportsByDefault`; functions and expressions that take longer than 200 ms to type-check |
+| Tests | `swift test` | — | CyranoCore behavior |
+| Unused code | Periphery | [.periphery.yml](../Packages/CyranoCore/.periphery.yml) | Unused types, functions, properties, parameters. The public API of CyranoCore counts as used: it's the contract with App |
+| Complexity and size | SwiftLint | [.swiftlint.yml](../.swiftlint.yml) | Thresholds below; plus `!`, `try!`, `as!`, IUO |
+| Duplicates | jscpd | [.jscpd.json](../.jscpd.json) | Matching fragments of 6 lines and 60 tokens or more; any clone found is a failure |
 
-## Пороги
+## Thresholds
 
-| Метрика | Порог | Комментарий |
+| Metric | Threshold | Comment |
 |---|---|---|
-| Цикломатическая сложность функции | ≤ 10 | `switch` по enum не считается: разбивать его ради метрики не нужно |
-| Тело функции | ≤ 40 строк | |
-| Тело замыкания | ≤ 30 строк | SwiftUI `body` — повод вынести подвью |
-| Тело типа | ≤ 250 строк | |
-| Файл | ≤ 400 строк | без строк-комментариев |
-| Параметров функции | ≤ 5 | больше — повод для типа-параметра |
-| Вложенность | типы ≤ 2, функции ≤ 3 | |
-| Кортеж | ≤ 3 элемента | больше — `struct` |
+| Cyclomatic complexity of a function | ≤ 10 | A `switch` over an enum doesn't count: no need to split it for the metric |
+| Function body | ≤ 40 lines | |
+| Closure body | ≤ 30 lines | A SwiftUI `body` this long is a reason to extract a subview |
+| Type body | ≤ 250 lines | |
+| File | ≤ 400 lines | excluding comment lines |
+| Function parameters | ≤ 5 | more is a reason for a parameter type |
+| Nesting | types ≤ 2, functions ≤ 3 | |
+| Tuple | ≤ 3 elements | more becomes a `struct` |
 
-Все пороги — ошибки, а не предупреждения. Пороги меняются только по решению владельца проекта, а не ради прохождения проверки.
+All thresholds are errors. They change only by the project owner's decision, never to make the check pass.
 
-Подавление правила допускается только точечно и с причиной:
+A rule may be suppressed only at one spot and with a reason:
 
 ```swift
 // swiftlint:disable:next force_unwrapping - caller guarantees a non-empty list
 let head = items.first!
 ```
 
-Блочные `swiftlint:disable` без парного `enable` запрещены правилом `blanket_disable_command`.
+Block `swiftlint:disable` without a matching `enable` is forbidden by the `blanket_disable_command` rule.
 
-## Тесты
+## Tests
 
-- Тест вызывает код так, как его вызывает приложение, и проверяет то, что увидит пользователь. Подмены — только на границах: сеть (`ScriptedTransport`), движок (`FakeEngine`), UserDefaults своего suite. Тест, который проверяет реализацию или повторяет другой, удаляем (ревизия 2026-11-01).
-- Тело теста тайпчекается локально не дольше ~60 мс: CI примерно вдвое медленнее, а порог 200 мс. Мерить последовательной сборкой в отдельной папке: `swift build --build-tests -j 1 --scratch-path <tmp> -v -Xswiftc -Xfrontend -Xswiftc -debug-time-function-bodies`. Дороже всего `#expect` с литералами и замыканиями: значения считать до `#expect` с явными типами, длинную подготовку выносить в функцию-помощник.
-- Границы с системой — вход через браузер и loopback, Keychain, ScreenCaptureKit, Accessibility — тестами Core не покрыты; их проверяем в приложении навыком `verify-app`.
+- A test calls the code the way the app calls it and checks what the user will see. Substitutes only at the boundaries: the network (`ScriptedTransport`), the engine (`FakeEngine`), UserDefaults with its own suite. A test that checks the implementation or repeats another test gets deleted (review of 2026-11-01).
+- A test body type-checks locally in no more than ~60 ms: CI is about twice as slow, and the threshold is 200 ms. Measure with a sequential build in a separate folder: `swift build --build-tests -j 1 --scratch-path <tmp> -v -Xswiftc -Xfrontend -Xswiftc -debug-time-function-bodies`. The most expensive is `#expect` with literals and closures: compute the values before `#expect` with explicit types, move long setup into a helper function.
+- The boundaries with the system — sign-in through the browser and loopback, Keychain, ScreenCaptureKit, Accessibility — aren't covered by Core tests; we check them in the app with the `verify-app` skill.
 
-## Приложение (App/)
+## The app (App/)
 
-- SwiftLint, jscpd и `swift format` проверяют `App/` вместе с пакетами.
-- В build settings Xcode-проекта: `SWIFT_TREAT_WARNINGS_AS_ERRORS = YES`, `SWIFT_STRICT_CONCURRENCY = complete`, те же upcoming features, что в `Package.swift`, изоляция по умолчанию — `MainActor`.
-- Подпись: по умолчанию ad-hoc ([App/Signing.xcconfig](../App/Signing.xcconfig)), чтобы проект собирался везде, включая CI. Локально `scripts/make-signing-identity` создаёт самоподписанный сертификат «Cyrano Local Signing» и `App/Signing.local.xcconfig` (не в git): разрешение Accessibility привязывается к сертификату и переживает пересборки.
-- `scripts/check` собирает приложение `xcodebuild` (в `.build/xcode`) и запускает Periphery по Xcode-проекту.
-- `retain_public` для CyranoCore пока оставлен: скан приложения не проверяет публичный API пакета. Снять, когда Periphery начнёт сканировать оба вместе.
+- SwiftLint, jscpd and `swift format` check `App/` together with the packages.
+- In the Xcode project's build settings: `SWIFT_TREAT_WARNINGS_AS_ERRORS = YES`, `SWIFT_STRICT_CONCURRENCY = complete`, the same upcoming features as in `Package.swift`, default isolation `MainActor`.
+- Signing: ad-hoc by default ([App/Signing.xcconfig](../App/Signing.xcconfig)), so the project builds everywhere, CI included. Locally `scripts/make-signing-identity` creates a self-signed certificate "Cyrano Local Signing" and `App/Signing.local.xcconfig` (not in git): the Accessibility permission is tied to the certificate and survives rebuilds.
+- `scripts/check` builds the app with `xcodebuild` (into `.build/xcode`) and runs Periphery on the Xcode project.
+- `retain_public` for CyranoCore stays for now: the app scan doesn't check the package's public API. Remove it once Periphery scans both together.
 
-## Позже
+## Later
 
-Отложено, пока кода мало:
+Postponed while there is little code:
 
-- **CRAP** — сложность × непокрытость тестами по функциям: `swift test --enable-code-coverage` + `llvm-cov export` + сложность. Либо добавить Swift в crapper.
-- **Мутационное тестирование** — по изменённым файлам перед коммитом (Muter или Swift-модуль для mutator).
-- **Разбиение CyranoCore на таргеты SPM** (Auth, OpenAI, Prompts, Diff, Settings): компилятор начнёт запрещать циклы и лишние зависимости.
+- CRAP — complexity × lack of test coverage per function: `swift test --enable-code-coverage` + `llvm-cov export` + complexity. Or add Swift to crapper.
+- Mutation testing — on the changed files before a commit (Muter or a Swift module for mutator).
+- Splitting CyranoCore into SPM targets (Auth, OpenAI, Prompts, Diff, Settings): the compiler will then forbid cycles and extra dependencies.
 
-Предостережение из эксперимента Мартина: механическое следование метрике сложности раздуло код на 20–65% и удвоило число функций без изменения поведения. Метрика — сигнал; разбивать стоит по смыслу, а не до минимального числа.
+A caution from Martin's experiment: mechanically following the complexity metric bloated the code by 20–65% and doubled the number of functions without changing behavior. The metric is a signal; split by meaning, and stop before chasing the minimum number.

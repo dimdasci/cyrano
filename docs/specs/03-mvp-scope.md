@@ -1,89 +1,89 @@
-# 03. Scope MVP
+# 03. MVP scope
 
-Статус: **согласовано** 2026-10-27. Пересмотрено: движок — модели по подписке ChatGPT ([02](02-tech-decisions.md) T7).
+Status: agreed 2026-10-27. Revised: the engine is models through the ChatGPT subscription ([02](02-tech-decisions.md) T7).
 
-## Позиционирование
+## Positioning
 
-Ассистент-напарник для **коротких коммуникаций** — прежде всего на английском, но на любом языке: сообщения в чатах, письма, комментарии, короткие фрагменты документации. Длинные тексты не целевой сценарий. Главное — качество: естественный английский, честные пояснения и диалог. Поэтому проверку делает облачная модель по подписке ChatGPT пользователя.
+A companion assistant for short communication, primarily in English but in any language: chat messages, emails, comments, short pieces of documentation. Long texts aren't a target scenario. Quality comes first: natural English, honest explanations and a dialog. That's why the check is done by a cloud model through the user's ChatGPT subscription.
 
-## Сценарии
+## Scenarios
 
-### S1. Проверка с панелью (основной)
+### S1. Check with the panel (main)
 
-1. Пользователь пишет текст в любом приложении и нажимает хоткей проверки (по умолчанию ⌥⌘G).
-2. Приложение забирает выделенный текст или всё поле (AX → ⌘C явного выделения). Больше ничего не угадывает: если текст не прочитан, панель откроется с пустым полем, куда текст вводят или вставляют.
-3. Рядом с полем, а если позиция неизвестна, то по центру экрана, появляется панель с забранным текстом и открытым полем Context. Если текст взят из окна приложения, Cyrano снимает это окно и сам заполняет Context: кто участвует в переписке и на какое сообщение пользователь отвечает. Это занимает несколько секунд; результат можно поправить, дописать или дополнить картинками. До Check текст тоже можно поправить. Проверка сама не начинается: пользователь нажимает **Check** внизу панели. В секции Context кнопок проверки нет. Дальше индикатор работы, затем исправленный текст с подсвеченным дифом и списком пояснений. Проверка без контекста тратила бы лимит впустую, а с контекстом её всё равно пришлось бы повторять.
-4. В панели можно:
-   - выбрать **тип контекста**: Message · Email · Docs (сохраняется отдельно для каждого приложения);
-   - выбрать **тон** (пресет) и повторить проверку;
-   - вставить контекст в поле **Context** (над текстом): сообщение, на которое отвечаешь, кусок переписки, пояснение («complaint is the metric»). Это обычный копипаст, отдельного разрешения не нужно;
-   - нажать **📷**: сделать скриншот активного окна и добавить его как контекст; картинку можно и вставить ⌘V или перетащить, по клику — крупный просмотр. Изменённый контекст учитывается по Check или вместе со следующим сообщением ([05](05-ui.md) §2.3a, §2.7);
-   - отклонить отдельную правку;
-   - **доработать результат в диалоге** (см. S1a);
-   - Copy в карточке нужной версии, дальше пользователь вставляет сам; Esc закрыть.
-5. Если правок нет, панель показывает «Looks good ✓», но остаётся открытой: можно сразу перейти к диалогу.
-6. Результат всегда только копируется (02 C3).
+1. The user writes text in any app and presses the check hotkey (⌥⌘G by default).
+2. The app takes the selected text or the whole field (AX → ⌘C of an explicit selection). It guesses nothing beyond that: if the text wasn't read, the panel opens with an empty field where the text is typed or pasted.
+3. Next to the field, or in the center of the screen if the position is unknown, a panel appears with the captured text and the Context field open. If the text was taken from an app window, Cyrano captures that window and fills in Context itself: who takes part in the conversation and which message the user is replying to. This takes a few seconds; the result can be corrected, extended or supplemented with images. The text can be corrected before Check too. The check doesn't start by itself: the user presses Check at the bottom of the panel. The Context section has no check buttons. Then a progress indicator, then the corrected text with the diff highlighted and a list of explanations. A check without context would waste the limit, and once context arrived it would have to be repeated anyway.
+4. In the panel you can:
+   - choose the context type: Message · Email · Docs (saved separately for each app);
+   - choose the tone (a preset) and check again;
+   - paste context into the Context field (above the text): the message you're replying to, a piece of the conversation, an explanation ("complaint is the metric"). It's ordinary copy and paste, no separate permission needed;
+   - press 📷: take a screenshot of the active window and add it as context; an image can also be pasted with ⌘V or dragged in, and a click opens a large preview. Changed context is taken into account on Check or together with the next message ([05](05-ui.md) §2.3a, §2.7);
+   - reject a single change;
+   - refine the result in a dialog (see S1a);
+   - Copy in the card of the version you want, then the user pastes it; Esc closes.
+5. If there are no changes, the panel shows "Looks good ✓" but stays open: you can go straight to the dialog.
+6. The result is always only copied (02 C3).
 
-### S1a. Доработка в диалоге
+### S1a. Refining in a dialog
 
-Первый результат служит стартовой версией, а не финалом. Под ним в панели есть многострочное поле ввода с кнопкой Send (↩ — перенос строки), где можно:
+The first result is a starting version, and the dialog takes it further. Below it the panel has a multi-line input field with a Send button (↩ inserts a line break), where you can:
 
-- **добавить контекст или пожелание**: «mention that the deadline is Friday», «make it softer, this is my manager», «короче»;
-- **предложить свою версию**: вставить или переписать текст и попросить проверить его грамотность. Модель исправляет уже эту версию;
-- **спросить**: «why "have" and not "has"?». Модель отвечает коротко, текст не меняется.
+- add context or a wish: "mention that the deadline is Friday", "make it softer, this is my manager", "shorter";
+- offer your own version: paste or rewrite the text and ask to check it. The model then corrects this version;
+- ask: "why "have" and not "has"?". The model answers briefly, the text doesn't change.
 
-Панель устроена как чат: каждый ответ модели — **карточка новой версии** с изменениями относительно предыдущей и пояснениями, между карточками — сообщения пользователя и ответы на вопросы. История — прокрутка ленты. В каждой карточке своя кнопка Copy. Тип контекста, тон, скриншот и пожелания из диалога действуют на всех следующих шагах. Диалог живёт, пока открыта панель, после закрытия не сохраняется.
+The panel works like a chat: every answer of the model is a card with a new version, with changes relative to the previous one and explanations; between the cards are the user's messages and the answers to questions. The history is the scrolling feed. Every card has its own Copy button. The context type, tone, screenshot and wishes from the dialog apply to all following steps. The dialog lives while the panel is open and isn't saved after it closes.
 
-**Расход виден:** в панели показано, сколько токенов ушло на текущий диалог и не исчерпан ли лимит подписки (M12 в [02](02-tech-decisions.md)).
+Usage is visible: the panel shows how many tokens the current dialog has used and whether the subscription limit is exhausted (M12 in [02](02-tech-decisions.md)).
 
-Пользователь может писать в диалоге на любом языке. Язык результата — язык беседы, если его удалось прочитать из окна, иначе как у исходного текста; можно выбрать другой target language (pop-up в шапке панели); при выборе другого языка модель переводит и правит одновременно.
+The user can write in the dialog in any language. The output language is the conversation's language if it could be read from the window, otherwise the same as the source text; you can choose another target language (the pop-up in the panel header); with another language chosen, the model translates and corrects at the same time.
 
 ### S2. Menu bar
 
-Иконка в строке меню: Check Text… (та же панель с пустым текстом: ввести или вставить → результат и тот же диалог, что в S1a), Settings, статус входа в ChatGPT и разрешений, Quit.
+An icon in the menu bar: Check Text… (the same panel with empty text: type or paste → the result and the same dialog as in S1a), Settings, the ChatGPT sign-in and permissions status, Quit.
 
-### S0. Первый запуск
+### S0. First launch
 
-1. Экран «Continue with ChatGPT» → вход в системном браузере → разрешение расходовать лимит подписки (Plus или Pro).
-2. Онбординг разрешения Accessibility.
-3. Короткая подсказка про хоткей.
+1. The "Continue with ChatGPT" screen → sign-in in the system browser → permission to spend the subscription limit (Plus or Pro).
+2. Onboarding for the Accessibility permission.
+3. A short hint about the hotkey.
 
-## Тип контекста (явный выбор)
+## Context type (explicit choice)
 
-| Тип | Что меняет в инструкциях модели |
+| Type | What it changes in the model's instructions |
 |---|---|
-| **Message** | Разговорный регистр допустим, без приветствий и подписей, сокращения (I'm, don't) и эмодзи не трогаем, краткость |
-| **Email** | Структура письма, вежливые формулы, приветствие/подпись не выдумываем, но правим, если они есть |
-| **Docs** | Нейтральный технический стиль, точность терминов, Markdown и код (`backticks`) не трогаем |
+| Message | A conversational register is fine, no greetings or signatures, contractions (I'm, don't) and emoji are left alone, brevity |
+| Email | Email structure, polite formulas; greetings and signatures aren't made up, but are corrected if present |
+| Docs | Neutral technical style, precise terms; Markdown and code (`backticks`) are left alone |
 
-Тип контекста и тон независимы: тип отвечает на вопрос «что это за текст», тон задаёт, как он должен звучать.
+Context type and tone are independent: the type answers "what kind of text is this", the tone sets how it should sound.
 
-## Настройки (MVP)
+## Settings (MVP)
 
-- Сочетание клавиш: глобальное «Check text» настраивается; внутри панели своих сочетаний нет (02 T6).
-- **Prompts:** встроенные промпты конвейера, типов текста, тонов и уровней можно посмотреть и отредактировать, «Restore Default» возвращает исходный.
-- **Модели:** `gpt-6.1-sol` (качество) · `gpt-6.1-terra` · `gpt-6-luna` (быстрее), отдельно для чтения контекста, проверки и пояснений (02 M1).
-- **Аккаунт:** кто вошёл, выйти.
-- **Тон:** Neutral · Casual · Friendly · Professional · Concise.
-- **Уровень вмешательства:** Fix errors only · Improve fluency (по умолчанию) · Rewrite.
-- **Custom instructions:** свободный текст.
-- **Dictionary («Never change»):** имена, термины, сленг. Пополняется по ходу работы: выделить слово в панели → Never Change. Отдельная вкладка Settings с поиском, импортом и экспортом. В модель попадают только слова, найденные в тексте.
-- **Язык результата:** по умолчанию как у исходного текста; меняется только в панели и запоминается для приложения.
-- Пояснения **на английском**, одна короткая строка на правку. Стилистические правки показываются отдельно от ошибок.
+- Keyboard shortcut: the global "Check text" is configurable; inside the panel there are no shortcuts of its own (02 T6).
+- Prompts: the built-in prompts of the pipeline, text types, tones and levels can be viewed and edited, "Restore Default" brings back the original.
+- Models: `gpt-6.1-sol` (quality) · `gpt-6.1-terra` · `gpt-6-luna` (faster), separately for context reading, the check and explanations (02 M1).
+- Account: who is signed in, sign out.
+- Tone: Neutral · Casual · Friendly · Professional · Concise.
+- Level of intervention: Fix errors only · Improve fluency (default) · Rewrite.
+- Custom instructions: free text.
+- Dictionary ("Never change"): names, terms, slang. Filled in along the way: select a word in the panel → Never Change. A separate Settings tab with search, import and export. Only words found in the text go to the model.
+- Output language: by default the same as the source text; changed only in the panel and remembered for the app.
+- Explanations in English, one short line per change. Style changes are shown separately from errors.
 
-## Не входит в MVP
+## Outside the MVP
 
-- Чтение истории чата через AX.
-- Локальные модели и работа без сети.
-- История проверок, статистика.
-- macOS Services, автоопределение типа контекста по приложению.
+- Reading chat history through AX.
+- Local models and working offline.
+- History of checks, statistics.
+- macOS Services, detecting the context type automatically from the app.
 
-## Критерии готовности
+## Acceptance criteria
 
-1. Захват и замена работают в: Safari, Chrome, Slack, Telegram, Mail, Notes, Messages. Если замена невозможна, результат копируется в буфер с понятным сообщением.
-2. Время от хоткея до исправленного текста для сообщения до 60 слов: медиана ≤ 5 с на `gpt-6.1-sol`. Пояснения могут догружаться после текста.
-3. Буфер обмена пользователя после операции восстановлен.
-4. Без входа в ChatGPT, без сети, при исчерпанном лимите или без разрешений показывается понятный экран с инструкцией, исходный текст не теряется.
-5. Eval-набор (≥ 30 примеров) проходит без регрессий: модель не меняет смысл, не трогает «do-not-change» слова, отвечает на вопросы в диалоге, а не правит их.
-6. Сетевые запросы идут только в `auth.openai.com` и `api.openai.com`, токены хранятся только в Keychain.
-7. Токен обновляется без повторного входа; после отзыва доступа приложение возвращает на экран входа.
+1. Capture and replacement work in: Safari, Chrome, Slack, Telegram, Mail, Notes, Messages. If replacement is impossible, the result is copied to the clipboard with a clear message.
+2. Time from the hotkey to the corrected text for a message of up to 60 words: median ≤ 5 s on `gpt-6.1-sol`. Explanations may load after the text.
+3. The user's clipboard is restored after the operation.
+4. Without a ChatGPT sign-in, without network, with an exhausted limit or without permissions, a clear screen with instructions is shown, and the source text isn't lost.
+5. The eval set (≥ 30 examples) passes without regressions: the model doesn't change the meaning, doesn't touch "do-not-change" words, answers questions in the dialog instead of editing them.
+6. Network requests go only to `auth.openai.com` and `api.openai.com`, tokens are stored only in Keychain.
+7. The token refreshes without signing in again; after access is revoked, the app returns to the sign-in screen.

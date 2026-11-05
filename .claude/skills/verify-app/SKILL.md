@@ -1,110 +1,110 @@
 ---
 name: verify-app
-description: Проверить изменение в запущенном Cyrano руками агента — перезапустить свежую сборку, открыть панель на тексте из TextEdit, нажимать кнопки и пункты меню, читать карточки и Settings через Accessibility. Использовать перед тем, как сказать, что изменение в App готово, и когда пользователь просит проверить в приложении. Здесь же — что делать, если macOS отозвала разрешения Accessibility или Screen Recording.
+description: Verify a change in the running Cyrano with the agent's own hands — relaunch a fresh build, open the panel on text from TextEdit, press buttons and menu items, read cards and Settings through Accessibility. Use before saying that a change in App is done, and when the user asks to check something in the app. Also covers what to do if macOS has revoked the Accessibility or Screen Recording permission.
 ---
 
-# Проверка в запущенном Cyrano
+# Verifying in the running Cyrano
 
-Агент управляет приложением через Accessibility: утилита `.build/ax` (исходник [ax.swift](ax.swift)) читает дерево элементов, нажимает кнопки, открывает контекстные меню и выбирает пункты; [capture.sh](capture.sh) открывает панель на тексте из TextEdit. Текст карточек читается как текст, без распознавания скриншотов.
+The agent drives the app through Accessibility: the `.build/ax` utility (source [ax.swift](ax.swift)) reads the element tree, presses buttons, opens context menus and picks items; [capture.sh](capture.sh) opens the panel on text from TextEdit. Card text is read as text, without recognizing screenshots.
 
-## Правила безопасности
+## Safety rules
 
-Пользователь в это время может работать за компьютером, а клавиатура и мышь общие.
+The user may be working at the computer at the same time, and the keyboard and mouse are shared.
 
-- Перед началом скажи пользователю, что ближайшие минуты будешь нажимать клавиши и двигать мышь, и попроси не переключать окна.
-- Клавиши (`ax key`, `osascript … keystroke`) уходят в окно с фокусом клавиатуры, и это не всегда переднее приложение. Панель Cyrano забирает клавиши, не делая Cyrano передним (System Events при этом называет TextEdit), а запрос пароля Keychain (`SecurityAgent`) забирает их у всех. Поэтому `capture.sh` сначала закрывает окна Cyrano (`ax close`), ждёт, пока закроется запрос пароля, и только потом проверяет, что впереди TextEdit. Для клавиш в Cyrano `osascript -e 'tell application "System Events" to get name of first process whose frontmost is true'` должно вернуть `Cyrano`. Если впереди другое — не нажимай, скажи об этом.
-- Запрос пароля Keychain появляется, когда свежая сборка впервые читает токен. Его закрывает только пользователь: скажи ему и подожди, клавиши в это время не отправляй.
-- Check нажимай, только если первая строка `.build/ax windows` — `Proofreading — TextEdit`. Иначе панель могла забрать текст из окна пользователя: не читай её и не отправляй на проверку.
-- Словарь и настройки — настоящие данные пользователя. Перед проверкой сохрани копию `~/Library/Application Support/Cyrano/dictionary.json` (или запомни, что файла нет) и `defaults export io.github.dimdasci.cyrano <файл>`, после — сравни и, если что-то изменилось, закрой Cyrano и верни как было. Пока Cyrano запущен, он держит словарь в памяти и запишет его обратно при следующем изменении.
-- Системные настройки (разрешения) меняет только пользователь.
-- Если шаг навыка не сработал (`capture.sh`, `ax`), остановись: найди причину (см. «Если клавиши не дошли») и исправь навык. Не обходи его своими скриптами и не продолжай проверку в обход.
+- Before you start, tell the user that for the next few minutes you'll be pressing keys and moving the mouse, and ask them not to switch windows.
+- Keys (`ax key`, `osascript … keystroke`) go to the window with keyboard focus, which isn't always the frontmost app. The Cyrano panel takes keys without making Cyrano frontmost (System Events then names TextEdit), and the Keychain password prompt (`SecurityAgent`) takes them from everyone. So `capture.sh` first closes Cyrano's windows (`ax close`), waits for the password prompt to close, and only then checks that TextEdit is in front. For keys meant for Cyrano, `osascript -e 'tell application "System Events" to get name of first process whose frontmost is true'` must return `Cyrano`. If something else is in front, don't press anything; say so.
+- The Keychain password prompt appears when a fresh build reads the token for the first time. Only the user closes it: tell them and wait, and send no keys meanwhile.
+- Press Check only if the first line of `.build/ax windows` is `Proofreading — TextEdit`. Otherwise the panel may have taken text from the user's window: don't read it and don't send it for checking.
+- The dictionary and settings are the user's real data. Before the check, save a copy of `~/Library/Application Support/Cyrano/dictionary.json` (or note that the file doesn't exist) and run `defaults export io.github.dimdasci.cyrano <file>`; afterwards compare, and if something changed, quit Cyrano and restore it. While Cyrano is running, it keeps the dictionary in memory and writes it back on the next change.
+- Only the user changes system settings (permissions).
+- If a step of the skill fails (`capture.sh`, `ax`), stop: find the cause (see "If keys didn't arrive") and fix the skill. Don't work around it with your own scripts, and don't continue the check around it.
 
-## Подготовка
+## Setup
 
 ```bash
 xcodebuild -project App/Cyrano.xcodeproj -scheme Cyrano -configuration Debug -derivedDataPath .build/xcode -quiet build
 swiftc -O .claude/skills/verify-app/ax.swift -o .build/ax
 pkill -x Cyrano; sleep 1; open .build/xcode/Build/Products/Debug/Cyrano.app; sleep 3
-.build/ax windows    # без ошибки — Accessibility есть
+.build/ax windows    # no error means Accessibility is granted
 ```
 
-Если `.build/ax` пишет `Accessibility is not granted to this process` или `osascript` — `not allowed assistive access`, см. «Разрешения» ниже.
+If `.build/ax` prints `Accessibility is not granted to this process` or `osascript` prints `not allowed assistive access`, see "Permissions" below.
 
-## Команды `ax`
+## `ax` commands
 
-| Команда | Что делает |
+| Command | What it does |
 |---|---|
-| `ax windows` | заголовки окон Cyrano, переднее первым |
-| `ax close [окно]` | закрывает окна Cyrano; окно — подстрока заголовка |
-| `ax tree [окно]` | дерево: `роль \| подпись \| значение \| подсказка`; окно — подстрока заголовка (`Dictionary`) |
-| `ax wait <текст> [сек]` | ждёт, пока текст появится в подписи или значении (по умолчанию 30 с) |
-| `ax press <подпись>` | нажимает кнопку или ссылку (`Check`, `Send`, `Copy`, `Undo`, `▸ 1 fix`, `Add Term`) |
-| `ax select <текст>` | выделяет текст в тексте карточки |
-| `ax menu <текст>` | открывает меню выделения (`AXShowMenu`) и печатает пункты; отмеченные — с `✓` |
-| `ax rightclick <текст>` | настоящий правый клик по элементу с этим текстом в подписи или значении; печатает пункты |
-| `ax pick <пункт>` | выбирает пункт открытого контекстного меню |
-| `ax dismiss` | закрывает открытое контекстное меню, ничего не выбирая |
-| `ax appmenu <пункт>` | пункт меню приложения или иконки в строке меню (`Settings…`, `Check Text…`) |
-| `ax set <плейсхолдер/подпись> <значение>` | вводит значение в поле (`Search`, `Term`); `@N` — N-е поле сверху (у SwiftUI TextEditor нет подписи: Context — `@1`) |
-| `ax rows` | строки таблиц |
-| `ax selectrow <значение>` | выбирает строку таблицы |
-| `ax doubleclick <значение>` | двойной клик по элементу с этим значением |
-| `ax key <буква> [command] [option] [shift] [control]` | нажимает клавишу как клавиатура (через HID); только когда впереди нужное приложение |
+| `ax windows` | titles of Cyrano's windows, frontmost first |
+| `ax close [window]` | closes Cyrano's windows; window is a substring of the title |
+| `ax tree [window]` | the tree: `role \| label \| value \| hint`; window is a substring of the title (`Dictionary`) |
+| `ax wait <text> [sec]` | waits until the text appears in a label or value (30 s by default) |
+| `ax press <label>` | presses a button or link (`Check`, `Send`, `Copy`, `Undo`, `▸ 1 fix`, `Add Term`) |
+| `ax select <text>` | selects text in the card text |
+| `ax menu <text>` | opens the selection menu (`AXShowMenu`) and prints its items; checked ones with `✓` |
+| `ax rightclick <text>` | a real right click on the element with this text in its label or value; prints the items |
+| `ax pick <item>` | picks an item of the open context menu |
+| `ax dismiss` | closes the open context menu without picking anything |
+| `ax appmenu <item>` | an item of the app menu or of the menu bar icon (`Settings…`, `Check Text…`) |
+| `ax set <placeholder/label> <value>` | types a value into a field (`Search`, `Term`); `@N` is the Nth field from the top (a SwiftUI TextEditor has no label: Context is `@1`) |
+| `ax rows` | table rows |
+| `ax selectrow <value>` | selects a table row |
+| `ax doubleclick <value>` | double-clicks the element with this value |
+| `ax key <letter> [command] [option] [shift] [control]` | presses a key like a keyboard does (through HID); only when the right app is in front |
 
-Вывод `ax tree` сохраняй в файл и ищи в нём: при `ax tree | head` утилита может умереть от SIGPIPE и ничего не напечатать. Если команда перед этим упала, файл старый: не читай его, а сначала разберись с ошибкой.
+Save the output of `ax tree` to a file and search in it: with `ax tree | head` the utility may die from SIGPIPE and print nothing. If the command before it failed, the file is stale: don't read it, deal with the error first.
 
-## Сценарий
+## Scenario
 
-1. Открыть панель: `.claude/skills/verify-app/capture.sh "I pushed the fix to Github, can you review it when you have a minute?"`. Подожди 10–12 с: Cyrano читает контекст со скриншота, Check до этого неактивна.
-2. `.build/ax press Check`, `.build/ax wait "Version 1" 60`, затем `.build/ax tree > …` — текст карточки в строке `AXTextArea`: удалённое и добавленное идут подряд (`Github, can GitHub. Can`). Пояснения приходят ещё через 5–15 с: сводка меняется с `Explaining…` на `1 fix`.
-3. Проверяй то, что видит пользователь: подписи, сводку, строку статуса (`AXStaticText` внизу), файлы, которые пишет приложение.
-4. Закрой панель и TextEdit: `.build/ax close`, `osascript -e 'tell application "TextEdit" to close every document saving no'`.
+1. Open the panel: `.claude/skills/verify-app/capture.sh "I pushed the fix to Github, can you review it when you have a minute?"`. Wait 10–12 s: Cyrano reads the context from the screenshot, and Check stays disabled until then.
+2. `.build/ax press Check`, `.build/ax wait "Version 1" 60`, then `.build/ax tree > …`. The card text is in the `AXTextArea` line: removed and added text come one after the other (`Github, can GitHub. Can`). Explanations arrive 5–15 s later: the summary changes from `Explaining…` to `1 fix`.
+3. Check what the user sees: labels, the summary, the status line (`AXStaticText` at the bottom), the files the app writes.
+4. Close the panel and TextEdit: `.build/ax close`, `osascript -e 'tell application "TextEdit" to close every document saving no'`.
 
-Примеры, которые `gpt-6.1-sol` стабильно исправляет (удобно для словаря): `Github → GitHub`, `kibana → Kibana`, `grafana → Grafana`. Модель в контексте сообщения может не тронуть сленг (`tmrw`, `pls`), так что на них не полагайся.
+Examples that `gpt-6.1-sol` reliably fixes (handy for the dictionary): `Github → GitHub`, `kibana → Kibana`, `grafana → Grafana`. In a message context the model may leave slang alone (`tmrw`, `pls`), so don't rely on it.
 
-Settings: `.build/ax appmenu "Settings…"`, вкладка — `.build/ax press Dictionary`, дальше `ax tree Dictionary`, `ax rows`.
+Settings: `.build/ax appmenu "Settings…"`, the tab with `.build/ax press Dictionary`, then `ax tree Dictionary`, `ax rows`.
 
-## Особенности
+## Quirks
 
-- Подписи кнопок SwiftUI лежат в `AXAttributedDescription`; System Events (AppleScript, JXA) их не читает, поэтому `ax` написан на `AXUIElement`.
-- `AXShowMenu` работает для текста карточки (`NSTextView`), но не для SwiftUI `.contextMenu` (ошибка -25204) — там `ax rightclick`. Правый клик попадает в центр элемента; если меню не открылось, проверь, что у строки есть `.contentShape`, иначе пустое место не ловит клик.
-- Меню, открытое `ax menu` или `ax rightclick`, сразу закрывай: `ax pick <пункт>` или `ax dismiss`, и только потом нажимай кнопки. Если `ax press` при открытом меню убирает вид, к которому оно относится (Check убирает «Text to check» и сворачивает Context), меню так и не заканчивает отслеживание, KeyboardShortcuts держит хоткей на паузе, и ⌥⌘G не работает до перезапуска Cyrano. Признаки: `capture.sh` пишет `the panel did not open for TextEdit`, а по журналу клавиши дошли до TextEdit. Пользователь так сделать не может, первый клик мимо меню его закрывает (2026-11-05).
-- Кнопка, которая открывает модальное окно (Import…, Export…), не возвращается из `AXPress`, пока окно открыто: запускай `ax press` в фоне (`… &`). Окну сохранения нужен ввод пути с клавиатуры (⇧⌘G) — только когда впереди Cyrano; иначе закрой его `ax press Cancel`.
+- SwiftUI button labels live in `AXAttributedDescription`; System Events (AppleScript, JXA) can't read them, which is why `ax` is written on `AXUIElement`.
+- `AXShowMenu` works for the card text (`NSTextView`) and fails for SwiftUI `.contextMenu` (error -25204); use `ax rightclick` there. The right click lands in the center of the element; if the menu didn't open, check that the row has `.contentShape`, otherwise empty space doesn't catch the click.
+- Close a menu opened by `ax menu` or `ax rightclick` right away, with `ax pick <item>` or `ax dismiss`, and only then press buttons. If `ax press` with the menu open removes the view the menu belongs to (Check removes "Text to check" and collapses Context), the menu never finishes tracking, KeyboardShortcuts keeps the hotkey paused, and ⌥⌘G doesn't work until Cyrano is relaunched. Signs: `capture.sh` prints `the panel did not open for TextEdit`, and according to the log the keys reached TextEdit. A user can't get into this state: their first click outside the menu closes it (2026-11-05).
+- A button that opens a modal window (Import…, Export…) doesn't return from `AXPress` while the window is open: run `ax press` in the background (`… &`). A save window needs a path typed on the keyboard (⇧⌘G), only when Cyrano is in front; otherwise close it with `ax press Cancel`.
 
-## Если клавиши не дошли
+## If keys didn't arrive
 
-`capture.sh` пишет `the panel did not open for TextEdit`, а разрешения на месте. Куда ушли клавиши, видно в системном журнале (время — местное):
+`capture.sh` prints `the panel did not open for TextEdit`, and the permissions are in place. Where the keys went is visible in the system log (local time):
 
 ```bash
 /usr/bin/log show --last 2m --predicate '(process == "WindowServer" AND eventMessage CONTAINS "Keyboard event") OR (process == "tccd" AND eventMessage CONTAINS "AUTHREQ_RESULT")' --style compact
 ```
 
-- `destinations for Keyboard event: (<keyboardFocus; TextEdit…>)` — клавиши дошли до TextEdit, но ⌥⌘G не сработал как хоткей: сработавший хоткей WindowServer не отдаёт окну, и строки для него нет. Посмотри, жив ли Cyrano и не записывают ли сочетание в Settings. Хоткей нажимай через `ax key`: нажатия System Events (`osascript … keystroke`) доходят до приложения, но глобальный хоткей вызывают не всегда (2026-11-02 не вызывали ни у Cyrano, ни у отдельной пробы с `RegisterEventHotKey`).
-- `keyboardFocus; Cyrano…` или `SecurityAgent…` — фокус держала панель Cyrano или запрос пароля.
-- `AUTHREQ_RESULT … authValue=2` — macOS разрешила доступ; `authValue=0` — запретила, см. «Разрешения».
+- `destinations for Keyboard event: (<keyboardFocus; TextEdit…>)` — the keys reached TextEdit, but ⌥⌘G didn't fire as a hotkey: WindowServer doesn't pass a hotkey that fired to a window, so there's no line for it. Check that Cyrano is alive and that the shortcut isn't being recorded in Settings. Press the hotkey with `ax key`: System Events presses (`osascript … keystroke`) reach the app but don't always trigger a global hotkey (on 2026-11-02 they triggered it neither for Cyrano nor for a separate probe with `RegisterEventHotKey`).
+- `keyboardFocus; Cyrano…` or `SecurityAgent…` — the focus was held by the Cyrano panel or by the password prompt.
+- `AUTHREQ_RESULT … authValue=2` — macOS allowed access; `authValue=0` — it denied it, see "Permissions".
 
-## Разрешения
+## Permissions
 
-Нужны **Accessibility** (клавиши, клики, чтение дерева) и **Screen Recording** (скриншоты для вёрстки, `screencapture`). Их выдают не `osascript` и не `ax`, а процессу Claude Code, который запускает оболочку:
+The skill needs Accessibility (keys, clicks, reading the tree) and Screen Recording (screenshots for layout, `screencapture`). They're granted to the Claude Code process that runs the shell, which `osascript` and `ax` inherit:
 
 ```
-Claude.app → disclaimer → ~/Library/Application Support/Claude/claude-code/<версия>/<хеш>/claude.app → zsh
+Claude.app → disclaimer → ~/Library/Application Support/Claude/claude-code/<version>/<hash>/claude.app → zsh
 ```
 
-Найти точный путь: пройти `ps -o ppid=,comm= -p <pid>` вверх от `$$`.
+To find the exact path, walk up from `$$` with `ps -o ppid=,comm= -p <pid>`.
 
-Признаки, что разрешения нет: `ax` — `Accessibility is not granted to this process`; `osascript` — `not allowed assistive access (-1719)`; `screencapture -x file.png` — `could not create image from display`. После обновления Claude Code путь меняется, и macOS может попросить разрешения снова.
+Signs that a permission is missing: `ax` prints `Accessibility is not granted to this process`; `osascript` prints `not allowed assistive access (-1719)`; `screencapture -x file.png` prints `could not create image from display`. After a Claude Code update the path changes, and macOS may ask for the permissions again.
 
-Как восстановить:
+How to restore them:
 
-1. Скажи пользователю, какого разрешения нет и зачем оно. Сам в System Settings ничего не включай.
-2. Вызови системный запрос: `swift .claude/skills/verify-app/permissions.swift`. Открой нужную панель: `open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"` (или `?Privacy_ScreenCapture`).
-3. Попроси пользователя включить строку **claude** (иконка Claude Code, не Claude.app). Если её нет — **+**, ⇧⌘G, путь к `claude.app` из шага выше.
-4. Accessibility начинает действовать сразу. Screen Recording — только после перезапуска Claude Code (на «Quit & Reopen» лучше ответить Later и перезапустить потом, иначе прервётся сессия); до этого проверяй через `ax`, без скриншотов.
-5. Проверь: `swift .claude/skills/verify-app/permissions.swift` печатает `true` для нужного разрешения.
+1. Tell the user which permission is missing and what it's for. Don't turn anything on in System Settings yourself.
+2. Trigger the system prompt: `swift .claude/skills/verify-app/permissions.swift`. Open the right pane: `open "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility"` (or `?Privacy_ScreenCapture`).
+3. Ask the user to turn on the "claude" row (the Claude Code icon; Claude.app is a different entry). If it isn't there: +, ⇧⌘G, the path to `claude.app` from the step above.
+4. Accessibility takes effect immediately. Screen Recording only after Claude Code restarts (better answer Later to "Quit & Reopen" and restart afterwards, otherwise the session is interrupted); until then check through `ax`, without screenshots.
+5. Verify: `swift .claude/skills/verify-app/permissions.swift` prints `true` for the needed permission.
 
-Права широкие: с Accessibility команды сессии управляют любым приложением, со Screen Recording видят весь экран. Пользователь может выключить их после проверки.
+The permissions are broad: with Accessibility the session's commands control any app, with Screen Recording they see the whole screen. The user can turn them off after the check.
 
-## Отчёт
+## Report
 
-Скажи, что проверено в приложении и чем (`ax`, скриншот), что не удалось проверить и почему, и вернул ли словарь и настройки как было.
+Say what was checked in the app and how (`ax`, a screenshot), what couldn't be checked and why, and whether the dictionary and settings were restored.

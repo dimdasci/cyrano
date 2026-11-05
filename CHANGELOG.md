@@ -1,7 +1,7 @@
 # Changelog
 
 What changed in Cyrano for the people who use it. Each version's section is also its release
-notes on GitHub. How to write entries: [docs/releases.md](docs/releases.md#changelog-и-release-notes).
+notes on GitHub. How to write entries: [docs/releases.md](docs/releases.md#changelog-and-release-notes).
 
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [Semantic Versioning](https://semver.org/).

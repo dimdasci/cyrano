@@ -1,16 +1,16 @@
-# Eval исправлений
+# Fix eval
 
-Кейсы для Fix, Explain и диалога ([04 §5](../../docs/specs/04-prompts.md)). Каждый кейс проходит полный ход, как в панели: проверка (Fix, затем Explain), потом ходы диалога — вопрос получает ответ, просьба — новую версию. Раннер вызывает тот же код, что и панель (`ProofreadingSession.check` и `send`), своих копий промптов у него нет.
+Cases for Fix, Explain and the dialog ([04 §5](../../docs/specs/04-prompts.md)). Each case goes through the full flow, as in the panel: the check (Fix, then Explain), then the dialog turns, where a question gets an answer and a request gets a new version. The runner calls the same code as the panel (`ProofreadingSession.check` and `send`) and keeps no copies of the prompts.
 
-Запуск из корня репозитория (сборка — `swift build --package-path Packages/CyranoCore --product cyrano-eval`):
+Run from the repository root (build with `swift build --package-path Packages/CyranoCore --product cyrano-eval`):
 
 ```bash
 Packages/CyranoCore/.build/debug/cyrano-eval fix evals/fix/cases.json gpt-6.1-sol > evals/private/fix-runs/gpt-6.1-sol.md
 ```
 
-Без модели — модель проверки по умолчанию (`gpt-6.1-sol`); модель из аргумента отвечает и на проверку, и на пояснения, и классифицирует ходы диалога. Первый запуск после сборки просит доступ к записи Cyrano в Keychain. Eval и приложение одновременно не запускать: оба обновляют токен.
+Without a model argument it uses the default check model (`gpt-6.1-sol`); the model from the argument does the check and the explanations and classifies the dialog turns. The first run after a build asks for access to Cyrano's Keychain item. Don't run the eval and the app at the same time: both refresh the token.
 
-## Кейс
+## A case
 
 ```json
 {
@@ -27,23 +27,23 @@ Packages/CyranoCore/.build/debug/cyrano-eval fix evals/fix/cases.json gpt-6.1-so
 }
 ```
 
-- `source`: `real` — сообщение пользователя (имена изменены), `synthetic` — придуманный кейс. Настоящие — проверка на реальность: если на них заметно хуже, чем на синтетике, синтетика слишком лёгкая.
-- Опции шапки панели — как `rawValue` в `CheckOptions`; нет поля — значение по умолчанию (Message · Neutral · Fluency · Same as Text). `context` — поле Context, `dictionary` — словарь «Never change».
-- `criteria` — что должно получиться, словами: какая ошибка исправлена, что нельзя испортить, какие варианты верны. Не эталон: годится любой правильный вариант.
-- `notes` — решения о спорных местах, чтобы в следующий раз не спорить снова.
+- `source`: `real` is the user's message (names changed), `synthetic` is a made-up case. The real ones are a reality check: if results on them are noticeably worse than on the synthetic ones, the synthetic set is too easy.
+- The panel header options are the `rawValue`s from `CheckOptions`; a missing field means the default (Message · Neutral · Fluency · Same as Text). `context` is the Context field, `dictionary` is the "Never change" dictionary.
+- `criteria` describe in words what should come out: which error is fixed, what must stay intact, which variants are correct. They describe the outcome and leave the wording open: any correct variant passes.
+- `notes` record decisions on disputed points, so we don't argue about them again next time.
 
-## Отчёт и оценка
+## Report and grading
 
-Раннер не засчитывает кейсы, а печатает отчёт в Markdown: опции, Context, текст, каждую версию с правками «было → стало», категорией и пояснением, ходы диалога с тем, как их понял классификатор, время и токены, затем критерии. Сбой вызова — `**ERROR**`, кейс на этом заканчивается. Отчёты — в `evals/private/fix-runs/` (вне git).
+The runner doesn't score the cases; it prints a Markdown report: the options, the Context, the text, each version with its changes as "before → after", category and explanation, the dialog turns with how the classifier understood them, time and tokens, then the criteria. A failed call shows as `**ERROR**`, and the case ends there. Reports go to `evals/private/fix-runs/` (outside git).
 
-Оценивает агент, который запускал прогон: читает отчёты всех моделей рядом, кейс за кейсом, и по каждому ставит «прошёл» или «нет» с причиной. Спорное — согласует с пользователем, решение записывает в `notes`. Итог — таблица в 04 §5.
+The agent that ran the eval grades it: it reads the reports of all models side by side, case by case, and marks each as passed or failed with a reason. Disputed cases are settled with the user, and the decision goes into `notes`. The result is the table in 04 §5.
 
-Общие правила, кроме критериев кейса. Только явные ошибки, без нюансов:
+General rules on top of the case criteria. Only clear errors, no nuances:
 
-- **Fix:** ошибка исправлена; верное не испорчено, смысл не изменён; язык результата — из pop-up, а при Same as Text — язык текста; Context не скопирован в текст.
-- **Explain:** у каждой правки есть пояснение; ошибка и вкусовщина не перепутаны (правка верного текста — `style`, исправление ошибки — не `style`); пояснение не выдумано.
-- **Диалог:** намерение понято верно, и сделано то, чего пользователь ждёт:
-  - просьба («перепиши», «обнови», «примени», «переведи», «добавь…») — новая версия, где просьба выполнена;
-  - уточнение (контекст, кому адресовано, что значит слово) — новая версия, где учтено уточнение и изменено только то, на что оно влияет; ответ «понял» без версии — провал;
-  - вопрос о тексте («вежливо?», «почему заменил?», «что не так?») — ответ, текст не меняется; ответ отвечает на вопрос, а не повторяет текст;
-  - вопрос, который звучит как поправка («как точнее сказать, что…», «не слишком ли уверенно? я не уверен, что успеем») — годится и новая версия, и ответ с вариантом, который пользователь потом применит.
+- Fix: the error is fixed; correct text is left intact and the meaning unchanged; the output language comes from the pop-up, and with Same as Text it's the language of the text; Context isn't copied into the text.
+- Explain: every change has an explanation; errors and matters of taste aren't mixed up (a change to correct text is `style`, a fix of an error is some other category); the explanation isn't made up.
+- Dialog: the intent is understood correctly, and the panel does what the user expects:
+  - a request ("rewrite", "update", "apply", "translate", "add…") — a new version where the request is done;
+  - a clarification (the context, who it's addressed to, what a word means) — a new version that takes the clarification into account and changes only what it affects; an "understood" answer without a version is a failure;
+  - a question about the text ("polite?", "why did you replace it?", "what's wrong?") — an answer, the text doesn't change; the answer addresses the question instead of repeating the text;
+  - a question that sounds like a correction ("how do I say more precisely that…", "isn't it too confident? I'm not sure we'll make it") — either a new version or an answer with a variant the user will then apply is fine.
