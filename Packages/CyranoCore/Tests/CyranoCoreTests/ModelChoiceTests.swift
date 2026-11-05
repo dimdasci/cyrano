@@ -33,11 +33,13 @@ extension ModelCall {
     // Reading the context, two explanations, and the other five calls: classify, fix, answer.
     let context: [Model] = engine.contextCalls.map(\.model)
     let explanations: [Model] = engine.calls.filter(\.explains).map(\.model)
-    let proofreading: [ModelCall] = engine.calls.filter(\.onTerra)
-    #expect(engine.calls.count == 8)
-    #expect(context == [Model.sol])
-    #expect(explanations == [Model.luna, Model.luna])
-    #expect(proofreading.count == 5)
+    let proofreading: [Model] = engine.calls.filter(\.onTerra).map(\.model)
+    let routed: [[Model]] = [context, explanations, proofreading]
+    let expected: [[Model]] = [[.sol], [.luna, .luna], Array(repeating: .terra, count: 5)]
+    let calls: Int = engine.calls.count
+
+    #expect(calls == 8)
+    #expect(routed == expected)
   }
 
   /// Reads the context, checks, asks a question and asks for a change.

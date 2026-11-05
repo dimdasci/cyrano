@@ -159,26 +159,39 @@ enum SSE {
     await #expect(throws: EngineError.self) { try await collect(engine(transport)) }
   }
 
-  @Test func imagesRepliesAndSchemaGoInTheirWireShape() async throws {
+  /// The request body of a call with an image, a reply and a schema.
+  func wireBody() async throws -> [String: Any] {
     let png = Data([0x89, 0x50, 0x4E, 0x47])
     let input = [ChatMessage(.user, "TEXT", images: [png]), ChatMessage(.assistant, "Fixed")]
     let call = ModelCall(
       model: .luna, instructions: "Read.", input: input, schema: ["type": "object"])
     let transport = ScriptedTransport([.lines(status: 200, [SSE.completed(tokens: 1)])])
     _ = try await collect(engine(transport), call)
+    return try await sentBody(transport)
+  }
 
-    let body = try await sentBody(transport)
-    #expect(body["model"] as? String == "gpt-6-luna")
-    let messages = try #require(body["input"] as? [[String: Any]])
-    let content = messages.map { $0["content"] as? [[String: Any]] ?? [] }
-    #expect(
-      content.map { $0.map { $0["type"] as? String } } == [
-        ["input_text", "input_image"], ["output_text"],
-      ])
-    #expect(content[0].last?["image_url"] as? String == "data:image/png;base64,iVBORw==")
-    let format = (body["text"] as? [String: Any])?["format"] as? [String: Any]
-    #expect(format?["type"] as? String == "json_schema")
-    #expect(format?["strict"] as? Bool == true)
+  @Test func imagesAndRepliesGoInTheirWireShape() async throws {
+    let body = try await wireBody()
+    let messages = body["input"] as? [[String: Any]] ?? []
+    let content: [[[String: Any]]] = messages.map { $0["content"] as? [[String: Any]] ?? [] }
+    let types: [[String]] = content.map { $0.map { $0["type"] as? String ?? "" } }
+    let image: String = content.first?.last?["image_url"] as? String ?? ""
+    let expectedTypes: [[String]] = [["input_text", "input_image"], ["output_text"]]
+
+    #expect(types == expectedTypes)
+    #expect(image == "data:image/png;base64,iVBORw==")
+  }
+
+  @Test func modelAndSchemaGoInTheirWireShape() async throws {
+    let body = try await wireBody()
+    let format = (body["text"] as? [String: Any])?["format"] as? [String: Any] ?? [:]
+    let sent: [String] = [
+      body["model"] as? String ?? "", format["type"] as? String ?? "",
+      (format["strict"] as? Bool).map(String.init) ?? "",
+    ]
+    let expected: [String] = ["gpt-6-luna", "json_schema", "true"]
+
+    #expect(sent == expected)
   }
 }
 

@@ -12,16 +12,16 @@ A companion assistant for short communication, primarily in English but in any l
 
 1. The user writes text in any app and presses the check hotkey (⌥⌘G by default).
 2. The app takes the selected text or the whole field (AX → ⌘C of an explicit selection). It guesses nothing beyond that: if the text wasn't read, the panel opens with an empty field where the text is typed or pasted.
-3. Next to the field, or in the center of the screen if the position is unknown, a panel appears with the captured text and the Context field open. If the text was taken from an app window, Cyrano captures that window and fills in Context itself: who takes part in the conversation and which message the user is replying to. This takes a few seconds; the result can be corrected, extended or supplemented with images. The text can be corrected before Check too. The check doesn't start by itself: the user presses Check at the bottom of the panel. The Context section has no check buttons. Then a progress indicator, then the corrected text with the diff highlighted and a list of explanations. A check without context would waste the limit, and once context arrived it would have to be repeated anyway.
+3. Next to the field, or in the center of the screen if the position is unknown, a panel appears with the captured text and the Context field open. If the text was taken from an app window, Cyrano captures that window and fills in Context itself: who the conversation is with, its language, what it's about, the format, the style and how formal it is ([04](04-prompts.md) §4.5). This takes a few seconds; the result can be corrected, extended or supplemented with images. The text can be corrected before Check too. The check doesn't start by itself: the user presses Check at the bottom of the panel. The Context section has no check buttons. Then a progress indicator, then the corrected text with the diff highlighted and a list of explanations. A check without context would waste the limit, and once context arrived it would have to be repeated anyway.
 4. In the panel you can:
    - choose the context type: Message · Email · Docs (saved separately for each app);
-   - choose the tone (a preset) and check again;
+   - choose the tone (Neutral · Casual · Friendly · Professional · Concise) and the level of intervention (Errors Only · Fluency, the default · Rewrite); a change rechecks the latest version;
    - paste context into the Context field (above the text): the message you're replying to, a piece of the conversation, an explanation ("complaint is the metric"). It's ordinary copy and paste, no separate permission needed;
    - press 📷: take a screenshot of the active window and add it as context; an image can also be pasted with ⌘V or dragged in, and a click opens a large preview. Changed context is taken into account on Check or together with the next message ([05](05-ui.md) §2.3a, §2.7);
    - reject a single change;
    - refine the result in a dialog (see S1a);
    - Copy in the card of the version you want, then the user pastes it; Esc closes.
-5. If there are no changes, the panel shows "Looks good ✓" but stays open: you can go straight to the dialog.
+5. If there are no changes, the card shows "✓ No changes needed", and the panel stays open: you can go straight to the dialog.
 6. The result is always only copied (02 C3).
 
 ### S1a. Refining in a dialog
@@ -40,13 +40,16 @@ The user can write in the dialog in any language. The output language is the con
 
 ### S2. Menu bar
 
-An icon in the menu bar: Check Text… (the same panel with empty text: type or paste → the result and the same dialog as in S1a), Settings, the ChatGPT sign-in and permissions status, Quit.
+An icon in the menu bar: Check Text… (the same panel with empty text: type or paste → the result and the same dialog as in S1a), Check Clipboard (the same panel with the text from the clipboard), the ChatGPT sign-in status, Grant Accessibility… while there's no permission, About Cyrano, Settings, Quit.
 
 ### S0. First launch
 
-1. The "Continue with ChatGPT" screen → sign-in in the system browser → permission to spend the subscription limit (Plus or Pro).
-2. Onboarding for the Accessibility permission.
-3. A short hint about the hotkey.
+One window with four sections ([05](05-ui.md) §1):
+
+1. "Continue with ChatGPT" → sign-in in the system browser → permission to spend the subscription limit (Plus or Pro).
+2. The Accessibility permission.
+3. Context from the window: the toggle and the Screen Recording permission.
+4. The hotkey.
 
 ## Context type (explicit choice)
 
@@ -64,11 +67,11 @@ Context type and tone are independent: the type answers "what kind of text is th
 - Prompts: the built-in prompts of the pipeline, text types, tones and levels can be viewed and edited, "Restore Default" brings back the original.
 - Models: `gpt-6.1-sol` (quality) · `gpt-6.1-terra` · `gpt-6-luna` (faster), separately for context reading, the check and explanations (02 M1).
 - Account: who is signed in, sign out.
-- Tone: Neutral · Casual · Friendly · Professional · Concise.
-- Level of intervention: Fix errors only · Improve fluency (default) · Rewrite.
+- Read context from the window: on by default (02 C6).
+- Per-app defaults: the context type, tone and level chosen in the panel are remembered for each app and shown in a table, where a row can be removed.
 - Custom instructions: free text.
 - Dictionary ("Never change"): names, terms, slang. Filled in along the way: select a word in the panel → Never Change. A separate Settings tab with search, import and export. Only words found in the text go to the model.
-- Output language: by default the same as the source text; changed only in the panel and remembered for the app.
+- Output language: chosen only in the panel, for that panel; by default the conversation's language from Context, otherwise the same as the source text (02 M7).
 - Explanations in English, one short line per change. Style changes are shown separately from errors.
 
 ## Outside the MVP
@@ -80,9 +83,9 @@ Context type and tone are independent: the type answers "what kind of text is th
 
 ## Acceptance criteria
 
-1. Capture and replacement work in: Safari, Chrome, Slack, Telegram, Mail, Notes, Messages. If replacement is impossible, the result is copied to the clipboard with a clear message.
+1. Capture works in: Safari, Chrome, Slack, Telegram, Mail, Notes, Messages. If the text can't be read, the panel opens with an empty field to type or paste it into. The result is only copied (02 C3).
 2. Time from the hotkey to the corrected text for a message of up to 60 words: median ≤ 5 s on `gpt-6.1-sol`. Explanations may load after the text.
-3. The user's clipboard is restored after the operation.
+3. The user's clipboard is restored after capture with ⌘C.
 4. Without a ChatGPT sign-in, without network, with an exhausted limit or without permissions, a clear screen with instructions is shown, and the source text isn't lost.
 5. The eval set (≥ 30 examples) passes without regressions: the model doesn't change the meaning, doesn't touch "do-not-change" words, answers questions in the dialog instead of editing them.
 6. Network requests go only to `auth.openai.com` and `api.openai.com`, tokens are stored only in Keychain.

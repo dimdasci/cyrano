@@ -106,15 +106,25 @@ final class FakeEngine: CorrectionEngine {
   }
 
   @Test func firstCheckShowsAVersionWithDiffAndReasons() async throws {
-    let engine = FakeEngine(fixes: ["I have a cat."])
-    let session = session(engine)
+    let session = session(FakeEngine(fixes: ["I have a cat."]))
     await session.check()
 
     let version = try #require(session.versions.first)
+    let changes: [[String]] = version.diff?.changes.map(\.words) ?? []
+    let expectedChanges: [[String]] = [["has", "have"]]
+    let reason = Explanation(category: Explanation.Category.grammar, reason: "Tense.")
+    let reasons: Version.Explanations = .ready([1: reason])
     #expect(version.number == 1)
-    #expect(version.diff?.changes.map(\.words) == [["has", "have"]])
-    #expect(version.explanations == .ready([1: Explanation(category: .grammar, reason: "Tense.")]))
-    #expect(session.activity == .idle)
+    #expect(changes == expectedChanges)
+    #expect(version.explanations == reasons)
+  }
+
+  @Test func firstCheckEndsIdleAndCountsTokens() async {
+    let session = session(FakeEngine(fixes: ["I have a cat."]))
+    await session.check()
+
+    let activity: ProofreadingSession.Activity = session.activity
+    #expect(activity == ProofreadingSession.Activity.idle)
     #expect(session.tokens == 20)
   }
 
@@ -136,17 +146,30 @@ final class FakeEngine: CorrectionEngine {
     #expect(engine.calls.allSatisfy { $0.schema == nil })
   }
 
-  @Test func editRequestAddsAVersionAgainstThePreviousOne() async throws {
+  /// Checks "I has a cat." and asks for two cats.
+  func afterEditRequest() async -> (ProofreadingSession, FakeEngine) {
     let engine = FakeEngine(fixes: ["I have a cat.", "I have two cats."])
     let session = session(engine)
     await session.check()
     await session.send("make it two cats")
+    return (session, engine)
+  }
 
-    #expect(session.versions.map(\.number) == [1, 2])
-    #expect(session.versions[1].diff?.changes.map(\.words) == [["a cat.", "two cats."]])
-    let input = try #require(engine.fixCalls.last?.input)
-    #expect(input.map(\.role) == [.user, .assistant, .user])
-    #expect(input[2].text.contains("make it two cats"))
+  @Test func editRequestAddsAVersionAgainstThePreviousOne() async {
+    let (session, _) = await afterEditRequest()
+    let numbers: [Int] = session.versions.map(\.number)
+    let changes: [[String]] = session.versions.last?.diff?.changes.map(\.words) ?? []
+    #expect(numbers == [1, 2])
+    #expect(changes == [["a cat.", "two cats."]])
+  }
+
+  @Test func editRequestSendsTheDialogSoFar() async {
+    let (_, engine) = await afterEditRequest()
+    let input: [ChatMessage] = engine.fixCalls.last?.input ?? []
+    let roles: [ChatMessage.Role] = input.map(\.role)
+    let request: String = input.last?.text ?? ""
+    #expect(roles == [.user, .assistant, .user])
+    #expect(request.contains("make it two cats"))
   }
 
   @Test func pendingRequestIsShownOnceWhileTheAnswerStreams() async {
@@ -197,20 +220,29 @@ final class FakeEngine: CorrectionEngine {
     #expect(engine.fixCalls.last?.input.last?.text.contains("DO NOT rewrite the text") == true)
   }
 
-  @Test func rejectingAChangeAddsALocalVersionTheNextRequestStartsFrom() async throws {
+  /// Checks "I has a cat at home." and rejects the first change, `has` → `have`.
+  func afterRejection() async throws -> (ProofreadingSession, FakeEngine) {
     let engine = FakeEngine(fixes: ["I have a cat at our home.", "I has a cat at our house."])
     let session = session(engine, original: "I has a cat at home.")
     await session.check()
-    let first = try #require(session.versions.first?.diff?.changes.first)
-    session.reject(first)
+    session.reject(try #require(session.versions.first?.diff?.changes.first))
+    return (session, engine)
+  }
 
-    #expect(session.versions.last?.text == "I has a cat at our home.")
-    #expect(session.versions.last?.origin == .rejection)
+  @Test func rejectingAChangeAddsALocalVersion() async throws {
+    let (session, engine) = try await afterRejection()
+    let latest = try #require(session.versions.last)
+    #expect(latest.text == "I has a cat at our home.")
+    #expect(latest.origin == Version.Origin.rejection)
     #expect(engine.fixCalls.count == 1)
+  }
 
+  @Test func theNextRequestStartsFromTheRejectedVersion() async throws {
+    let (session, engine) = try await afterRejection()
     await session.send("say house")
+
     let latest = try #require(engine.fixCalls.last?.input.dropLast().last)
-    #expect(latest.role == .assistant)
+    #expect(latest.role == ChatMessage.Role.assistant)
     #expect(latest.text == "I has a cat at our home.")
   }
 

@@ -60,7 +60,7 @@ Block `swiftlint:disable` without a matching `enable` is forbidden by the `blank
 ## Tests
 
 - A test calls the code the way the app calls it and checks what the user will see. Substitutes only at the boundaries: the network (`ScriptedTransport`), the engine (`FakeEngine`), UserDefaults with its own suite. A test that checks the implementation or repeats another test gets deleted (review of 2026-11-01).
-- A test body type-checks locally in no more than ~60 ms: CI is about twice as slow, and the threshold is 200 ms. Measure with a sequential build in a separate folder: `swift build --build-tests -j 1 --scratch-path <tmp> -v -Xswiftc -Xfrontend -Xswiftc -debug-time-function-bodies`. The most expensive is `#expect` with literals and closures: compute the values before `#expect` with explicit types, move long setup into a helper function.
+- A test body type-checks locally in about 40 ms at most (measurements vary by ±5 ms): CI can be four times slower (on 2026-11-05 a test that took 52 ms locally took 217 ms there), and the threshold is 200 ms. Measure with a sequential build in a separate folder: `swift build --build-tests -j 1 --scratch-path <tmp> -v -Xswiftc -Xfrontend -Xswiftc -debug-time-function-bodies`. Every `#expect` costs several milliseconds, and the most expensive ones compare optionals and untyped literals (`x?.origin == .check`): compute the values before `#expect` with explicit types, keep a test to one behavior with a few `#expect`s, move shared setup into a helper function.
 - The boundaries with the system — sign-in through the browser and loopback, Keychain, ScreenCaptureKit, Accessibility — aren't covered by Core tests; we check them in the app with the `verify-app` skill.
 
 ## The app (App/)

@@ -9,17 +9,26 @@ import Testing
     try JSONDecoder().decode(Checks.self, from: Data(json.utf8))
   }
 
-  @Test func requiredAndForbiddenTextIgnoreCaseAndCurlyQuotes() throws {
-    let expect = try checks(
+  func lukeChecks() throws -> Checks {
+    try checks(
       #"{ "mustContain": ["luke schulta", "it's"], "mustNotContain": ["Will reply soon"] }"#)
+  }
 
-    #expect(expect.failures(in: "With: Luke Schulta. It’s a thread.").isEmpty)
-    #expect(
-      expect.failures(in: "With: Luke.")
-        == ["missing \"luke schulta\"", "missing \"it's\""])
-    #expect(
-      expect.failures(in: "Luke Schulta, it's: will reply soon")
-        == ["has \"Will reply soon\""])
+  @Test func requiredTextIgnoresCaseAndCurlyQuotes() throws {
+    let failures: [String] = try lukeChecks().failures(in: "With: Luke Schulta. It’s a thread.")
+    #expect(failures.isEmpty)
+  }
+
+  @Test func missingRequiredTextIsAFailure() throws {
+    let failures: [String] = try lukeChecks().failures(in: "With: Luke.")
+    let expected: [String] = ["missing \"luke schulta\"", "missing \"it's\""]
+    #expect(failures == expected)
+  }
+
+  @Test func forbiddenTextIsAFailureInAnyCase() throws {
+    let failures: [String] = try lukeChecks().failures(in: "Luke Schulta, it's: will reply soon")
+    let expected: [String] = ["has \"Will reply soon\""]
+    #expect(failures == expected)
   }
 
   @Test func emptyMeansNoContextAtAll() throws {

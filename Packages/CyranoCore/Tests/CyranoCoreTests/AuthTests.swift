@@ -32,12 +32,18 @@ func query(_ url: URL) -> [String: String] {
   @Test func firstSignInAsksForADynamicClient() throws {
     let url = try AuthorizationAttempt().authorizeURL(
       clientID: "dynamic_agent_client", hostID: "urn:uuid:1", email: nil)
-    let values = query(url)
-    #expect(url.host() == "auth.openai.com")
-    #expect(values["agent_name_hint"] == "Cyrano")
-    #expect(values["code_challenge_method"] == "S256")
-    #expect(values["redirect_uri"] == "http://127.0.0.1:1457/auth/callback")
-    #expect(values["scope"]?.contains("chatgpt.tokens.use.direct") == true)
+    let expected: [String: String] = [
+      "agent_name_hint": "Cyrano", "code_challenge_method": "S256",
+      "redirect_uri": "http://127.0.0.1:1457/auth/callback",
+    ]
+    let values: [String: String] = query(url)
+    let sent: [String: String] = values.filter { expected.keys.contains($0.key) }
+    let host: String = url.host() ?? ""
+    let scope: String = values["scope"] ?? ""
+
+    #expect(host == "auth.openai.com")
+    #expect(sent == expected)
+    #expect(scope.contains("chatgpt.tokens.use.direct"))
   }
 
   @Test func signingInAgainNamesTheIssuedClientAndTheAccount() throws {
