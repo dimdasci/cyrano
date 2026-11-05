@@ -1,5 +1,6 @@
-// Card text the user can select, with a dictionary item at the top of its context menu. SwiftUI
-// Text doesn't tell what is selected, so this is an NSTextView. See docs/specs/05-ui.md §2.4.
+// Card text the user can select or edit, with a dictionary item at the top of its context menu.
+// SwiftUI Text and TextEditor don't tell what is selected, so this is an NSTextView. See
+// docs/specs/05-ui.md §2.4.
 
 import AppKit
 import SwiftUI
@@ -25,15 +26,7 @@ struct SelectableText: NSViewRepresentable {
     -> CGSize?
   {
     guard let width = proposal.width, width.isFinite else { return nil }
-    let storage = NSTextStorage(attributedString: text)
-    let layout = NSLayoutManager()
-    let container = NSTextContainer(
-      size: CGSize(width: width, height: CGFloat.greatestFiniteMagnitude))
-    container.lineFragmentPadding = 0
-    layout.addTextContainer(container)
-    storage.addLayoutManager(layout)
-    layout.ensureLayout(for: container)
-    return CGSize(width: width, height: ceil(layout.usedRect(for: container).height))
+    return CGSize(width: width, height: MenuTextView.height(of: text, width: width))
   }
 }
 
@@ -61,6 +54,20 @@ final class MenuTextView: NSTextView {
 
   required init?(coder: NSCoder) { nil }
 
+  /// The height of the text laid out at a width, the same way this view lays it out.
+  static func height(of text: NSAttributedString, width: CGFloat) -> CGFloat {
+    let storage = NSTextStorage(attributedString: text)
+    let layout = NSLayoutManager()
+    let container = NSTextContainer(
+      size: CGSize(width: width, height: CGFloat.greatestFiniteMagnitude))
+    container.lineFragmentPadding = 0
+    layout.addTextContainer(container)
+    storage.addLayoutManager(layout)
+    layout.ensureLayout(for: container)
+    return ceil(layout.usedRect(for: container).height)
+  }
+
+  /// The text view's own menu (Cut, Copy, Paste, Spelling…) with the item on top.
   override func menu(for event: NSEvent) -> NSMenu? {
     let menu = super.menu(for: event) ?? NSMenu()
     let selection = (string as NSString).substring(with: selectedRange())

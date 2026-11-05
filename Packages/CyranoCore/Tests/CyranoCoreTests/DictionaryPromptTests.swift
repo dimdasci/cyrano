@@ -49,6 +49,18 @@ import Testing
     #expect(try firstMessage(of: engine.fixCalls.last).hasSuffix("written: \"k8s\"."))
   }
 
+  /// Never Change in Text to check (05 §2.4): the user edits the text, adds a word from it, and
+  /// the first check already keeps it.
+  @Test func aTermAddedBeforeTheFirstCheckGoesWithIt() async throws {
+    let engine = FakeEngine(fixes: ["Ask Luna about Grafana."])
+    let session = session(engine, terms: [], original: "Ask luna.")
+    session.original = "Ask luna about grafana."
+    let term = try #require(TermDictionary.term(fromSelection: " grafana."))
+    session.dictionary.add(term)
+    await session.check()
+    #expect(try firstMessage(of: engine.fixCalls.first).hasSuffix("written: \"grafana\"."))
+  }
+
   /// "k8s" checked into "Kubernetes": the session and its one change.
   func checkedK8s() async throws -> (ProofreadingSession, Change) {
     let engine = FakeEngine(fixes: ["Deploy it to Kubernetes today."])
