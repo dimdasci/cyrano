@@ -12,8 +12,10 @@
 //   ax rightclick <text>      right-clicks the element whose label contains the text; prints
 //                             the menu items
 //   ax pick <title>           presses the open menu's item with this title
+//   ax dismiss                closes the open context menu without choosing an item
 //   ax appmenu <title>        presses a menu item of the app or its menu bar icon (Settings…)
-//   ax set <placeholder> <v>  puts the value into the text field with this placeholder or label
+//   ax set <placeholder> <v>  puts the value into the text field with this placeholder or label,
+//                             or into the Nth field from the top for @N
 //   ax rows                   prints the rows of tables
 //   ax selectrow <value>      selects the table row that has a cell with this value
 //   ax doubleclick <value>    double-clicks the element with exactly this value
@@ -185,7 +187,11 @@ func pressKey(_ letter: String, _ modifiers: [String]) {
 
 func printMenu() {
   Thread.sleep(forTimeInterval: 0.5)
-  for item in openMenuItems() { print(label(item).isEmpty ? "—" : label(item)) }
+  for item in openMenuItems() {
+    // A checked item, such as Check Spelling While Typing, is printed with ✓.
+    let mark = string(item, "AXMenuItemMarkChar").isEmpty ? "" : "✓ "
+    print(label(item).isEmpty ? "—" : mark + label(item))
+  }
 }
 
 let arguments = Array(CommandLine.arguments.dropFirst())
@@ -260,18 +266,30 @@ case "pick":
   }
   perform(item, "AXPress")
   print("picked \(arguments[1])")
+case "dismiss":
+  // Close a menu before pressing anything: if a press removes the menu's view, the menu never
+  // ends tracking and KeyboardShortcuts keeps the global hot key paused.
+  let menus = walk(application(), skip: { role($0) == "AXMenuBar" }).map(\.element).filter {
+    role($0) == "AXMenu"
+  }
+  guard let menu = menus.first else { fail("no open menu") }
+  perform(menu, "AXCancel")
+  print("dismissed the menu")
 case "appmenu":
   guard let item = all(application()).first(where: { role($0) == "AXMenuItem" && label($0) == arguments[1] })
   else { fail("no app menu item \(arguments[1])") }
   perform(item, "AXPress")
   print("chose \(arguments[1])")
 case "set":
-  guard
-    let field = elements().first(where: {
-      ["AXTextField", "AXTextArea"].contains(role($0))
-        && (string($0, "AXPlaceholderValue") + label($0)).contains(arguments[1])
-    })
-  else { fail("no field \(arguments[1])") }
+  // "@2" is the second field from the top: SwiftUI TextEditor has no label or placeholder.
+  let fields = elements().filter { ["AXTextField", "AXTextArea"].contains(role($0)) }
+  let field =
+    arguments[1].hasPrefix("@")
+    ? Int(arguments[1].dropFirst()).flatMap { fields.indices.contains($0 - 1) ? fields[$0 - 1] : nil }
+    : fields.first {
+      (string($0, "AXPlaceholderValue") + label($0)).contains(arguments[1])
+    }
+  guard let field else { fail("no field \(arguments[1])") }
   AXUIElementSetAttributeValue(field, "AXFocused" as CFString, kCFBooleanTrue)
   AXUIElementSetAttributeValue(field, "AXValue" as CFString, arguments[2] as CFString)
   print("set \(arguments[1]) to \(string(field, "AXValue"))")
@@ -298,5 +316,5 @@ case "key":
   pressKey(arguments[1], Array(arguments.dropFirst(2)))
   print("pressed \(arguments.dropFirst().joined(separator: " "))")
 default:
-  fail("usage: ax windows|close|tree|wait|press|select|menu|rightclick|pick|appmenu|set|rows|selectrow|doubleclick|key …")
+  fail("usage: ax windows|close|tree|wait|press|select|menu|rightclick|pick|dismiss|appmenu|set|rows|selectrow|doubleclick|key …")
 }

@@ -18,7 +18,7 @@ struct FeedView: View {
       ScrollView {
         VStack(alignment: .leading, spacing: 10) {
           if session.feed.isEmpty {
-            TextToCheck(session: session)
+            TextToCheck(model: model, session: session)
           }
           ForEach(session.feed) { item in
             row(item)
@@ -68,27 +68,22 @@ struct FeedView: View {
 /// The text before the first check: captured text to fix up, or an empty field to type or paste
 /// into when nothing was captured (05 §2.4).
 private struct TextToCheck: View {
+  let model: PanelModel
   @Bindable var session: ProofreadingSession
-  @FocusState private var editing: Bool
 
   var body: some View {
     Card(title: "Text to check") {
-      TextEditor(text: $session.original)
-        .font(.system(size: 14))
-        .frame(minHeight: 120)
-        .scrollContentBackground(.hidden)
-        .overlay(alignment: .topLeading) {
-          if session.original.isEmpty {
-            Text("Select text in any app and press ⌥⌘G, or type or paste it here")
-              .font(.system(size: 14))
-              .foregroundStyle(.tertiary)
-              .padding(.leading, 5)
-              .allowsHitTesting(false)
-          }
+      EditableText(text: $session.original, isEditable: !isChecking) { selection in
+        TermDictionary.term(fromSelection: selection).map(model.selectionItem)
+      }
+      .overlay(alignment: .topLeading) {
+        if session.original.isEmpty {
+          Text("Select text in any app and press ⌥⌘G, or type or paste it here")
+            .font(.system(size: 14))
+            .foregroundStyle(.tertiary)
+            .allowsHitTesting(false)
         }
-        .focused($editing)
-        .disabled(isChecking)
-        .onAppear { editing = session.original.isEmpty }
+      }
     }
   }
 

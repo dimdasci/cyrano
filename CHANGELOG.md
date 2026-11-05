@@ -8,6 +8,13 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Added
+
+- Protect a word before the first check: select it in Text to check, right-click and choose
+  Never Change. The first check already keeps it as written. Cut, Copy, Paste and spelling stay
+  in the same menu, and for a word already in your dictionary the menu offers Remove from
+  Dictionary.
+
 ## [0.6.0] - 2026-11-03
 
 ### Changed
