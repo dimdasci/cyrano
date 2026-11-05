@@ -59,26 +59,34 @@ final class ScriptedEngine: CorrectionEngine {
     #expect(item.turns.isEmpty)
   }
 
-  @Test func caseSetsHeaderOptionsContextAndTurns() throws {
-    let json = #"""
-      [{ "id": "b", "source": "real", "textType": "email", "tone": "friendly",
-         "level": "errorsOnly", "language": "russian", "customInstructions": "No dashes",
-         "context": "Ravi, a colleague", "dictionary": ["k8s"], "text": "Hi",
-         "criteria": ["fixed"], "turns": [{ "message": "Why?", "criteria": ["an answer"] }] }]
-      """#
-    let item = try #require(try cases(json).first)
+  static let fullCase = #"""
+    [{ "id": "b", "source": "real", "textType": "email", "tone": "friendly",
+       "level": "errorsOnly", "language": "russian", "customInstructions": "No dashes",
+       "context": "Ravi, a colleague", "dictionary": ["k8s"], "text": "Hi",
+       "criteria": ["fixed"], "turns": [{ "message": "Why?", "criteria": ["an answer"] }] }]
+    """#
+
+  @Test func caseSetsHeaderOptions() throws {
+    let item = try #require(try cases(Self.fullCase).first)
     let options = CheckOptions(
       textType: .email, tone: .friendly, level: .errorsOnly, language: .russian,
       customInstructions: "No dashes")
-    let messages: [String] = item.turns.map(\.message)
-    let criteria: [[String]] = item.turns.map(\.criteria)
 
     #expect(item.options == options)
-    #expect(item.source == .real)
+    #expect(item.source == FixCase.Source.real)
+  }
+
+  @Test func caseSetsContextDictionaryAndTurns() throws {
+    let item = try #require(try cases(Self.fullCase).first)
+    let dictionary: [String] = ["k8s"]
+    let messages: [String] = item.turns.map(\.message)
+    let criteria: [[String]] = item.turns.map(\.criteria)
+    let expectedCriteria: [[String]] = [["an answer"]]
+
     #expect(item.context == "Ravi, a colleague")
-    #expect(item.dictionary == ["k8s"])
+    #expect(item.dictionary == dictionary)
     #expect(messages == ["Why?"])
-    #expect(criteria == [["an answer"]])
+    #expect(criteria == expectedCriteria)
   }
 
   @Test func repositoryCasesDecodeAndHaveCriteria() throws {
