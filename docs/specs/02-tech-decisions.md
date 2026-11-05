@@ -7,7 +7,7 @@ Status: agreed 2026-10-27. Revised the same day: local models (Apple Foundation 
 | # | Decision | Rationale |
 |---|---|---|
 | T1 | macOS 27+, Apple Silicon | The user's current system, no regard for older versions |
-| T2 | Swift 6.4, strict concurrency; SwiftUI for the UI, AppKit for `NSPanel`, the status bar and AX | SwiftUI can't do non-activating floating panels |
+| T2 | Swift 6.4 compiler, Swift 6 language mode, strict concurrency; SwiftUI for the UI, AppKit for `NSPanel`, the status bar and AX | SwiftUI can't do non-activating floating panels |
 | T3 | Repository: `App/` — the app's Xcode project (UI, AX, hotkeys, windows); `Packages/CyranoCore/` — a local Swift Package (OpenAI client, authorization, prompts, diff, dictionary, settings); `docs/` — the spec and wireframes; `evals/` — the example set and the runner. The app depends on CyranoCore | The core is tested with `swift test` without UI; UI code isn't mixed with logic |
 | T4 | No App Sandbox, distribution outside the App Store. Until there is a Developer ID, the app is built locally and signed with a local self-signed certificate ([releases](../releases.md#distribution)) | The Accessibility API for other apps is incompatible with the sandbox. Without a stable signature macOS resets the Accessibility permission on every rebuild |
 | T5 | `LSUIElement`: an agent in the menu bar, no Dock icon | A utility that's always at hand |
@@ -64,7 +64,7 @@ A1–A7 are implemented in [CyranoCore/Auth](../../Packages/CyranoCore/Sources/C
 
 | # | Decision |
 |---|---|
-| S1 | Settings: `Codable` → JSON in Application Support (presets, profiles, dictionary); hotkeys in `UserDefaults`; tokens only in Keychain |
+| S1 | Settings in `UserDefaults`: the per-app panel options, custom instructions, models, toggles, the hotkey. The dictionary is a JSON file in Application Support (M11), the user's prompts will be one too (M8). Tokens only in Keychain |
 | S2 | The MVP doesn't keep a history of checks. Context type, tone and level are remembered separately for each app (bundle id); the output language isn't (M7) |
 | S3 | Text, context and screenshots go only to OpenAI (`store: false`). No telemetry or text logs of our own |
 

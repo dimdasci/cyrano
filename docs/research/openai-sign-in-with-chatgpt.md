@@ -53,7 +53,7 @@ In total, 2–3 days to a working prototype. The alternative is an API key with 
 
 - Message text and context go to OpenAI (`store: false`, but processing happens on their servers). For the cloud mode this is a deliberate departure from "local only".
 - The cloud engine doesn't need the 4096-token limits, compaction or Apple's guided generation. The engine interface should hide these differences.
-- Needed: a sign-in screen ("Continue with ChatGPT" per OpenAI's guidelines), limit status, signing out, a fallback local engine on a limit error or without network.
+- Needed: a sign-in screen ("Continue with ChatGPT" per OpenAI's guidelines), limit status, signing out, a fallback local engine on a limit error or without network. The local engine was dropped later: local models fell short on quality, and on a limit error or without network the app shows a clear message (02 T7, M13).
 
 ## Sources
 
