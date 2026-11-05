@@ -67,17 +67,18 @@ final class ScriptedEngine: CorrectionEngine {
          "criteria": ["fixed"], "turns": [{ "message": "Why?", "criteria": ["an answer"] }] }]
       """#
     let item = try #require(try cases(json).first)
+    let options = CheckOptions(
+      textType: .email, tone: .friendly, level: .errorsOnly, language: .russian,
+      customInstructions: "No dashes")
+    let messages: [String] = item.turns.map(\.message)
+    let criteria: [[String]] = item.turns.map(\.criteria)
 
-    #expect(
-      item.options
-        == CheckOptions(
-          textType: .email, tone: .friendly, level: .errorsOnly, language: .russian,
-          customInstructions: "No dashes"))
+    #expect(item.options == options)
     #expect(item.source == .real)
     #expect(item.context == "Ravi, a colleague")
     #expect(item.dictionary == ["k8s"])
-    #expect(item.turns.map(\.message) == ["Why?"])
-    #expect(item.turns.map(\.criteria) == [["an answer"]])
+    #expect(messages == ["Why?"])
+    #expect(criteria == [["an answer"]])
   }
 
   @Test func repositoryCasesDecodeAndHaveCriteria() throws {
