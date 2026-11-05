@@ -13,11 +13,13 @@ import Testing
 
   @Test func actionIsCheckBeforeTheFirstCheck() async {
     let session = session(FakeEngine(fixes: ["I have a cat."]))
-    #expect(session.action(for: "") == .check)
-    #expect(session.canPerform(message: ""))
+    let action: ProofreadingSession.Action = session.action(for: "")
+    let enabled: Bool = session.canPerform(message: "")
+    #expect(action == ProofreadingSession.Action.check && enabled)
 
     await session.perform(message: "")
-    #expect(session.versions.last?.origin == .check)
+    let origin: Version.Origin? = session.versions.last?.origin
+    #expect(origin == Version.Origin.check)
   }
 
   @Test func actionIsSendWhileTheContextIsUnchanged() async throws {
@@ -34,20 +36,12 @@ import Testing
     #expect(session.versions.last?.origin == .request)
   }
 
-  @Test func changedContextWithAnEmptyFieldRechecks() async throws {
-    let engine = FakeEngine(fixes: ["I have a cat.", "I have a cat!"])
-    let session = session(engine)
-    await session.check()
-    session.context = "Any pets at home?"
-    #expect(session.action(for: "") == .check)
-    #expect(session.canPerform(message: ""))
-
-    await session.perform(message: "")
-    let input = try #require(engine.fixCalls.last?.input)
-    #expect(input[0].text.contains("Any pets at home?"))
-    #expect(input.last?.text == Prompts.recheck)
-    #expect(session.versions.last?.origin == .recheck)
-    #expect(session.action(for: "") == .send)
+  @Test func changedContextWithAnEmptyFieldRechecks() async {
+    let press = await press("", afterContextChangesTo: "Any pets at home?")
+    #expect(press.label == ProofreadingSession.Action.check)
+    #expect(press.firstMessage.contains("Any pets at home?"))
+    #expect(press.lastMessage == Prompts.recheck)
+    #expect(press.origin == Version.Origin.recheck && press.nextLabel == .send)
   }
 
   @Test func changedImagesWithAnEmptyFieldRecheck() async {
@@ -60,20 +54,38 @@ import Testing
     #expect(session.action(for: "") == .check)
   }
 
-  @Test func changedContextWithAMessageSendsBoth() async throws {
+  @Test func changedContextWithAMessageSendsBoth() async {
+    let press = await press("make it two cats", afterContextChangesTo: "How many pets?")
+    #expect(press.label == ProofreadingSession.Action.send && press.messages == 3)
+    #expect(press.firstMessage.contains("How many pets?"))
+    #expect(press.lastMessage.contains("make it two cats"))
+    #expect(press.origin == Version.Origin.request && press.nextLabel == .send)
+  }
+
+  /// What a press of the action button sent after the context changed, and where it left the
+  /// panel.
+  struct Press {
+    let label: ProofreadingSession.Action
+    let messages: Int
+    let firstMessage: String
+    let lastMessage: String
+    let origin: Version.Origin?
+    let nextLabel: ProofreadingSession.Action
+  }
+
+  /// Checks, changes the context, then presses the button with `message` in the field.
+  func press(_ message: String, afterContextChangesTo context: String) async -> Press {
     let engine = FakeEngine(fixes: ["I have a cat.", "I have two cats."])
     let session = session(engine)
     await session.check()
-    session.context = "How many pets?"
-    #expect(session.action(for: "make it two cats") == .send)
-
-    await session.perform(message: "make it two cats")
-    let input = try #require(engine.fixCalls.last?.input)
-    #expect(input.count == 3)
-    #expect(input[0].text.contains("How many pets?"))
-    #expect(input[2].text.contains("make it two cats"))
-    #expect(session.versions.last?.origin == .request)
-    #expect(session.action(for: "") == .send)
+    session.context = context
+    let label = session.action(for: message)
+    await session.perform(message: message)
+    let input: [String] = engine.fixCalls.last?.input.map(\.text) ?? []
+    return Press(
+      label: label, messages: input.count, firstMessage: input.first ?? "",
+      lastMessage: input.last ?? "", origin: session.versions.last?.origin,
+      nextLabel: session.action(for: ""))
   }
 
   @Test func actionIsDisabledWhileACheckRuns() async {
