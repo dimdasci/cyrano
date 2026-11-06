@@ -18,7 +18,7 @@ public struct ModelChoice: Hashable, Sendable {
   /// Reasons for the changes of a version.
   public var explanations: Model
 
-  public init(context: Model = .luna, proofreading: Model = .sol, explanations: Model = .sol) {
+  public init(context: Model = .terra, proofreading: Model = .sol, explanations: Model = .sol) {
     self.context = context
     self.proofreading = proofreading
     self.explanations = explanations

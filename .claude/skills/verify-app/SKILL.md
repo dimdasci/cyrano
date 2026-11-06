@@ -103,6 +103,13 @@ How to restore them:
 4. Accessibility takes effect immediately. Screen Recording only after Claude Code restarts (better answer Later to "Quit & Reopen" and restart afterwards, otherwise the session is interrupted); until then check through `ax`, without screenshots.
 5. Verify: `swift .claude/skills/verify-app/permissions.swift` prints `true` for the needed permission.
 
+Cyrano needs its own Accessibility and Screen Recording permissions: the first to read the selection, the second to read context from the window. Every build has a new ad-hoc signature, and macOS may drop them.
+
+- Without Accessibility the hotkey still opens the panel, but as "Proofreading — Manual", with an "Accessibility not granted" icon and no text; `capture.sh` says so, and Cyrano's log has `capture: … trusted=false`.
+- Without Screen Recording Context stays empty with no status at all: reading is skipped. Settings → General shows "Open System Settings…" next to Screen Recording.
+
+Turning the old Cyrano row off and on may not help: the row belongs to another build. What worked on 2026-11-06: the user runs `tccutil reset All io.github.dimdasci.cyrano`, you relaunch Cyrano from your checkout, and the user allows Accessibility in the system prompt and Screen Recording from Settings → General → Open System Settings…; Screen Recording takes effect after Cyrano restarts. Only the user does this; you tell them what to press and wait.
+
 The permissions are broad: with Accessibility the session's commands control any app, with Screen Recording they see the whole screen. The user can turn them off after the check.
 
 ## Report

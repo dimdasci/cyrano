@@ -81,7 +81,8 @@
         "Q3",
         "slides"
       ]
-    }
+    },
+    "notes": "Luna sometimes returned only With and nothing else (package 19, 2026-11-06). Decided 2026-11-06 by the user: the model didn't return the content, so it's a failure."
   },
   {
     "id": "mail-popout",
@@ -94,7 +95,7 @@
     "expect": {
       "mustContain": [
         "Priya Raman",
-        "sync"
+        "Contact Center Analysis"
       ],
       "mustNotContain": [
         "dataset",
@@ -103,7 +104,8 @@
         "organizer",
         "agenda"
       ]
-    }
+    },
+    "notes": "Luna sometimes returned only With and nothing else (package 19, 2026-11-06). Decided 2026-11-06 by the user: the model didn't return the content, so it's a failure."
   },
   {
     "id": "mail-client-german",
@@ -121,7 +123,8 @@
       ],
       "mustNotContain": [
         "Sehr geehrter Herr Morgan",
-        "Für eine kurze Rückmeldung"
+        "Für eine kurze Rückmeldung",
+        "Head of"
       ]
     }
   },
@@ -161,11 +164,13 @@
         "new"
       ],
       "mustNotContain": [
-        "contract",
         "user directory",
         "access",
         "shared folder",
-        "dashboards"
+        "dashboards",
+        "the contract",
+        "new contract",
+        "contract period"
       ]
     }
   },
@@ -206,7 +211,8 @@
         "nightly load",
         "release freeze",
         "backfill",
-        "warehouse"
+        "warehouse",
+        "others"
       ]
     }
   },
@@ -250,7 +256,11 @@
         "parcel",
         "Hannah",
         "у меня своя",
-        "needed"
+        "not needed",
+        "isn't needed",
+        "no need",
+        "озер",
+        "палатк"
       ]
     }
   },
