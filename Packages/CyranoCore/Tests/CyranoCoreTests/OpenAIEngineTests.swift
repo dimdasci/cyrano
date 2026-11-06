@@ -214,13 +214,15 @@ enum SSE {
     #expect(updates.last == .completed(text: "ok", tokens: 3))
   }
 
-  /// Before its first text the model reasons; the server's events about that are progress.
+  /// Before its first text the model reasons; the server's events about that are progress. The
+  /// stream lasts twice the idle timeout, and each pause is a fifth of it: a busy CI runner
+  /// stretches a 20 ms pause past 80 ms, a 100 ms one not past 500 ms.
   @Test func slowReasoningEventsThenTextDoNotTimeOut() async throws {
     let working = Array(repeating: #"data: {"type":"response.in_progress"}"#, count: 8)
     let transport = ScriptedTransport([
-      .slow(working + [SSE.delta("ok"), SSE.completed(tokens: 3)], pause: .milliseconds(20))
+      .slow(working + [SSE.delta("ok"), SSE.completed(tokens: 3)], pause: .milliseconds(100))
     ])
-    let updates = try await collect(engine(transport, idle: .milliseconds(80)))
+    let updates = try await collect(engine(transport, idle: .milliseconds(500)))
     #expect(updates.last == .completed(text: "ok", tokens: 3))
     #expect(await transport.requests.count == 1)
   }
