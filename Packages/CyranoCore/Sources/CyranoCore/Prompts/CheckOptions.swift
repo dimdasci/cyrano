@@ -71,11 +71,6 @@ public enum OutputLanguage: String, CaseIterable, Codable, Sendable {
     }
     self = language
   }
-
-  /// How the language is named inside prompts.
-  var promptName: String {
-    self == .sameAsText ? "the same language as the TEXT" : title
-  }
 }
 
 public struct CheckOptions: Hashable, Codable, Sendable {

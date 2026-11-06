@@ -48,20 +48,17 @@ public struct Version: Hashable, Sendable {
   }
 }
 
-public enum Intent: Hashable, Sendable {
-  case question
-  case edit
-}
-
 public enum FeedItem: Hashable, Sendable, Identifiable {
   case version(Version)
-  case request(id: Int, text: String, intent: Intent)
+  /// The author's dialog message.
+  case request(id: Int, text: String)
+  /// An explanation or a question back, instead of a new version.
   case answer(id: Int, text: String)
 
   public var id: Int {
     switch self {
     case .version(let version): -version.number
-    case .request(let id, _, _), .answer(let id, _): id
+    case .request(let id, _), .answer(let id, _): id
     }
   }
 }

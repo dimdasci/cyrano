@@ -37,12 +37,16 @@ enum ResponsesRequest {
 }
 
 /// One server-sent event of the stream that matters to us.
-enum StreamEvent: Equatable {
+enum StreamEvent: Equatable, Sendable {
   case delta(String)
   case completed(tokens: Int)
   case failed(EngineError)
+  /// Any other event of the response, such as `response.in_progress` or reasoning: no text, but
+  /// the model is working.
+  case progress
 
-  /// Parses one `data:` line; other lines and unknown events give nil.
+  /// Parses one `data:` line. Other lines and keep-alives give nil: the server sends keep-alives
+  /// while a request waits, even when it waits for minutes.
   init?(line: String) {
     guard line.hasPrefix("data:") else { return nil }
     let payload = Data(String(line.dropFirst(5)).trimmed.utf8)
@@ -52,7 +56,8 @@ enum StreamEvent: Equatable {
     case "response.completed": self = .completed(tokens: raw.response?.usage?.totalTokens ?? 0)
     case "response.failed", "error":
       self = .failed((raw.response?.error ?? raw.error)?.engineError ?? .failed(raw.type))
-    default: return nil
+    case "keepalive": return nil
+    default: self = .progress
     }
   }
 }

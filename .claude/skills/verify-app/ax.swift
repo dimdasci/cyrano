@@ -21,6 +21,8 @@
 //   ax doubleclick <value>    double-clicks the element with exactly this value
 //   ax key <letter> [mods…]   presses the key in the front app like a keyboard (mods: command,
 //                             option, shift, control); check the front app first
+//   ax announcements [sec]    prints what Cyrano asks VoiceOver to announce during the next
+//                             seconds (30 by default); VoiceOver itself may stay off
 
 import AppKit
 import ApplicationServices
@@ -194,6 +196,26 @@ func printMenu() {
   }
 }
 
+/// Announcements arrive as AXAnnouncementRequested on the app element, with the text under
+/// AXAnnouncementKey in the notification's info.
+func listenToAnnouncements(for seconds: Double) {
+  let app = application()
+  var pid: pid_t = 0
+  AXUIElementGetPid(app, &pid)
+  var observer: AXObserver?
+  let callback: AXObserverCallbackWithInfo = { _, _, _, info, _ in
+    let value = (info as NSDictionary)[kAXAnnouncementKey as String]
+    let text = (value as? NSAttributedString)?.string ?? (value as? String) ?? "\(info)"
+    print("announced: \(text)")
+    fflush(stdout)
+  }
+  guard AXObserverCreateWithInfoCallback(pid, callback, &observer) == .success, let observer
+  else { fail("can't observe Cyrano") }
+  AXObserverAddNotification(observer, app, kAXAnnouncementRequestedNotification as CFString, nil)
+  CFRunLoopAddSource(CFRunLoopGetCurrent(), AXObserverGetRunLoopSource(observer), .defaultMode)
+  CFRunLoopRunInMode(.defaultMode, seconds, false)
+}
+
 let arguments = Array(CommandLine.arguments.dropFirst())
 guard AXIsProcessTrusted() else { fail("Accessibility is not granted to this process") }
 
@@ -315,6 +337,8 @@ case "doubleclick":
 case "key":
   pressKey(arguments[1], Array(arguments.dropFirst(2)))
   print("pressed \(arguments.dropFirst().joined(separator: " "))")
+case "announcements":
+  listenToAnnouncements(for: Double(arguments.dropFirst().first ?? "30") ?? 30)
 default:
-  fail("usage: ax windows|close|tree|wait|press|select|menu|rightclick|pick|dismiss|appmenu|set|rows|selectrow|doubleclick|key …")
+  fail("usage: ax windows|close|tree|wait|press|select|menu|rightclick|pick|dismiss|appmenu|set|rows|selectrow|doubleclick|key|announcements …")
 }

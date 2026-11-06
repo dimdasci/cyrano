@@ -3,7 +3,7 @@ import Testing
 
 @testable import CyranoCore
 
-/// Dictionary terms found in the text go to Fix as one line of the first message (04 §4.2).
+/// Dictionary terms found in the text go to Fix in the first message's <dictionary> (04 §4.2).
 @MainActor @Suite struct DictionaryPromptTests {
   func session(
     _ engine: FakeEngine, terms: [String], original: String = "I pushed it to bitbucket and K8S."
@@ -21,22 +21,28 @@ import Testing
     await session(engine, terms: ["Jira", "k8s", "Bitbucket"]).check()
     let message = try firstMessage(of: engine.fixCalls.first)
     #expect(
-      message.hasSuffix("\"\"\"\nKeep these words exactly as written: \"Bitbucket\", \"k8s\"."))
+      message.hasPrefix(
+        "<dictionary>\nKeep these words exactly as written: \"Bitbucket\", \"k8s\".\n</dictionary>"
+      ))
+  }
+
+  @Test func aTermSpelledDifferentlyGoesAsASpellingHint() async throws {
+    let engine = FakeEngine(fixes: ["Ask Priya about Bitbucket."])
+    await session(engine, terms: ["Priya", "Bitbucket"], original: "Ask Pria about Bitbucket.")
+      .check()
+    let message = try firstMessage(of: engine.fixCalls.first)
+    #expect(
+      message.contains(
+        "Keep these words exactly as written: \"Bitbucket\".\n"
+          + "These terms may be misspelled in the text; where the text means one, spell it so: "
+          + "\"Priya\".\n</dictionary>"))
   }
 
   @Test func withoutTermsInTheTextThereIsNoLine() async throws {
     let engine = FakeEngine(fixes: ["I pushed it to Bitbucket and K8S."])
     await session(engine, terms: ["Jira"]).check()
-    #expect(try !firstMessage(of: engine.fixCalls.first).contains("Keep these words"))
-  }
-
-  @Test func theLineComesBeforeTheImagesNote() async throws {
-    let engine = FakeEngine(fixes: ["I pushed it to Bitbucket and K8S."])
-    let session = session(engine, terms: ["k8s"])
-    session.images = [imageA]
-    await session.check()
     let message = try firstMessage(of: engine.fixCalls.first)
-    #expect(message.hasSuffix("written: \"k8s\".\n" + Prompts.imagesNote))
+    #expect(!message.contains("<dictionary>"))
   }
 
   @Test func aTermAddedAfterACheckGoesWithTheNextRequest() async throws {
@@ -46,7 +52,7 @@ import Testing
     session.dictionary.add("k8s")
     await session.perform(message: "make it shorter")
     #expect(try !firstMessage(of: engine.fixCalls.first).contains("Keep these words"))
-    #expect(try firstMessage(of: engine.fixCalls.last).hasSuffix("written: \"k8s\"."))
+    #expect(try firstMessage(of: engine.fixCalls.last).contains("written: \"k8s\".\n</dict"))
   }
 
   /// Never Change in Text to check (05 §2.4): the user edits the text, adds a word from it, and
@@ -58,7 +64,7 @@ import Testing
     let term = try #require(TermDictionary.term(fromSelection: " grafana."))
     session.dictionary.add(term)
     await session.check()
-    #expect(try firstMessage(of: engine.fixCalls.first).hasSuffix("written: \"grafana\"."))
+    #expect(try firstMessage(of: engine.fixCalls.first).contains("written: \"grafana\".\n</"))
   }
 
   /// "k8s" checked into "Kubernetes": the session and its one change.

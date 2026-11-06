@@ -25,6 +25,8 @@ public enum AuthError: Error, Hashable, Sendable {
   case cancelled
   case planNotAllowed
   case network
+  /// Signed in, but the Keychain refused the tokens.
+  case notSaved
   case invalidResponse(String)
 }
 

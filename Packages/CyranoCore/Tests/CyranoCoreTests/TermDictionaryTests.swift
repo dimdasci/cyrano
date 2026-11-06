@@ -110,3 +110,35 @@ func temporaryDictionaryFile() -> URL {
     #expect(dictionary.found(in: "Slack, then Jira and Slack again") == ["Slack", "Jira"])
   }
 }
+
+/// A term the text spells a letter or two off is a spelling hint for Fix (04 §4.2).
+@MainActor @Suite struct MisspelledTermTests {
+  @Test func aNameOneLetterOffIsFound() {
+    let dictionary = dictionary(["Priya", "Jira"])
+    #expect(dictionary.misspelled(in: "Met Laura and Pria today.") == ["Priya"])
+  }
+
+  @Test func swappedLettersCountAsOneEdit() {
+    #expect(dictionary(["Aoife"]).misspelled(in: "Thanks, Aiofe!") == ["Aoife"])
+  }
+
+  @Test func longTermsAllowTwoEdits() {
+    let dictionary = dictionary(["Kestrela", "Katarzyna"])
+    #expect(dictionary.misspelled(in: "Katarzinna deployed Kestrrella.") == ["Katarzyna"])
+  }
+
+  @Test func phrasesAreComparedWordForWord() {
+    #expect(dictionary(["dev env"]).misspelled(in: "It works on dev emv now.") == ["dev env"])
+  }
+
+  /// "quick" is a word of its own; "k8s" is too short to tell a typo from another term.
+  @Test func caseOnlyAndShortTermsAreNotHints() {
+    let dictionary = dictionary(["Quick", "k8s", "Priya"])
+    #expect(dictionary.misspelled(in: "A quick k9s check with Priya.") == [])
+  }
+
+  @Test func hintsComeInTheOrderOfTheText() {
+    let dictionary = dictionary(["Kestrela", "Priya"])
+    #expect(dictionary.misspelled(in: "Pria uses Kestrella.") == ["Priya", "Kestrela"])
+  }
+}

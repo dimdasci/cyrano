@@ -58,7 +58,7 @@
         ]
       }
     ],
-    "notes": "Decided 2026-11-05: «как точнее сказать, что…» sounds like a correction, so a new version or an answer with the phrasing both pass. `noted` (took note) → `noticed` (saw) changes the meaning."
+    "notes": "Decided 2026-11-05: «как точнее сказать, что…» sounds like a correction, so a new version or an answer with the phrasing both pass. `noted` (took note) → `noticed` (saw) changes the meaning. Decided 2026-11-06: `noticed` here is accepted as model behaviour, no further effort now (04 §5). The criterion stays, so the grade keeps showing it."
   },
   {
     "id": "real-05-polite-question-oliver",
@@ -243,6 +243,16 @@
     ]
   },
   {
+    "id": "syn-09-request-in-text",
+    "source": "synthetic",
+    "text": "Can you make this document shorter and send it to whole team before noon? I want that everyone read it today.",
+    "criteria": [
+      "a version: the text asks a colleague, not the proofreader; it is not shortened or answered (`Sure`, `Here is`)",
+      "`to whole team` → `to the whole team`; `I want that everyone read it` → `I want everyone to read it`"
+    ],
+    "notes": "The check can only give a version (04 §4.3): a request inside the text is a sentence to correct."
+  },
+  {
     "id": "lang-01-context-spanish-popup-russian",
     "source": "synthetic",
     "context": "With: Lucía Fernández.\nLanguage: Spanish.\nAbout: the slides for Friday's client meeting.\nFormat: 1:1 chat in WhatsApp, reply.\nStyle: short messages.\nFormality: informal.",
@@ -393,6 +403,20 @@
       "`dev env` kept as two words, not `dev environment`; an article before it is fine",
       "`new version` gets an article; `it work` → `it works`, `it's working` or `it has worked`"
     ]
+  },
+  {
+    "id": "dictionary-03-spelling-hint",
+    "source": "synthetic",
+    "dictionary": [
+      "Aoife",
+      "Kestrela"
+    ],
+    "text": "Hi Aiofe, the new build is on Kestrella now, can you check if the login work?",
+    "criteria": [
+      "`Aiofe` → `Aoife` and `Kestrella` → `Kestrela`: spelled as in the dictionary",
+      "`the login work` → `the login works`"
+    ],
+    "notes": "The dictionary is also a spelling hint: a term the text spells a letter off is corrected to the dictionary's spelling. Kestrela is a made-up tool name, so only the dictionary tells the right spelling."
   },
   {
     "id": "level-01-errors-only",
@@ -620,6 +644,167 @@
     "notes": "Synthetic twin of real-05. Decided 2026-11-05: `didn't catch the meaning` is natural; straight → typographic quotes is not an error, though keeping the user's quotes is better."
   },
   {
+    "id": "meaning-10-near-word-assure",
+    "source": "synthetic",
+    "text": "Please assure the client that the data is safe and nobody have access to it except our team.",
+    "criteria": [
+      "`nobody have` → `nobody has`",
+      "`assure the client` kept: `ensure` (make sure) says something else"
+    ],
+    "notes": "Meaning over grammar and frequency: a more common word that says something else is a corruption."
+  },
+  {
+    "id": "meaning-11-near-word-continual",
+    "source": "synthetic",
+    "text": "We get continual complaints about the login page, almost every days.",
+    "criteria": [
+      "`almost every days` → `almost every day`",
+      "`continual` (again and again) kept: `continuous` (without a break) says something else"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on meaning holds.",
+    "heldOut": true
+  },
+  {
+    "id": "meaning-12-strength-might",
+    "source": "synthetic",
+    "text": "The fix might be ready on Monday, I will let you know soon if it work.",
+    "criteria": [
+      "`if it work` → `if it works`, or the sentence reordered, e.g. `I'll let you know soon whether it works`",
+      "`might` kept: not `will`, `should` or `is going to`",
+      "`soon` kept: not `as soon as possible`"
+    ],
+    "notes": "Meaning over grammar and frequency: a more common word that says something else is a corruption."
+  },
+  {
+    "id": "meaning-13-strength-a-bit-late",
+    "source": "synthetic",
+    "text": "Sorry, I'm a bit late with the report, it will be ready in a hour.",
+    "criteria": [
+      "`in a hour` → `in an hour`",
+      "`a bit late` kept: not `late` or `very late`, and no stronger apology"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on meaning holds.",
+    "heldOut": true
+  },
+  {
+    "id": "meaning-14-modality-could",
+    "source": "synthetic",
+    "text": "You could restart the service if the queue stuck again.",
+    "criteria": [
+      "`the queue stuck` → `the queue gets stuck` or `is stuck`",
+      "`could` kept: a suggestion, not `should` or `must`"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on meaning holds.",
+    "heldOut": true
+  },
+  {
+    "id": "meaning-15-quantifier-a-few",
+    "source": "synthetic",
+    "text": "There are a few problems with the import, can you look on them?",
+    "criteria": [
+      "`look on them` → `look at them` or `look into them`",
+      "`a few` kept, or `some` or `several`: not `few` (almost none) or `many`"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on meaning holds.",
+    "heldOut": true
+  },
+  {
+    "id": "meaning-16-hedge-i-think",
+    "source": "synthetic",
+    "text": "I think the bug fixed now, but please check it on staging before we merge.",
+    "criteria": [
+      "`the bug fixed` → `the bug is fixed` or `has been fixed`",
+      "`I think` kept: `The bug is fixed` drops the doubt"
+    ],
+    "notes": "Meaning over grammar and frequency: a more common word that says something else is a corruption."
+  },
+  {
+    "id": "meaning-17-hedge-as-far-as-i-know",
+    "source": "synthetic",
+    "text": "As far as I know the API dont support batching yet.",
+    "criteria": [
+      "`dont support` → `doesn't support`; a comma after `know` is optional",
+      "`As far as I know` kept: the doubt stays"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on meaning holds.",
+    "heldOut": true
+  },
+  {
+    "id": "meaning-18-specific-build",
+    "source": "synthetic",
+    "text": "I pushed the fix in build 1.4.2 this morning, please test it when you has time.",
+    "criteria": [
+      "`when you has time` → `when you have time`",
+      "`build 1.4.2` and `this morning` kept: not `the latest build`, not `today`; `in` may become `to`"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on meaning holds.",
+    "heldOut": true
+  },
+  {
+    "id": "meaning-19-false-friend-eventually",
+    "source": "synthetic",
+    "text": "Eventually we can move the call to Thursday, if it suits you better.",
+    "criteria": [
+      "`Eventually` (in the end) fixed to what the author means, possibly: `If needed`, `Alternatively`, `Perhaps`, `We could also`",
+      "Thursday kept"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on meaning holds.",
+    "heldOut": true
+  },
+  {
+    "id": "meaning-20-tense-had-finished",
+    "source": "synthetic",
+    "text": "When I came to the office, the deploy already finished.",
+    "criteria": [
+      "`already finished` → `had already finished`: it finished before the author came",
+      "`came to the office` may stay or become `got to the office`"
+    ],
+    "notes": "Meaning over grammar and frequency: a more common word that says something else is a corruption."
+  },
+  {
+    "id": "meaning-21-tense-since",
+    "source": "synthetic",
+    "text": "I work here since 2021 and I never seen such a load on the servers.",
+    "criteria": [
+      "`I work here since 2021` → `I've worked here since 2021` or `I've been working here since 2021`",
+      "`I never seen` → `I've never seen`"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on meaning holds.",
+    "heldOut": true
+  },
+  {
+    "id": "meaning-22-negation-not-all",
+    "source": "synthetic",
+    "text": "Not all tests failed, only the slow ones was red.",
+    "criteria": [
+      "`the slow ones was red` → `were red` or `failed`",
+      "`Not all tests failed` kept: not `All tests didn't fail` or `No tests failed`"
+    ],
+    "notes": "Meaning over grammar and frequency: a more common word that says something else is a corruption."
+  },
+  {
+    "id": "meaning-23-negation-only-active",
+    "source": "synthetic",
+    "text": "We don't need to migrate all users, only the active one.",
+    "criteria": [
+      "`only the active one` → `only the active ones`",
+      "the scope kept: some users are migrated, not none"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on meaning holds.",
+    "heldOut": true
+  },
+  {
+    "id": "meaning-24-noun-adjunct",
+    "source": "synthetic",
+    "text": "Please send me the tickets list for the last sprint.",
+    "criteria": [
+      "`the tickets list` → `the ticket list` or `the list of tickets`",
+      "`the last sprint` kept"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on meaning holds.",
+    "heldOut": true
+  },
+  {
     "id": "dialog-03-clarify-then-rewrite",
     "source": "synthetic",
     "text": "Hi Tom, the report will be ready on Monday.",
@@ -645,6 +830,31 @@
     "notes": "Decided 2026-11-05: a clarification gets a new version. If the first version already apologizes, the second may keep it."
   },
   {
+    "id": "dialog-04-question-then-edit",
+    "source": "synthetic",
+    "text": "We will finish the migration this week.",
+    "criteria": [
+      "unchanged: the text is correct"
+    ],
+    "turns": [
+      {
+        "message": "Does this sound like a promise?",
+        "criteria": [
+          "an answer, no new version",
+          "the answer is about how certain the sentence sounds; it may suggest softer wording such as `we hope to` or `we should`"
+        ]
+      },
+      {
+        "message": "ok, make it less certain",
+        "criteria": [
+          "a new version with the doubt, e.g. `We hope to finish…`, `We should finish…`",
+          "the migration and this week kept"
+        ]
+      }
+    ],
+    "notes": "An answer stays in the dialog: the next request may build on it."
+  },
+  {
     "id": "dialog-05-disagree",
     "source": "synthetic",
     "text": "Thanks Pavel, I noted your remarks.",
@@ -661,5 +871,85 @@
       }
     ],
     "notes": "Decided 2026-11-05: a clarification gets a new version; here the text already says what the user means, so the new version keeps it."
+  },
+  {
+    "id": "dialog-06-version-reference",
+    "source": "synthetic",
+    "text": "hi Nina, the dashboard is ready, i added the filters you asked and fixed the date column. tell me if something is wrong.",
+    "criteria": [
+      "capitals fixed: `Hi`, `I`, `Tell`; `the filters you asked` → `you asked for`",
+      "Nina, the filters and the date column kept"
+    ],
+    "turns": [
+      {
+        "message": "make it more formal",
+        "criteria": [
+          "Version 2, more formal: no `hi`, polite phrasing",
+          "the filters and the date column kept"
+        ]
+      },
+      {
+        "message": "now make it much shorter",
+        "criteria": [
+          "Version 3, shorter than Version 2"
+        ]
+      },
+      {
+        "message": "Let's go with version 2, but make it a bit warmer",
+        "criteria": [
+          "Version 4 starts from Version 2: the filters and the date column, which Version 3 may have cut, are back; still formal, a little warmer",
+          "not a warmer copy of Version 3"
+        ]
+      }
+    ],
+    "notes": "The app numbers the versions; the author refers to them by number (04 §4.3)."
+  },
+  {
+    "id": "dialog-07-back-to-original",
+    "source": "synthetic",
+    "text": "Guys, the server will be down tonight from 22 to 23 for update, sorry for inconvenience.",
+    "criteria": [
+      "`for update` → `for an update` or `for maintenance`; `sorry for inconvenience` → `sorry for the inconvenience`",
+      "22 and 23 kept, as times (`22:00–23:00` is fine)"
+    ],
+    "turns": [
+      {
+        "message": "make it casual and fun",
+        "criteria": [
+          "a new version, casual; the times kept"
+        ]
+      },
+      {
+        "message": "go back to my original text and only fix the mistakes",
+        "criteria": [
+          "a new version from the original: its wording with the errors fixed, like Version 1; nothing casual from Version 2"
+        ]
+      }
+    ],
+    "notes": "\"The original\" is the text the author checked (04 §4.3)."
+  },
+  {
+    "id": "dialog-08-version-after-translation",
+    "source": "synthetic",
+    "text": "Hi Pablo, I attach the invoice for October. Please confirm when you receive it, and let me know if something need to change.",
+    "criteria": [
+      "`I attach` may become `I'm attaching` or `Please find attached`; `something need` → `something needs`",
+      "October kept"
+    ],
+    "turns": [
+      {
+        "message": "translate into Spanish",
+        "criteria": [
+          "Version 2 in Spanish; the panel shows `Translated to Spanish`"
+        ]
+      },
+      {
+        "message": "take version 1 and make it shorter",
+        "criteria": [
+          "Version 3 in English, from Version 1, shorter: the invoice, October and the confirmation kept"
+        ]
+      }
+    ],
+    "notes": "A version starts from the one the author names and keeps its language (04 §4.3)."
   }
 ]

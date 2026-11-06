@@ -8,6 +8,46 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Added
+
+- Your "Never change" dictionary also corrects spelling: when the text spells a dictionary term
+  a letter or two off, for example `Pria` for `Priya`, the check spells it as in the dictionary.
+- In the dialog you can name a version by the number on its card: "take version 1 and make it
+  shorter". "Go back to my original" starts from the text you checked.
+- VoiceOver reads an answer in the dialog once it has arrived.
+
+### Changed
+
+- A message in the dialog now takes one request to the model instead of two. With the default
+  model, gpt-6.1-sol, a typical reply comes in about 7 seconds instead of 8.
+- The Friendly tone now softens a blunt text even when it has no errors, turning orders into
+  requests. The Concise tone cuts filler and repetition from correct sentences too.
+- When Context says the conversation is formal, for example a message to a manager, the check
+  removes slang such as `gonna`.
+
+### Fixed
+
+- A question about the text in the dialog, such as "Is this polite?", could get the text back
+  instead of an answer. It now gets a short answer in the language you asked in, and your next
+  request can build on that answer.
+- When you explained something in the dialog, such as what a word means or who the text is
+  for, the new version could replace your words with words from your explanation. It now
+  changes only the parts your explanation is about.
+- The check could make a sentence say more than you wrote: "soon" became "as soon as
+  possible".
+- A name spelled two ways in the same text, such as `Pria` and `Priya`, is now spelled the same
+  way everywhere.
+- A noun used before another noun is now made singular: `users directory` becomes
+  `user directory`.
+- Asking gpt-6.1-terra to translate the text could return it unchanged. It now translates.
+- After a translation, the next request in the dialog keeps the new language.
+- When OpenAI stopped answering partway through, a check or its explanations could wait for many
+  minutes. After 30 seconds without a reply Cyrano now tries once more, then says "OpenAI
+  stopped answering" with Try Again. Your text stays.
+- After an update, Cyrano could sign you out of ChatGPT when macOS didn't let the new version
+  save your sign-in to the Keychain. Cyrano now keeps the sign-in and asks you to allow Keychain
+  access and try again; checks wait until the sign-in is saved.
+
 ## [0.8.0] - 2026-11-06
 
 ### Changed

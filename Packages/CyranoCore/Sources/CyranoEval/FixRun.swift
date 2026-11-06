@@ -22,14 +22,24 @@ struct FixRun {
     print(
       "\(Date.now.formatted(date: .abbreviated, time: .shortened)) · \(cases.count) cases · "
         + "explanations: \(models.explanations.rawValue)\n")
-    var failed = 0
-    for item in cases {
-      let report = await report(item)
-      print(report.markdown)
-      if report.failed { failed += 1 }
-    }
+    let reports = await reports(cases)
+    for report in reports { print(report.markdown) }
+    let failed = reports.count { $0.failed }
     print("---\n\n\(cases.count) cases, \(failed) with errors")
     return failed == 0
+  }
+
+  /// Runs a few cases at a time, so a run takes minutes; the reports keep the cases' order.
+  private func reports(_ cases: [FixCase], atOnce limit: Int = 4) async -> [CaseReport] {
+    await withTaskGroup(of: (Int, CaseReport).self) { group in
+      var reports = [CaseReport?](repeating: nil, count: cases.count)
+      for (index, item) in cases.enumerated() {
+        if index >= limit, let (done, report) = await group.next() { reports[done] = report }
+        group.addTask { (index, await report(item)) }
+      }
+      for await (done, report) in group { reports[done] = report }
+      return reports.compactMap(\.self)
+    }
   }
 
   /// One case as one panel: the first check, then each dialog message in turn.
@@ -68,7 +78,7 @@ private struct ReportWriter {
 
   mutating func header(_ item: FixCase) {
     let options = item.options
-    lines.append("## \(item.id) · \(item.source.rawValue)\n")
+    lines.append("## \(item.id) · \(item.source.rawValue)\(item.heldOut ? " · held out" : "")\n")
     lines.append(
       [options.textType.title, options.tone.title, options.level.title, options.language.title]
         .joined(separator: " · "))
@@ -109,8 +119,8 @@ private struct ReportWriter {
     case .version(let version):
       "\n**Version \(version.number)** (\(origin(version.origin)))\n\n" + quoted(version.text)
         + "\n\n" + edit(version.edit)
-    case .request(_, let text, let intent):
-      "\n**Request** (\(intent == .question ? "question" : "edit")): \(text)"
+    case .request(_, let text):
+      "\n**Message**: \(text)"
     case .answer(_, let text):
       "\n**Answer**: \(text)"
     }

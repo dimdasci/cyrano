@@ -54,5 +54,11 @@ public enum EngineError: Error, Hashable, Sendable {
   case planLimitReached
   case planUsageUnavailable
   case network
+  /// No event arrived for 30 s, after one retry when no text had arrived yet (02 M13).
+  case timedOut
+  /// A token refresh succeeded, but the Keychain refused the new token. Every request fails with
+  /// this and tries to save it again until a save succeeds; meanwhile the token stays in memory,
+  /// so it isn't lost (02 A5).
+  case signInNotSaved
   case failed(String)
 }
