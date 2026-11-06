@@ -12,6 +12,10 @@ struct Credentials: Codable, Hashable, Sendable {
   var expiresAt: Date
 }
 
+enum CredentialStoreError: Error, Hashable {
+  case saveFailed(OSStatus)
+}
+
 protocol CredentialStore: Sendable {
   func load() -> Credentials?
   func save(_ credentials: Credentials) throws
@@ -35,13 +39,18 @@ struct KeychainCredentialStore: CredentialStore {
     return try? JSONDecoder().decode(Credentials.self, from: data)
   }
 
+  /// Updates the item in place. Deleting it first needs a right a new build may not have; the add
+  /// then failed with errSecDuplicateItem and the rotated token was lost.
   func save(_ credentials: Credentials) throws {
-    delete()
-    var item = query
-    item[kSecValueData] = try JSONEncoder().encode(credentials)
-    item[kSecAttrAccessible] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-    let status = SecItemAdd(item as CFDictionary, nil)
-    guard status == errSecSuccess else { throw AuthError.invalidResponse("Keychain \(status)") }
+    let data = try JSONEncoder().encode(credentials)
+    var status = SecItemUpdate(query as CFDictionary, [kSecValueData: data] as CFDictionary)
+    if status == errSecItemNotFound {
+      var item = query
+      item[kSecValueData] = data
+      item[kSecAttrAccessible] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+      status = SecItemAdd(item as CFDictionary, nil)
+    }
+    guard status == errSecSuccess else { throw CredentialStoreError.saveFailed(status) }
   }
 
   func delete() {

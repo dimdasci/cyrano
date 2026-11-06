@@ -37,7 +37,10 @@ struct FeedView: View {
         visibleHeight = $0
         shortfall = max(contentHeight, Self.minHeight) - visibleHeight
       }
-      .onChange(of: session.feed) { proxy.scrollTo("bottom") }
+      .onChange(of: session.feed) { old, new in
+        proxy.scrollTo("bottom")
+        announceAnswer(old: old, new: new)
+      }
       .onChange(of: session.activity) { proxy.scrollTo("bottom") }
     }
     .accessibilityLabel("Proofreading results")
@@ -49,11 +52,17 @@ struct FeedView: View {
       VersionCard(
         version: version, isLatest: version.number == session.versions.last?.number,
         actions: actions)
-    case .request(_, let text, _):
+    case .request(_, let text):
       Bubble(text: text, fromUser: true)
     case .answer(_, let text):
       Bubble(text: text, fromUser: false)
     }
+  }
+
+  /// VoiceOver reads a new answer once it is whole: it streamed into the bubble (05 §7).
+  private func announceAnswer(old: [FeedItem], new: [FeedItem]) {
+    guard new.count > old.count, case .answer(_, let text) = new.last else { return }
+    AccessibilityNotification.Announcement(text).post()
   }
 
   private var actions: VersionCard.Actions {
@@ -112,7 +121,7 @@ struct Bubble: View {
   }
 }
 
-/// What is happening now: streaming text, a pending request, or an error with a way out.
+/// What is happening now: a streaming version or answer, or an error with a way out.
 private struct ActivityRow: View {
   let model: PanelModel
   let session: ProofreadingSession
@@ -127,9 +136,6 @@ private struct ActivityRow: View {
         Text(partial.isEmpty ? session.latestText : partial)
           .foregroundStyle(partial.isEmpty ? .secondary : .primary)
       }
-    case .classifying(let request):
-      Bubble(text: request, fromUser: true)
-      Bubble(text: "…", fromUser: false)
     case .replying(let partial):
       Bubble(text: partial.isEmpty ? "…" : partial, fromUser: false)
     case .failed(let error):
@@ -173,6 +179,10 @@ private struct ErrorRow: View {
     case .planLimitReached: "Your ChatGPT plan limit for this app is reached."
     case .planUsageUnavailable: "ChatGPT plan usage isn't available for this app right now."
     case .network: "Couldn't reach OpenAI."
+    case .timedOut: "OpenAI stopped answering. Try again in a moment."
+    case .signInNotSaved:
+      "Cyrano couldn't save your ChatGPT sign-in to the Keychain. Choose Try Again and allow "
+        + "access when macOS asks; if Cyrano quits first, you'll need to sign in again."
     case .failed(let detail): "The check failed: \(detail)"
     }
   }

@@ -132,6 +132,8 @@ final class AppModel {
     case .cancelled: "Sign-in was cancelled."
     case .planNotAllowed: "Your plan doesn't allow apps to use it. Plus or Pro is required."
     case .network: "Couldn't reach OpenAI."
+    case .notSaved:
+      "Couldn't save the sign-in to the Keychain. Sign in again and allow access when macOS asks."
     case .invalidResponse(let detail): "Couldn't sign in (\(detail))."
     case nil: "Couldn't sign in."
     }

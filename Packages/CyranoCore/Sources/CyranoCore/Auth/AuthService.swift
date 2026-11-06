@@ -11,6 +11,9 @@ public actor AuthService {
   private let transport: any HTTPTransport
   private let now: @Sendable () -> Date
   private var refreshing: Task<Credentials, any Error>?
+  /// Refreshed credentials the Keychain refused. The old refresh token is spent, so these are the
+  /// only valid ones until they are saved.
+  private var unsaved: Credentials?
 
   public init(transport: any HTTPTransport = URLSessionTransport()) {
     self.init(
@@ -53,12 +56,17 @@ public actor AuthService {
     let credentials = Credentials(
       clientID: issued, hostID: hostID, email: email, accessToken: token.accessToken,
       refreshToken: refreshToken, expiresAt: now().addingTimeInterval(token.expiresIn ?? 3600))
-    try store.save(credentials)
+    do {
+      try store.save(credentials)
+    } catch {
+      throw AuthError.notSaved
+    }
     return Account(email: email)
   }
 
   /// A valid access token, refreshed two minutes before it expires.
   public func accessToken() async throws -> String {
+    try saveUnsaved()
     guard let credentials = store.load() else { throw EngineError.notSignedIn }
     if credentials.expiresAt > now().addingTimeInterval(120) { return credentials.accessToken }
     if let refreshing { return try await refreshing.value.accessToken }
@@ -70,6 +78,7 @@ public actor AuthService {
 
   /// Revokes the refresh token when possible and forgets the credentials.
   public func signOut() async {
+    unsaved = nil
     guard let credentials = store.load() else { return }
     store.delete()
     guard let configuration = try? await discovery(),
@@ -98,8 +107,19 @@ public actor AuthService {
     updated.accessToken = token.accessToken
     updated.refreshToken = token.refreshToken ?? credentials.refreshToken
     updated.expiresAt = now().addingTimeInterval(token.expiresIn ?? 3600)
-    try store.save(updated)
+    unsaved = updated
+    try saveUnsaved()
     return updated
+  }
+
+  private func saveUnsaved() throws {
+    guard let unsaved else { return }
+    do {
+      try store.save(unsaved)
+    } catch {
+      throw EngineError.signInNotSaved
+    }
+    self.unsaved = nil
   }
 
   private func requestToken(_ fields: [String: String]) async throws -> TokenResponse {

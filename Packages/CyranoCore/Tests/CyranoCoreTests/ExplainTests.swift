@@ -22,7 +22,7 @@ extension Version {
 
   @Test func explainGetsTheNumberedChanges() async throws {
     let (engine, _) = await check()
-    let call = try #require(engine.calls.first { $0.schema != nil })
+    let call = try #require(engine.calls.first { $0.instructions == Prompts.explain })
     let expected =
       "Original: I has a cat.\nCorrected: I have a cat.\nChanges:\n1. \"has\" → \"have\""
     #expect(call.input.first?.text == expected)

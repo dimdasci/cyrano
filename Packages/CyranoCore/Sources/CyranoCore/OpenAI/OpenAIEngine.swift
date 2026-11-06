@@ -1,6 +1,7 @@
 // Responses API over the ChatGPT plan. See docs/specs/02-tech-decisions.md M2, M12, M13.
 
 import Foundation
+import Synchronization
 
 public struct OpenAIEngine: CorrectionEngine {
   public typealias TokenProvider = @Sendable () async throws -> String
@@ -9,10 +10,15 @@ public struct OpenAIEngine: CorrectionEngine {
 
   let transport: any HTTPTransport
   let accessToken: TokenProvider
+  let idleTimeout: Duration
 
-  public init(transport: any HTTPTransport, accessToken: @escaping TokenProvider) {
+  public init(
+    transport: any HTTPTransport, accessToken: @escaping TokenProvider,
+    idleTimeout: Duration = .seconds(30)
+  ) {
     self.transport = transport
     self.accessToken = accessToken
+    self.idleTimeout = idleTimeout
   }
 
   public func respond(_ call: ModelCall) -> AsyncThrowingStream<ResponseUpdate, any Error> {
@@ -29,8 +35,8 @@ public struct OpenAIEngine: CorrectionEngine {
     }
   }
 
-  /// A network failure before any text arrived is retried once (M13). A stopped call is not: its
-  /// request ends with a network error too.
+  /// A network failure or a timeout before any text arrived is retried once (M13). A stopped call
+  /// is not: its request ends with a network error too.
   private func respondRetryingOnce(
     _ call: ModelCall, yield: (ResponseUpdate) -> Void
   ) async throws {
@@ -40,7 +46,9 @@ public struct OpenAIEngine: CorrectionEngine {
         receivedText = true
         yield(update)
       }
-    } catch EngineError.network where !receivedText && !Task.isCancelled {
+    } catch let error as EngineError
+      where [.network, .timedOut].contains(error) && !receivedText && !Task.isCancelled
+    {
       try await respondOnce(call, yield: yield)
     }
   }
@@ -62,21 +70,56 @@ public struct OpenAIEngine: CorrectionEngine {
   private func read(_ response: HTTPStream, yield: (ResponseUpdate) -> Void) async throws {
     var text = ""
     do {
-      for try await line in response.lines {
-        switch StreamEvent(line: line) {
+      for try await event in Self.events(of: response.lines, idle: idleTimeout) {
+        switch event {
         case .delta(let delta):
           text += delta
           yield(.delta(delta))
         case .completed(let tokens):
           return yield(.completed(text: text, tokens: tokens))
         case .failed(let error): throw error
-        case nil: continue
+        case .progress: continue
         }
       }
     } catch is URLError {
       throw EngineError.network
     }
     throw EngineError.failed("The response ended before it was complete.")
+  }
+
+  /// The stream's events; fails with `timedOut` when none arrives for `idle`. The request's own
+  /// timeout counts bytes, and the server's keep-alives are bytes: a request it held for 905 s
+  /// never timed out (02 M13).
+  static func events(
+    of lines: AsyncThrowingStream<String, any Error>, idle: Duration
+  ) -> AsyncThrowingStream<StreamEvent, any Error> {
+    AsyncThrowingStream { continuation in
+      let lastEvent = Mutex(ContinuousClock.now)
+      let reader = Task {
+        do {
+          for try await line in lines {
+            guard let event = StreamEvent(line: line) else { continue }
+            lastEvent.withLock { $0 = .now }
+            continuation.yield(event)
+          }
+          continuation.finish()
+        } catch {
+          continuation.finish(throwing: error)
+        }
+      }
+      let watchdog = Task {
+        while true {
+          let deadline = lastEvent.withLock { $0 } + idle
+          guard (try? await Task.sleep(until: deadline, clock: .continuous)) != nil else { return }
+          if lastEvent.withLock({ $0 }) + idle <= .now { break }
+        }
+        continuation.finish(throwing: EngineError.timedOut)
+      }
+      continuation.onTermination = { _ in
+        reader.cancel()
+        watchdog.cancel()
+      }
+    }
   }
 
   private func makeRequest(_ call: ModelCall) async throws -> URLRequest {

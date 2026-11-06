@@ -5,8 +5,8 @@ import Testing
 
 @testable import CyranoEval
 
-/// Fix answers come from a queue, Explain gives change 1 a fixed reason, and a message with "?"
-/// is a question.
+/// Fix replies come from a queue: a text ending in "!" is an answer, anything else a version.
+/// Explain gives change 1 a fixed reason.
 final class ScriptedEngine: CorrectionEngine {
   private let state: Mutex<(fixes: [String], calls: [ModelCall], failsFix: Bool)>
 
@@ -15,21 +15,19 @@ final class ScriptedEngine: CorrectionEngine {
   }
 
   var fixCalls: [ModelCall] {
-    state.withLock { $0.calls }.filter {
-      $0.schema == nil && !$0.instructions.hasPrefix("Classify")
-    }
+    state.withLock { $0.calls }.filter { !$0.instructions.hasPrefix("You explain") }
   }
 
   func respond(_ call: ModelCall) -> AsyncThrowingStream<ResponseUpdate, any Error> {
     let answer = state.withLock { state -> String? in
       state.calls.append(call)
-      if call.instructions.hasPrefix("Classify") {
-        return call.input[0].text.contains("?") ? "question" : "edit"
-      }
-      if call.schema != nil {
+      if call.instructions.hasPrefix("You explain") {
         return #"{"items":[{"id":1,"category":"grammar","reason":"Subject-verb agreement."}]}"#
       }
-      return state.failsFix ? nil : state.fixes.removeFirst()
+      guard !state.failsFix else { return nil }
+      let text = state.fixes.removeFirst()
+      let kind = text.hasSuffix("!") ? "answer" : "version"
+      return #"{"kind":"\#(kind)","text":"\#(text)"}"#
     }
     return AsyncThrowingStream { continuation in
       if let answer {
@@ -63,7 +61,8 @@ final class ScriptedEngine: CorrectionEngine {
     [{ "id": "b", "source": "real", "textType": "email", "tone": "friendly",
        "level": "errorsOnly", "language": "russian", "customInstructions": "No dashes",
        "context": "Ravi, a colleague", "dictionary": ["k8s"], "text": "Hi",
-       "criteria": ["fixed"], "turns": [{ "message": "Why?", "criteria": ["an answer"] }] }]
+       "criteria": ["fixed"], "turns": [{ "message": "Why?", "criteria": ["an answer"] }],
+       "heldOut": true }]
     """#
 
   @Test func caseSetsHeaderOptions() throws {
@@ -74,6 +73,7 @@ final class ScriptedEngine: CorrectionEngine {
 
     #expect(item.options == options)
     #expect(item.source == FixCase.Source.real)
+    #expect(item.heldOut)
   }
 
   @Test func caseSetsContextDictionaryAndTurns() throws {
@@ -108,7 +108,7 @@ final class ScriptedEngine: CorrectionEngine {
                    { "message": "make it shorter", "criteria": ["shorter"] }] }]
       """#
     let item = try #require(try cases(json).first)
-    let engine = ScriptedEngine(fixes: ["I have fixed k8s", "Yes, it is.", "Fixed k8s"])
+    let engine = ScriptedEngine(fixes: ["I have fixed k8s", "Yes, it is!", "Fixed k8s"])
 
     let report = await FixRun(engine: engine, models: ModelChoice()).report(item)
 
@@ -117,15 +117,15 @@ final class ScriptedEngine: CorrectionEngine {
       "## jargon · synthetic", "Message · Neutral · Fluency · Same as Text", "Context: Ravi",
       "Dictionary: k8s", "> I has fixed k8s", "**Version 1** (check)", "> I have fixed k8s",
       #"1. "has" → "have" — grammar: Subject-verb agreement."#, "- has → have",
-      "**Request** (question): Is it polite?", "**Answer**: Yes, it is.",
-      "- an answer, no version", "**Request** (edit): make it shorter",
+      "**Message**: Is it polite?", "**Answer**: Yes, it is!",
+      "- an answer, no version", "**Message**: make it shorter",
       "**Version 2** (request)", "> Fixed k8s", "- shorter",
     ] {
       #expect(report.markdown.contains(line), "missing \(line)")
     }
     let first = try #require(engine.fixCalls.first?.input.first?.text)
     #expect(first.contains(#"Keep these words exactly as written: "k8s"."#))
-    #expect(first.contains("CONTEXT"))
+    #expect(first.hasPrefix("<context>\nRavi\n</context>"))
   }
 
   @Test func failedCallEndsTheCaseWithTheError() async throws {

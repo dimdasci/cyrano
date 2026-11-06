@@ -29,10 +29,12 @@ struct FixCase: Decodable {
   let turns: [Turn]
   /// Decisions on what is right in this case, for whoever judges it next.
   let notes: String?
+  /// A case the prompts are never tuned on: it only checks that a general rule holds.
+  let heldOut: Bool
 
   private enum CodingKeys: String, CodingKey {
     case id, source, textType, tone, level, language, customInstructions, context, dictionary,
-      text, criteria, turns, notes
+      text, criteria, turns, notes, heldOut
   }
 
   init(from decoder: any Decoder) throws {
@@ -54,5 +56,6 @@ struct FixCase: Decodable {
     criteria = try values.decode([String].self, forKey: .criteria)
     turns = try values.decodeIfPresent([Turn].self, forKey: .turns) ?? []
     notes = try values.decodeIfPresent(String.self, forKey: .notes)
+    heldOut = try values.decodeIfPresent(Bool.self, forKey: .heldOut) ?? false
   }
 }

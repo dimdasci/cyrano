@@ -9,10 +9,10 @@ public import Observation
 public final class ProofreadingSession {
   public enum Activity: Hashable, Sendable {
     case idle
+    /// A new version streams: the first check, a recheck, or a dialog message the model answers
+    /// with a version.
     case checking(partial: String)
-    /// A dialog message waits for its kind; it is not in the feed yet.
-    case classifying(request: String)
-    /// The message is in the feed; its answer or new version streams.
+    /// A dialog message is in the feed; its reply hasn't said its kind yet, or an answer streams.
     case replying(partial: String)
     case failed(EngineError)
   }
@@ -84,7 +84,7 @@ public final class ProofreadingSession {
   /// Check waits while the context is read.
   public var isBusy: Bool {
     switch activity {
-    case .checking, .classifying, .replying: true
+    case .checking, .replying: true
     case .idle, .failed: isReadingContext
     }
   }
@@ -122,32 +122,33 @@ public final class ProofreadingSession {
     retry = { [weak self] in await self?.check() }
     activity = .checking(partial: "")
     do {
-      let text = try await fix(prompt: userPrompt(for: origin)) { .checking(partial: $0) }
-      await addVersion(text, origin: origin)
+      let reply: FixReply<CheckKind> = try await fix(prompt: userPrompt(for: origin)) {
+        .checking(partial: $1)
+      }
+      await addVersion(reply.text, origin: origin)
     } catch {
       fail(error)
     }
   }
 
-  /// A dialog turn: a question gets an answer, anything else a new version.
+  /// A dialog turn: the model judges what the author wants and answers or writes a new version.
   public func send(_ message: String) async {
     let message = message.trimmed
     guard !message.isEmpty else { return }
     retry = { [weak self] in await self?.send(message) }
-    activity = .classifying(request: message)
+    let request = FeedItem.request(id: takeID(), text: message)
+    feed.append(request)
+    activity = .replying(partial: "")
     do {
-      let intent = try await classify(message)
-      let request = FeedItem.request(id: takeID(), text: message, intent: intent)
-      feed.append(request)
-      activity = .replying(partial: "")
-      do {
-        let text = try await fix(prompt: nil) { .replying(partial: $0) }
-        try await finishTurn(text, intent: intent)
-      } catch {
-        feed.removeAll { $0 == request }
-        throw error
+      let reply: FixReply<DialogKind> = try await fix(prompt: nil) { kind, text in
+        kind == .version ? .checking(partial: text) : .replying(partial: text)
+      }
+      switch reply.kind {
+      case .version: await addVersion(reply.text, origin: .request)
+      case .answer: addAnswer(reply.text)
       }
     } catch {
+      feed.removeAll { $0 == request }
       fail(error)
     }
   }
@@ -156,14 +157,10 @@ public final class ProofreadingSession {
     await retry?()
   }
 
-  private func finishTurn(_ text: String, intent: Intent) async throws {
-    switch intent {
-    case .question:
-      feed.append(.answer(id: takeID(), text: text))
-      activity = .idle
-    case .edit:
-      await addVersion(text, origin: .request)
-    }
+  private func addAnswer(_ text: String) {
+    feed.append(.answer(id: takeID(), text: text))
+    activity = .idle
+    retry = nil
   }
 
   private func addVersion(_ text: String, origin: Version.Origin) async {
@@ -199,37 +196,37 @@ public final class ProofreadingSession {
     feed[index] = .version(updated)
   }
 
-  private func classify(_ message: String) async throws -> Intent {
-    let call = ModelCall(
-      model: models.proofreading, instructions: Prompts.classify,
-      input: [ChatMessage(.user, "Message: \(message)")])
-    let output = try await run(call)
-    return output.lowercased().contains("question") ? .question : .edit
-  }
-
-  /// Runs Fix over the history plus an optional new user prompt, streaming into `activity`.
-  private func fix(
-    prompt: ChatMessage?, progress: @escaping (String) -> Activity
-  ) async throws -> String {
+  /// Runs Fix over the history plus an optional new user prompt, streaming the reply's text into
+  /// `activity` as soon as its kind is known.
+  private func fix<Kind: ReplyKind>(
+    prompt: ChatMessage?, progress: @escaping (Kind?, String) -> Activity
+  ) async throws -> FixReply<Kind> {
     let input = history() + (prompt.map { [$0] } ?? [])
     let call = ModelCall(
       model: models.proofreading, instructions: Prompts.proofreadInstructions(options),
-      input: input)
+      input: input, schema: FixReply<Kind>.schema)
     let sent = (text: context, images: images)
-    let output = try await run(call) { self.activity = progress($0) }
+    var partial = PartialReply()
+    let output = try await run(call) { delta in
+      partial.append(delta)
+      self.activity = progress(partial.kind.flatMap(Kind.init(rawValue:)), partial.text)
+    }
+    guard let reply = FixReply<Kind>(output: output) else {
+      throw EngineError.failed("The reply was not the fields asked for.")
+    }
     sentContext = sent
-    return Prompts.cleanOutput(output, original: latestText)
+    let text = Prompts.restoringTags(Prompts.cleanOutput(reply.text, original: latestText))
+    return FixReply(kind: reply.kind, text: text)
   }
 
+  /// Streams the call, handing each delta to `progress`; returns the whole output.
   private func run(
     _ call: ModelCall, progress: ((String) -> Void)? = nil
   ) async throws -> String {
-    var partial = ""
     for try await update in engine.respond(call) {
       switch update {
       case .delta(let delta):
-        partial += delta
-        progress?(partial)
+        progress?(delta)
       case .completed(let text, let tokens):
         self.tokens += tokens
         return text
@@ -243,13 +240,12 @@ public final class ProofreadingSession {
       switch item {
       case .version(let version):
         let prompt = userPrompt(for: version.origin).map { [$0] } ?? []
-        return prompt + [ChatMessage(.assistant, version.text)]
-      case .request(_, let text, .edit):
-        return [ChatMessage(.user, Prompts.revision(text, language: options.language))]
-      case .request(_, let text, .question):
-        return [ChatMessage(.user, Prompts.question(text))]
+        let stored = Prompts.stored(version: version.text, number: version.number)
+        return prompt + [ChatMessage(.assistant, stored)]
+      case .request(_, let text):
+        return [ChatMessage(.user, text)]
       case .answer(_, let text):
-        return [ChatMessage(.assistant, text)]
+        return [ChatMessage(.assistant, Prompts.stored(answer: text))]
       }
     }
   }
@@ -262,7 +258,7 @@ public final class ProofreadingSession {
         .user,
         Prompts.firstMessage(
           text: original, context: context, keep: dictionary.found(in: original),
-          hasImages: !images.isEmpty),
+          spell: dictionary.misspelled(in: original)),
         images: images)
     case .recheck: ChatMessage(.user, Prompts.recheck)
     case .request, .rejection: nil

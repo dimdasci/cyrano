@@ -70,7 +70,7 @@ Context type and tone are independent: the type answers "what kind of text is th
 - Read context from the window: on by default (02 C6).
 - Per-app defaults: the context type, tone and level chosen in the panel are remembered for each app and shown in a table, where a row can be removed.
 - Custom instructions: free text.
-- Dictionary ("Never change"): names, terms, slang. Filled in along the way: select a word in the panel → Never Change. A separate Settings tab with search, import and export. Only words found in the text go to the model.
+- Dictionary ("Never change"): names, terms, slang. Filled in along the way: select a word in the panel → Never Change. A separate Settings tab with search, import and export. Only words found in the text go to the model, and the terms it seems to misspell: `Pria` is corrected to `Priya` from the dictionary.
 - Output language: chosen only in the panel, for that panel; by default the conversation's language from Context, otherwise the same as the source text (02 M7).
 - Explanations in English, one short line per change. Style changes are shown separately from errors.
 

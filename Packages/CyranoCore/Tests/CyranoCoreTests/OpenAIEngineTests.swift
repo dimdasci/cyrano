@@ -9,6 +9,12 @@ actor ScriptedTransport: HTTPTransport {
     case lines(status: Int, [String])
     /// A 200 stream that loses the connection after these lines.
     case broken([String])
+    /// A 200 stream that sends these lines and then nothing, with the connection open.
+    case silent([String])
+    /// A 200 stream that keeps sending keep-alives and nothing else, as a stalled request does.
+    case pinging
+    /// A 200 stream that sends these lines one at a time, a pause before each.
+    case slow([String], pause: Duration)
     case failure(URLError.Code)
   }
 
@@ -28,18 +34,56 @@ actor ScriptedTransport: HTTPTransport {
   }
 
   func stream(for request: URLRequest) async throws -> HTTPStream {
-    let (status, lines, broken): (Int, [String], Bool) =
-      switch try next(request) {
-      case .lines(let status, let lines): (status, lines, false)
-      case .broken(let lines): (200, lines, true)
-      case .failure: throw URLError(.timedOut)
+    switch try next(request) {
+    case .lines(let status, let lines):
+      HTTPStream(status: status, lines: Self.send(lines, end: nil))
+    case .broken(let lines): HTTPStream(status: 200, lines: Self.send(lines, end: .connectionLost))
+    case .silent(let lines): HTTPStream(status: 200, lines: Self.send(lines, end: .stayOpen))
+    case .pinging: HTTPStream(status: 200, lines: Self.keepAlives())
+    case .slow(let lines, let pause): HTTPStream(status: 200, lines: Self.slowly(lines, pause))
+    case .failure: throw URLError(.timedOut)
+    }
+  }
+
+  enum End { case connectionLost, stayOpen }
+
+  static func send(_ lines: [String], end: End?) -> AsyncThrowingStream<String, any Error> {
+    AsyncThrowingStream { continuation in
+      for line in lines { continuation.yield(line) }
+      switch end {
+      case nil: continuation.finish()
+      case .connectionLost: continuation.finish(throwing: URLError(.networkConnectionLost))
+      case .stayOpen: break
       }
-    return HTTPStream(
-      status: status,
-      lines: AsyncThrowingStream { continuation in
-        for line in lines { continuation.yield(line) }
-        continuation.finish(throwing: broken ? URLError(.networkConnectionLost) : nil)
-      })
+    }
+  }
+
+  static func keepAlives() -> AsyncThrowingStream<String, any Error> {
+    AsyncThrowingStream { continuation in
+      let task = Task {
+        while !Task.isCancelled {
+          continuation.yield(": keep-alive")
+          continuation.yield("event: keepalive")
+          continuation.yield(#"data: {"type":"keepalive"}"#)
+          try? await Task.sleep(for: .milliseconds(5))
+        }
+      }
+      continuation.onTermination = { _ in task.cancel() }
+    }
+  }
+
+  static func slowly(_ lines: [String], _ pause: Duration) -> AsyncThrowingStream<String, any Error>
+  {
+    AsyncThrowingStream { continuation in
+      let task = Task {
+        for line in lines {
+          try? await Task.sleep(for: pause)
+          continuation.yield(line)
+        }
+        continuation.finish()
+      }
+      continuation.onTermination = { _ in task.cancel() }
+    }
   }
 
   private func next(_ request: URLRequest) throws -> Reply {
@@ -65,8 +109,8 @@ enum SSE {
 @Suite struct OpenAIEngineTests {
   let call = ModelCall(model: .sol, instructions: "Be nice.", input: [ChatMessage(.user, "TEXT")])
 
-  func engine(_ transport: ScriptedTransport) -> OpenAIEngine {
-    OpenAIEngine(transport: transport, accessToken: { "token-1" })
+  func engine(_ transport: ScriptedTransport, idle: Duration = .seconds(30)) -> OpenAIEngine {
+    OpenAIEngine(transport: transport, accessToken: { "token-1" }, idleTimeout: idle)
   }
 
   func collect(
@@ -151,6 +195,43 @@ enum SSE {
       .broken([SSE.delta("Hel")]), .lines(status: 200, [SSE.completed(tokens: 3)]),
     ])
     await #expect(throws: EngineError.network) { try await collect(engine(transport)) }
+    #expect(await transport.requests.count == 1)
+  }
+
+  /// The request's own timeout counts bytes, so a stream that stays open without events would
+  /// never end (M13).
+  @Test func aStreamWithoutEventsTimesOutAndIsRetriedOnce() async throws {
+    let stalled = ScriptedTransport([.silent([]), .pinging])
+    await #expect(throws: EngineError.timedOut) {
+      try await collect(engine(stalled, idle: .milliseconds(50)))
+    }
+    #expect(await stalled.requests.count == 2)
+
+    let recovering = ScriptedTransport([
+      .silent([]), .lines(status: 200, [SSE.delta("ok"), SSE.completed(tokens: 3)]),
+    ])
+    let updates = try await collect(engine(recovering, idle: .milliseconds(50)))
+    #expect(updates.last == .completed(text: "ok", tokens: 3))
+  }
+
+  /// Before its first text the model reasons; the server's events about that are progress.
+  @Test func slowReasoningEventsThenTextDoNotTimeOut() async throws {
+    let working = Array(repeating: #"data: {"type":"response.in_progress"}"#, count: 8)
+    let transport = ScriptedTransport([
+      .slow(working + [SSE.delta("ok"), SSE.completed(tokens: 3)], pause: .milliseconds(20))
+    ])
+    let updates = try await collect(engine(transport, idle: .milliseconds(80)))
+    #expect(updates.last == .completed(text: "ok", tokens: 3))
+    #expect(await transport.requests.count == 1)
+  }
+
+  @Test func aStreamThatStallsAfterTextTimesOutWithoutARetry() async throws {
+    let transport = ScriptedTransport([
+      .silent([SSE.delta("Hel")]), .lines(status: 200, [SSE.completed(tokens: 3)]),
+    ])
+    await #expect(throws: EngineError.timedOut) {
+      try await collect(engine(transport, idle: .milliseconds(50)))
+    }
     #expect(await transport.requests.count == 1)
   }
 

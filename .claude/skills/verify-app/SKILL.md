@@ -50,6 +50,7 @@ If `.build/ax` prints `Accessibility is not granted to this process` or `osascri
 | `ax selectrow <value>` | selects a table row |
 | `ax doubleclick <value>` | double-clicks the element with this value |
 | `ax key <letter> [command] [option] [shift] [control]` | presses a key like a keyboard does (through HID); only when the right app is in front |
+| `ax announcements [sec]` | prints what Cyrano asks VoiceOver to announce during the next seconds (30 by default); start it in the background before the action, VoiceOver itself can stay off |
 
 Save the output of `ax tree` to a file and search in it: with `ax tree | head` the utility may die from SIGPIPE and print nothing. If the command before it failed, the file is stale: don't read it, deal with the error first.
 
@@ -58,6 +59,7 @@ Save the output of `ax tree` to a file and search in it: with `ax tree | head` t
 1. Open the panel: `.claude/skills/verify-app/capture.sh "I pushed the fix to Github, can you review it when you have a minute?"`. Wait 10–12 s: Cyrano reads the context from the screenshot, and Check stays disabled until then.
 2. `.build/ax press Check`, `.build/ax wait "Version 1" 60`, then `.build/ax tree > …`. The card text is in the `AXTextArea` line: removed and added text come one after the other (`Github, can GitHub. Can`). Explanations arrive 5–15 s later: the summary changes from `Explaining…` to `1 fix`.
 3. Check what the user sees: labels, the summary, the status line (`AXStaticText` at the bottom), the files the app writes.
+   The dialog: `ax set "Ask or tell what to change" "<message>"`, `ax press Send`; an answer is an `AXStaticText` bubble, a new version a `Version N` card. To hear what VoiceOver would say, run `.build/ax announcements 40 > file &` before Send.
 4. Close the panel and TextEdit: `.build/ax close`, `osascript -e 'tell application "TextEdit" to close every document saving no'`.
 
 Examples that `gpt-6.1-sol` reliably fixes (handy for the dictionary): `Github → GitHub`, `kibana → Kibana`, `grafana → Grafana`. In a message context the model may leave slang alone (`tmrw`, `pls`), so don't rely on it.

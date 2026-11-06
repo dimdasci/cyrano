@@ -7,11 +7,18 @@ import Testing
 
 final class MemoryCredentialStore: CredentialStore {
   private let value: Mutex<Credentials?>
+  /// While true, saving fails as the Keychain does when access is denied.
+  let refusesSaves = Mutex(false)
 
   init(_ credentials: Credentials? = nil) { value = Mutex(credentials) }
 
   func load() -> Credentials? { value.withLock { $0 } }
-  func save(_ credentials: Credentials) throws { value.withLock { $0 = credentials } }
+
+  func save(_ credentials: Credentials) throws {
+    if refusesSaves.withLock({ $0 }) { throw CredentialStoreError.saveFailed(errSecAuthFailed) }
+    value.withLock { $0 = credentials }
+  }
+
   func delete() { value.withLock { $0 = nil } }
 }
 
@@ -243,6 +250,23 @@ struct DERReader {
       try await service(store, transport).accessToken()
     }
     #expect(store.load()?.refreshToken == "r1")
+  }
+
+  /// The refresh token has rotated by the time the Keychain refuses it: losing the new one would
+  /// sign the user out.
+  @Test func aRefreshTheKeychainRefusesIsKeptUntilItSaves() async throws {
+    let store = MemoryCredentialStore(credentials(expiringIn: 60))
+    store.refusesSaves.withLock { $0 = true }
+    let transport = ScriptedTransport([.lines(status: 200, [Self.refreshed])])
+    let service = service(store, transport)
+    await #expect(throws: EngineError.signInNotSaved) { try await service.accessToken() }
+    await #expect(throws: EngineError.signInNotSaved) { try await service.accessToken() }
+
+    store.refusesSaves.withLock { $0 = false }
+    let token = try await service.accessToken()
+    #expect(token == "new")
+    #expect(store.load()?.refreshToken == "r2")
+    #expect(await transport.requests.count == 1)
   }
 
   @Test func withoutCredentialsTheUserIsSignedOut() async throws {

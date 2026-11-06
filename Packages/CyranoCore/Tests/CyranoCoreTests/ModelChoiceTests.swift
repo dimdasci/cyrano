@@ -30,21 +30,21 @@ extension ModelCall {
     let engine = await dialog(
       with: ModelChoice(context: .sol, proofreading: .terra, explanations: .luna))
 
-    // Reading the context, two explanations, and the other five calls: classify, fix, answer.
+    // Reading the context, two explanations, and three Fix calls: check, answer, new version.
     let context: [Model] = engine.contextCalls.map(\.model)
     let explanations: [Model] = engine.calls.filter(\.explains).map(\.model)
     let proofreading: [Model] = engine.calls.filter(\.onTerra).map(\.model)
     let routed: [[Model]] = [context, explanations, proofreading]
-    let expected: [[Model]] = [[.sol], [.luna, .luna], Array(repeating: .terra, count: 5)]
+    let expected: [[Model]] = [[.sol], [.luna, .luna], Array(repeating: .terra, count: 3)]
     let calls: Int = engine.calls.count
 
-    #expect(calls == 8)
+    #expect(calls == 6)
     #expect(routed == expected)
   }
 
   /// Reads the context, checks, asks a question and asks for a change.
   private func dialog(with models: ModelChoice) async -> FakeEngine {
-    let engine = FakeEngine(fixes: ["I have a cat.", "Yes.", "I have two cats."])
+    let engine = FakeEngine(fixes: ["I have a cat.", .answer("Yes."), "I have two cats."])
     let session = ProofreadingSession(
       original: "I has a cat.", options: CheckOptions(), models: models, engine: engine,
       dictionary: dictionary())

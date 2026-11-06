@@ -4,6 +4,7 @@ public import Foundation
 public indirect enum JSONValue: Hashable, Sendable {
   case string(String)
   case bool(Bool)
+  case int(Int)
   case array([JSONValue])
   /// Keys keep their order: the model fills a schema's fields in the order they are listed.
   case object([Member])
@@ -23,6 +24,7 @@ public indirect enum JSONValue: Hashable, Sendable {
     switch self {
     case .string(let value): Self.quoted(value)
     case .bool(let value): Data((value ? "true" : "false").utf8)
+    case .int(let value): Data(String(value).utf8)
     case .array(let values): Self.joined(values.map(\.json), "[", "]")
     case .object(let members):
       Self.joined(members.map { Self.quoted($0.key) + Data(":".utf8) + $0.value.json }, "{", "}")
@@ -40,10 +42,11 @@ public indirect enum JSONValue: Hashable, Sendable {
 }
 
 extension JSONValue: ExpressibleByStringLiteral, ExpressibleByBooleanLiteral,
-  ExpressibleByArrayLiteral, ExpressibleByDictionaryLiteral
+  ExpressibleByIntegerLiteral, ExpressibleByArrayLiteral, ExpressibleByDictionaryLiteral
 {
   public init(stringLiteral value: String) { self = .string(value) }
   public init(booleanLiteral value: Bool) { self = .bool(value) }
+  public init(integerLiteral value: Int) { self = .int(value) }
   public init(arrayLiteral elements: JSONValue...) { self = .array(elements) }
   public init(dictionaryLiteral elements: (String, JSONValue)...) {
     self = .object(elements.map(Member.init))

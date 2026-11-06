@@ -58,6 +58,8 @@ struct ContextStatusLine: View {
     case .planLimitReached: "Couldn't read: plan limit reached"
     case .planUsageUnavailable: "Couldn't read: plan usage unavailable"
     case .network: "Couldn't reach OpenAI"
+    case .timedOut: "Couldn't read: OpenAI stopped answering"
+    case .signInNotSaved: "Couldn't read: sign-in not saved to the Keychain"
     case .failed: "Couldn't read the conversation"
     }
   }

@@ -112,7 +112,7 @@ import Testing
     #expect(session.canPerform(message: ""))
     await session.perform(message: "")
     let input = try #require(engine.fixCalls.first?.input)
-    #expect(input[0].text.hasSuffix("TEXT:\n\"\"\"\nI has a cat.\n\"\"\""))
+    #expect(input[0].text.hasSuffix("<text>\nI has a cat.\n</text>"))
     #expect(session.versions.first?.diff?.changes.map(\.words) == [["has", "have"]])
   }
 }
