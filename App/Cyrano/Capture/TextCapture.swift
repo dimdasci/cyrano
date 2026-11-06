@@ -47,7 +47,10 @@ enum TextCapture {
   /// Nothing else: no ⌘A, no guessing from a screenshot (02 C2).
   static func capture(from app: NSRunningApplication) async -> CapturedText? {
     log.notice(
-      "capture: \(app.bundleIdentifier ?? "?", privacy: .public) trusted=\(AXIsProcessTrusted())")
+      """
+      capture: \(app.bundleIdentifier ?? "?", privacy: .public) trusted=\(AXIsProcessTrusted()) \
+      screenRecording=\(CGPreflightScreenCaptureAccess())
+      """)
     if AXIsProcessTrusted(), let captured = await fromAccessibility(app) { return captured }
     return await fromSelection(app)
   }

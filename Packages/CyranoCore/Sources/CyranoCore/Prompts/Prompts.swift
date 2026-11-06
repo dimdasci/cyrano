@@ -8,6 +8,9 @@ enum Prompts {
     Name the rule when there is one, for example: subject-verb agreement, article, preposition, \
     tense, spelling.
     Use category "style" only when the original was correct and the change is a matter of taste.
+    A convention that some style guides require and others don't is a matter of taste: use \
+    "style" and explain the change as a choice, not as a rule.
+    Wording a fluent speaker wouldn't use is an error, "wordChoice", even when it is grammatical.
     """
 
   static func explainInput(old: String, diff: TextDiff) -> String {

@@ -48,10 +48,11 @@ struct FixRun {
     defer { try? FileManager.default.removeItem(at: dictionaryFile) }
     let dictionary = TermDictionary(file: dictionaryFile)
     for term in item.dictionary { dictionary.add(term) }
+    let timed = TimedEngine(engine)
     let session = ProofreadingSession(
       original: item.text, context: item.context, options: item.options, models: models,
-      engine: engine, dictionary: dictionary)
-    var report = ReportWriter(session: session)
+      engine: timed, dictionary: dictionary)
+    var report = ReportWriter(session: session, engine: timed)
     report.header(item)
     guard await report.step(criteria: item.criteria, { await session.check() }) else {
       return report.finish(failed: true)
@@ -68,12 +69,16 @@ struct FixRun {
 @MainActor
 private struct ReportWriter {
   let session: ProofreadingSession
+  let engine: TimedEngine
   private var lines: [String] = []
   /// Feed items already written.
   private var shown = 0
+  /// Calls already counted.
+  private var timed = 0
 
-  init(session: ProofreadingSession) {
+  init(session: ProofreadingSession, engine: TimedEngine) {
     self.session = session
+    self.engine = engine
   }
 
   mutating func header(_ item: FixCase) {
@@ -97,17 +102,26 @@ private struct ReportWriter {
   mutating func step(criteria: [String], _ action: () async -> Void) async -> Bool {
     let start = ContinuousClock.now
     await action()
-    let elapsed = (ContinuousClock.now - start).formatted(
-      .units(allowed: [.seconds], width: .narrow, fractionalPart: .show(length: 1)))
+    let elapsed = (ContinuousClock.now - start).inSeconds
     for item in session.feed[shown...] { lines.append(Self.markdown(item)) }
     shown = session.feed.count
     if case .failed(let error) = session.activity {
       lines.append("**ERROR**: \(error) in \(elapsed)")
       return false
     }
-    lines.append("_\(elapsed), \(session.tokens) tokens so far_")
+    lines.append("_\(elapsed), \(session.tokens) tokens so far\(explainTime())_")
     lines.append("\nCriteria:\n" + criteria.map { "- \($0)" }.joined(separator: "\n"))
     return true
+  }
+
+  /// The step's calls after its first, Fix, are Explain.
+  private mutating func explainTime() -> String {
+    let calls = engine.calls
+    let explain = calls[timed...].dropFirst()
+    timed = calls.count
+    guard !explain.isEmpty else { return "" }
+    let duration = explain.map(\.duration).reduce(.zero, +)
+    return "; Explain \(duration.inSeconds), \(explain.map(\.tokens).reduce(0, +)) tokens"
   }
 
   func finish(failed: Bool) -> CaseReport {

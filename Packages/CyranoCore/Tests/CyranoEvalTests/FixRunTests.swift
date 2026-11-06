@@ -14,9 +14,9 @@ final class ScriptedEngine: CorrectionEngine {
     state = Mutex((fixes, [], failsFix))
   }
 
-  var fixCalls: [ModelCall] {
-    state.withLock { $0.calls }.filter { !$0.instructions.hasPrefix("You explain") }
-  }
+  var calls: [ModelCall] { state.withLock { $0.calls } }
+
+  var fixCalls: [ModelCall] { calls.filter { !$0.instructions.hasPrefix("You explain") } }
 
   func respond(_ call: ModelCall) -> AsyncThrowingStream<ResponseUpdate, any Error> {
     let answer = state.withLock { state -> String? in
@@ -126,6 +126,24 @@ final class ScriptedEngine: CorrectionEngine {
     let first = try #require(engine.fixCalls.first?.input.first?.text)
     #expect(first.contains(#"Keep these words exactly as written: "k8s"."#))
     #expect(first.hasPrefix("<context>\nRavi\n</context>"))
+  }
+
+  @Test func explanationsCanComeFromAnotherModelAndShowTheirTime() async throws {
+    let json = #"""
+      [{ "id": "a", "source": "synthetic", "text": "I has it", "criteria": [],
+         "turns": [{ "message": "Why?", "criteria": [] }] }]
+      """#
+    let item = try #require(try cases(json).first)
+    let engine = ScriptedEngine(fixes: ["I have it", "A verb!"])
+    let models = ModelChoice(proofreading: .sol, explanations: .luna)
+
+    let report = await FixRun(engine: engine, models: models).report(item)
+
+    #expect(engine.calls.map(\.model) == [.sol, .luna, .sol])
+    let steps = report.markdown.split(separator: "\n").filter { $0.contains("tokens so far") }
+    #expect(steps.count == 2)
+    #expect(steps.first?.contains(/20 tokens so far; Explain \d+\.\d s, 10 tokens_$/) == true)
+    #expect(steps.last?.contains("Explain") == false)
   }
 
   @Test func failedCallEndsTheCaseWithTheError() async throws {

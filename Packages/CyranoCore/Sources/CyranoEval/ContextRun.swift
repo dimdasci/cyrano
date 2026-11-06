@@ -62,8 +62,7 @@ struct ContextRun {
   }
 
   private func seconds(since start: ContinuousClock.Instant) -> String {
-    (ContinuousClock.now - start).formatted(
-      .units(allowed: [.seconds], width: .narrow, fractionalPart: .show(length: 1)))
+    (ContinuousClock.now - start).inSeconds
   }
 }
 

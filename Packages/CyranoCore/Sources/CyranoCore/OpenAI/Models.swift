@@ -13,7 +13,7 @@ public enum Model: String, CaseIterable, Codable, Sendable {
 public struct ModelChoice: Hashable, Sendable {
   /// Reads who the user is replying to from a screenshot (C6).
   public var context: Model
-  /// Checks, rechecks, dialog answers and new versions, and classifies dialog messages.
+  /// Checks, rechecks, dialog answers and new versions.
   public var proofreading: Model
   /// Reasons for the changes of a version.
   public var explanations: Model

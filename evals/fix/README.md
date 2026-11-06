@@ -1,6 +1,6 @@
 # Fix eval
 
-Cases for Fix, Explain and the dialog ([04 §5](../../docs/specs/04-prompts.md)). Each case goes through the full flow, as in the panel: the check (Fix, then Explain), then the dialog turns, where the model replies to each message with a new version or an answer, as in the panel. The runner calls the same code as the panel (`ProofreadingSession.check` and `send`) and keeps no copies of the prompts.
+Cases for Fix, Explain and the dialog ([04 §5.2, §5.3](../../docs/specs/04-prompts.md)). Each case goes through the full flow, as in the panel: the check (Fix, then Explain), then the dialog turns, where the model replies to each message with a new version or an answer, as in the panel. The runner calls the same code as the panel (`ProofreadingSession.check` and `send`) and keeps no copies of the prompts.
 
 Run from the repository root (build with `swift build --package-path Packages/CyranoCore --product cyrano-eval`):
 
@@ -8,7 +8,15 @@ Run from the repository root (build with `swift build --package-path Packages/Cy
 Packages/CyranoCore/.build/debug/cyrano-eval fix evals/fix/cases.json gpt-6.1-sol > evals/private/fix-runs/gpt-6.1-sol.md
 ```
 
-Without a model argument it uses the default check model (`gpt-6.1-sol`); the model from the argument does the check, the explanations and the dialog. The runner checks four cases at a time, so a run of the whole set takes two and a half to three and a half minutes (measured 2026-11-06); the report keeps the order of the cases. The first run after a build asks for access to Cyrano's Keychain item. Don't run the eval and the app at the same time, or two evals at once: each refreshes the token.
+Without a model argument it uses the default check model (`gpt-6.1-sol`); the model from the argument does the check, the explanations and the dialog. A second model, after the first, does only the explanations: that way explanation models are compared on the same fix model.
+
+```bash
+Packages/CyranoCore/.build/debug/cyrano-eval fix evals/fix/cases.json gpt-6.1-sol gpt-6-luna > evals/private/fix-runs/sol-luna.md
+```
+
+The runner checks four cases at a time, so a run of the whole set takes two and a half to three and a half minutes (measured 2026-11-06); the report keeps the order of the cases. Don't run the eval and the app at the same time, or two evals at once: each refreshes the token.
+
+The first run after a build asks for access to Cyrano's Keychain item, and its first cases wait until the user allows it: once 840 s. Their times are then useless, so after a build, first run a file with a single case, and measure from the next run.
 
 ## A case
 
@@ -36,14 +44,14 @@ Without a model argument it uses the default check model (`gpt-6.1-sol`); the mo
 
 ## Report and grading
 
-The runner doesn't score the cases; it prints a Markdown report: the options, the Context, the text, each version with its number and its changes as "before → after", category and explanation, each dialog message and what came of it (a version or an answer), time and tokens, then the criteria. A failed call shows as `**ERROR**`, and the case ends there. Reports go to `evals/private/fix-runs/` (outside git).
+The runner doesn't score the cases; it prints a Markdown report: the options, the Context, the text, each version with its number and its changes as "before → after", category and explanation, each dialog message and what came of it (a version or an answer), time and tokens, then the criteria. The time of a step is the whole step; when the step has explanations, the line also gives the Explain call's own time and tokens: `_7.4 s, 1310 tokens so far; Explain 4.1 s, 330 tokens_`. A failed call shows as `**ERROR**`, and the case ends there. Reports go to `evals/private/fix-runs/` (outside git).
 
-The agent that ran the eval grades it: it reads the reports of all models side by side, case by case, and marks each as passed or failed with a reason. Disputed cases are settled with the user, and the decision goes into `notes`. The result is the table in 04 §5.
+The agent that ran the eval grades it: it reads the reports of all models side by side, case by case, and marks each as passed or failed with a reason. Disputed cases are settled with the user, and the decision goes into `notes`. The results are the tables in 04 §5.2 and §5.3.
 
 General rules on top of the case criteria. Only clear errors, no nuances:
 
-- Fix: the error is fixed; correct text is left intact and the meaning unchanged; the output language comes from the pop-up, and with Same as Text it's the language of the text; Context isn't copied into the text.
-- Explain: every change has an explanation; errors and matters of taste aren't mixed up (a change to correct text is `style`, a fix of an error is some other category); the explanation isn't made up.
+- Fix: the error is fixed; correct text is left intact and the meaning unchanged, and meaning comes before grammar and the more frequent expression: a change that says something else is damage (`noted` → `noticed`, `soon` → `as soon as possible`); the output language comes from the pop-up, and with Same as Text it's the language of the text; Context isn't copied into the text.
+- Explain: every change has an explanation; errors and matters of taste aren't mixed up (a change to correct text is `style`, a fix of an error is some other category); the explanation isn't made up. An optional point (a convention some style guides require and others don't: the serial comma, `that` for a restrictive clause, `data are`) is `style`; calling it `grammar` or `punctuation` with a rule fails. Where the choice depends on emphasis (`is moved` / `has been moved`) or is a gray area (a comma after a short introductory phrase), the category isn't checked; the case's `notes` say so.
 - Dialog: the reply's kind fits the message, and the panel does what the user expects:
   - a request ("rewrite", "update", "apply", "translate", "add…") — a new version where the request is done;
   - a clarification (the context, who it's addressed to, what a word means) — a new version that takes the clarification into account and changes only what it affects; an "understood" answer without a version is a failure;

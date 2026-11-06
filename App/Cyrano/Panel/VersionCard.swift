@@ -111,15 +111,21 @@ private struct ChangeList: View {
         .contentShape(Rectangle())
         .contextMenu { neverChange(change) }
         .accessibilityElement(children: .combine)
-        .accessibilityLabel(
-          "\(change.words[0]), replaced with \(change.words[1]), "
-            + (version.reasons[change.id]?.category == .style ? "style suggestion" : "error"))
+        .accessibilityLabel(rowLabel(change))
       }
     }
   }
 }
 
 extension ChangeList {
+  /// What VoiceOver reads for a row: the change, error or style, then its reason once it came.
+  fileprivate func rowLabel(_ change: Change) -> String {
+    let reason = version.reasons[change.id]
+    let kind = reason?.category == .style ? "style suggestion" : "error"
+    let label = "\(change.words[0]), replaced with \(change.words[1]), \(kind)"
+    return reason.map { "\(label). \($0.reason)" } ?? label
+  }
+
   /// Only the latest version's changes can be rejected.
   @ViewBuilder fileprivate func neverChange(_ change: Change) -> some View {
     if canReject {

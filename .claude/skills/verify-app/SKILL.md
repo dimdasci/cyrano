@@ -28,7 +28,7 @@ pkill -x Cyrano; sleep 1; open .build/xcode/Build/Products/Debug/Cyrano.app; sle
 .build/ax windows    # no error means Accessibility is granted
 ```
 
-If `.build/ax` prints `Accessibility is not granted to this process` or `osascript` prints `not allowed assistive access`, see "Permissions" below.
+If `.build/ax` prints `Accessibility is not granted to this process` or `osascript` prints `not allowed assistive access`, see "Permissions" below. A fresh build of Cyrano itself usually comes without its Accessibility and Screen Recording permissions; `capture.sh` says so, and "Permissions" says how to restore both.
 
 ## `ax` commands
 
@@ -105,12 +105,19 @@ How to restore them:
 4. Accessibility takes effect immediately. Screen Recording only after Claude Code restarts (better answer Later to "Quit & Reopen" and restart afterwards, otherwise the session is interrupted); until then check through `ax`, without screenshots.
 5. Verify: `swift .claude/skills/verify-app/permissions.swift` prints `true` for the needed permission.
 
-Cyrano needs its own Accessibility and Screen Recording permissions: the first to read the selection, the second to read context from the window. Every build has a new ad-hoc signature, and macOS may drop them.
+Cyrano needs its own two permissions: Accessibility to read the selection, Screen Recording to read context from the window. Every build has a new ad-hoc signature, and after a rebuild macOS drops both of them, never only one. So whenever one is lost, restore both.
 
-- Without Accessibility the hotkey still opens the panel, but as "Proofreading — Manual", with an "Accessibility not granted" icon and no text; `capture.sh` says so, and Cyrano's log has `capture: … trusted=false`.
-- Without Screen Recording Context stays empty with no status at all: reading is skipped. Settings → General shows "Open System Settings…" next to Screen Recording.
+- Without Accessibility the hotkey still opens the panel, but as "Proofreading — Manual", with an "Accessibility not granted" icon and no text. `capture.sh` stops with "No Accessibility"; Cyrano's log has `capture: … trusted=false`.
+- Without Screen Recording Context stays empty with no status at all: reading is skipped. `capture.sh` stops with "No Screen Recording"; Cyrano's log has `capture: … screenRecording=false`, and Settings → General shows "Open System Settings…" next to Screen Recording.
 
-Turning the old Cyrano row off and on may not help: the row belongs to another build. What worked on 2026-11-06: the user runs `tccutil reset All io.github.dimdasci.cyrano`, you relaunch Cyrano from your checkout, and the user allows Accessibility in the system prompt and Screen Recording from Settings → General → Open System Settings…; Screen Recording takes effect after Cyrano restarts. Only the user does this; you tell them what to press and wait.
+Turning the old Cyrano row off and on doesn't help: the row belongs to another build, and a grant given before a rebuild is void, because macOS keeps the stale entry and the switch does nothing. So there is one rule: no rebuild between the reset and the end of the check. Finish every build you need first (`scripts/check` builds the app too), then reset; if you rebuild after the reset, the whole cycle starts again. What works (2026-11-06). Only the user does the reset in step 1 and steps 3 and 4. Tell them all four steps in one message; after step 1 wait for their word, after steps 3 and 4 don't: watch the state yourself and go on as soon as it's granted (below).
+
+1. You quit Cyrano. The user runs `tccutil reset All io.github.dimdasci.cyrano`.
+2. You relaunch Cyrano from your checkout: `pkill -x Cyrano; open .build/xcode/Build/Products/Debug/Cyrano.app`.
+3. The user allows Accessibility in the system prompt.
+4. The user opens Cyrano's Settings → General → Open System Settings… next to Screen Recording and turns on the Cyrano switch there (in Device Control and Data Access). Screen Recording takes effect after Cyrano restarts, so you relaunch it once more, by its full path: `pkill -x Cyrano; open "$PWD/.build/xcode/Build/Products/Debug/Cyrano.app"`. If the user pressed "Quit & Reopen", macOS may reopen another checkout's build with the same bundle ID (on 2026-11-06 it opened the main checkout's build from a worktree), and that build has no permissions. Check with `ps -o command= -p $(pgrep -x Cyrano)` that the running Cyrano is yours.
+
+To watch the state, open Settings (`.build/ax appmenu "Settings…"`; the window is titled by its tab, `General`) and read `.build/ax tree General` every few seconds: each permission's row shows `Granted` instead of the `Open System Settings…` button once Cyrano has it. Screen Recording may show `Granted` only after the relaunch. Then `capture.sh` confirms both.
 
 The permissions are broad: with Accessibility the session's commands control any app, with Screen Recording they see the whole screen. The user can turn them off after the check.
 
