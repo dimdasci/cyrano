@@ -1,5 +1,5 @@
 // Draws a synthetic window: an HTML template filled with the case's data, at Retina scale like
-// the screenshots Cyrano takes. See docs/specs/04-prompts.md §5.
+// the screenshots Cyrano takes. See evals/context/README.md.
 
 import AppKit
 import WebKit

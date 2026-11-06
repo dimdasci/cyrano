@@ -4,6 +4,18 @@ A native macOS app that checks and improves short messages in any app: hotkey �
 
 Status: preview. The main flow, images as context, reading context from a window screenshot, the "Never change" dictionary and choosing a model for each operation all work. What's done, the next package and deviations from the spec are in [docs/plan.md](docs/plan.md).
 
+## Choosing models
+
+Settings → General has a model for each of three operations: reading context from the window, the check and the dialog, explanations. The defaults are what our evals favour ([docs/specs/04-prompts.md](docs/specs/04-prompts.md) §5, measured 2026-11-06):
+
+| Operation | Default | Why | When to pick another |
+|---|---|---|---|
+| Read context | gpt-6.1-terra | Reads every eval window right, like Sol, and was the only model that never took more than 10 s in our runs, while you wait before Check | Sol reads as well but is slower; Luna sometimes returns only the name |
+| Proofreading: the check and the dialog | gpt-6.1-sol | The steadiest on real messages and in the dialog: 67–68 of 70 cases and every dialog turn | Terra replies about a second faster in the dialog and slips more often on real messages; Luna is the fastest and the weakest on real messages |
+| Explanations | gpt-6.1-sol | Labels errors and matters of taste right in 233 of 234 cases, and in our runs didn't call an optional point a rule | Luna gives the reasons about a second sooner and now and then calls an optional point a rule |
+
+On the same work the three models spend the same number of tokens, so the choice changes speed and quality rather than tokens. We haven't measured how your ChatGPT plan counts each model toward its usage limit.
+
 ## Repository layout
 
 ```

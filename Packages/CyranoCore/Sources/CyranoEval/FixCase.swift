@@ -1,6 +1,6 @@
 // A fix eval case: the text with the panel's header options, Context and dictionary, then the
 // dialog messages the user sends. Criteria say in words what should happen; a person reads the
-// report and judges them. See docs/specs/04-prompts.md §5.
+// report and judges them. See evals/fix/README.md.
 
 import CyranoCore
 import Foundation

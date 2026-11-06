@@ -21,7 +21,8 @@
       "comma after `Regarding the rest`",
       "`check Marco's thoughts at our upcoming call` made natural: `hear` or `get Marco's thoughts during` or `on` the call",
       "meaning kept: write in an hour, sketch dashboards from the feedback, discuss which to embed"
-    ]
+    ],
+    "notes": "Decided 2026-11-06: a comma after a short introductory phrase is a gray area: adding it is allowed, and its category (punctuation or style) is not checked."
   },
   {
     "id": "real-03-meanwhile-typo",
@@ -577,7 +578,7 @@
       "word order fixed, e.g. `I think we can probably ship on Friday`; `tests` gets `the`",
       "the doubt stays: not `We can ship on Friday`, not `I'm sure`"
     ],
-    "notes": "Meaning over grammar and frequency: a more common word that says something else is a corruption."
+    "notes": "Meaning over grammar and frequency: a more common word that says something else is a corruption. Decided 2026-11-06: `about tests` without an article is possible as a generic plural, so the category of adding `the` (grammar or style) is not checked."
   },
   {
     "id": "meaning-04-false-friend",
@@ -599,7 +600,7 @@
       "`satisfaction score` stays: the user's term, not `NPS widget` from the Context",
       "nothing from Maria's message copied in"
     ],
-    "notes": "Meaning over grammar and frequency: a more common word that says something else is a corruption. Synthetic twin of real-06."
+    "notes": "Meaning over grammar and frequency: a more common word that says something else is a corruption. Synthetic twin of real-06. Decided 2026-11-06: `by regions` is an error; Explain calling `by region` a `style` choice fails."
   },
   {
     "id": "meaning-06-name-typo",
@@ -726,7 +727,7 @@
       "`dont support` → `doesn't support`; a comma after `know` is optional",
       "`As far as I know` kept: the doubt stays"
     ],
-    "notes": "Held out: never tuned on, only checks that the general rule on meaning holds.",
+    "notes": "Held out: never tuned on, only checks that the general rule on meaning holds. Decided 2026-11-06: a comma after a short introductory phrase is a gray area: adding it is allowed, and its category (punctuation or style) is not checked.",
     "heldOut": true
   },
   {
@@ -951,5 +952,101 @@
       }
     ],
     "notes": "A version starts from the one the author names and keeps its language (04 §4.3)."
+  },
+  {
+    "id": "explain-01-serial-comma",
+    "source": "synthetic",
+    "customInstructions": "Use the serial comma in lists.",
+    "text": "We need the logs, the configs and the dashboards from the old cluster before Friday. I has already asked Mark about it.",
+    "criteria": [
+      "a comma before `and` in the list (custom instructions); Explain: `style`, explained as a choice, not as a rule",
+      "`I has` → `I have` or `I've`; Explain: an error category, not `style`"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on explanations holds.",
+    "heldOut": true
+  },
+  {
+    "id": "explain-02-that-which",
+    "source": "synthetic",
+    "customInstructions": "Use \"that\", not \"which\", for restrictive clauses.",
+    "text": "The report which you sent yesterday has two mistake in the totals.",
+    "criteria": [
+      "`which` → `that` (custom instructions); Explain: `style`, explained as a choice, not as a rule",
+      "`two mistake` → `two mistakes`; Explain: an error category, not `style`"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on explanations holds.",
+    "heldOut": true
+  },
+  {
+    "id": "explain-03-split-infinitive",
+    "source": "synthetic",
+    "customInstructions": "Do not split infinitives.",
+    "text": "I want to quickly check the numbers before we sends them to the client.",
+    "criteria": [
+      "`to quickly check` no longer split (custom instructions); Explain: `style`, explained as a choice, not as a rule",
+      "`we sends` → `we send`; Explain: an error category, not `style`"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on explanations holds.",
+    "heldOut": true
+  },
+  {
+    "id": "explain-04-final-preposition",
+    "source": "synthetic",
+    "customInstructions": "Rewrite every sentence that ends with a preposition so that it doesn't.",
+    "text": "Can you send me the file you were talking about? I need to check there numbers before the call.",
+    "criteria": [
+      "the first sentence no longer ends in `about` (custom instructions); Explain: `style`, explained as a choice, not as a rule",
+      "`there numbers` → `their numbers`; Explain: an error category, not `style`"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on explanations holds.",
+    "heldOut": true
+  },
+  {
+    "id": "explain-05-data-plural",
+    "source": "synthetic",
+    "customInstructions": "Treat \"data\" as plural.",
+    "text": "The data is ready, but the dashboard dont show it yet.",
+    "criteria": [
+      "`data is` → `data are` (custom instructions); Explain: `style`, explained as a choice, not as a rule",
+      "`dont show` → `doesn't show` (and `it` → `them` is fine); Explain: an error category, not `style`"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on explanations holds.",
+    "heldOut": true
+  },
+  {
+    "id": "explain-06-no-contractions",
+    "source": "synthetic",
+    "textType": "email",
+    "customInstructions": "Do not use contractions.",
+    "text": "Hi Mia,\n\nI'm sorry, but we can't ship the update today. The tests on staging was red this morning.\n\nBest,\nSam",
+    "criteria": [
+      "`I'm` → `I am` and `can't` → `cannot` or `can not` (custom instructions); Explain: `style`, explained as a choice, not as a rule",
+      "`was red` → `were red` (or `failed`); Explain: an error category, not `style`"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on explanations holds.",
+    "heldOut": true
+  },
+  {
+    "id": "explain-07-errors-stay-errors",
+    "source": "synthetic",
+    "text": "Could you send me an update about the migration? I didn't received the email from the infra team and it's status is unclear.",
+    "criteria": [
+      "`didn't received` → `didn't receive`; Explain: an error category, not `style`",
+      "`it's status` → `its status`; Explain: an error category, not `style`"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on explanations holds.",
+    "heldOut": true
+  },
+  {
+    "id": "explain-08-errors-stay-errors",
+    "source": "synthetic",
+    "text": "We discussed about the budget on the meeting and everybody agree with the plan.",
+    "criteria": [
+      "`discussed about` → `discussed`; Explain: an error category, not `style`",
+      "`on the meeting` → `at the meeting` or `in the meeting`; Explain: an error category, not `style`",
+      "`everybody agree` → `everybody agrees`; Explain: an error category, not `style`"
+    ],
+    "notes": "Held out: never tuned on, only checks that the general rule on explanations holds.",
+    "heldOut": true
   }
 ]

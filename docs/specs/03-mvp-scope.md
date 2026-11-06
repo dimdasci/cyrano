@@ -1,6 +1,6 @@
 # 03. MVP scope
 
-Status: agreed 2026-10-27. Revised: the engine is models through the ChatGPT subscription ([02](02-tech-decisions.md) T7).
+Status: agreed. The engine is the models of the ChatGPT subscription ([02](02-tech-decisions.md) T7).
 
 ## Positioning
 

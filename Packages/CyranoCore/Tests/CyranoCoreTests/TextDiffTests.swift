@@ -27,6 +27,35 @@ import Testing
     #expect(merged.changes.map(\.words) == [["a b c", "x b y"]])
   }
 
+  @Test func changesAreNotMergedAcrossAParagraph() {
+    let old = "they might me adjusted. \n\nPlease validate if we agree."
+    let new = "they may be adjusted.\n\nPlease confirm whether we agree."
+    let diff = TextDiff(old: old, new: new)
+    #expect(
+      diff.changes.map(\.words) == [
+        ["might me", "may be"],
+        ["validate if", "confirm whether"],
+      ])
+    #expect(diff.newText == new)
+  }
+
+  @Test func wordsOnBothSidesOfABlankLineAreTwoChanges() {
+    let diff = TextDiff(
+      old: "Hi Jhon,\n\nthanks for the quote.", new: "Hi John,\n\nThanks for the quote.")
+    #expect(diff.changes.map(\.words) == [["Jhon,", "John,"], ["thanks", "Thanks"]])
+  }
+
+  @Test func changesAreNotMergedAcrossALineBreak() {
+    let diff = TextDiff(old: "check a logs\nwrite me", new: "check the logs\nlet me know")
+    #expect(diff.changes.map(\.words) == [["a", "the"], ["write me", "let me know"]])
+  }
+
+  @Test func rejectingAChangeNextToAParagraphKeepsTheOtherOne() throws {
+    let diff = TextDiff(old: "Hi Jhon,\n\nthanks.", new: "Hi John,\n\nThanks.")
+    let name = try #require(diff.changes.first)
+    #expect(diff.text(rejecting: name) == "Hi Jhon,\n\nThanks.")
+  }
+
   @Test func changesAreNumberedFromOne() {
     let diff = TextDiff(old: "one two three four five", new: "uno two three four cinco")
     #expect(diff.changes.map(\.id) == [1, 2])

@@ -8,6 +8,17 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Fixed
+
+- An explanation could present an optional point as a rule, for example a comma before "and"
+  at the end of a list, or "data are" instead of "data is". Such changes are now marked as
+  style and explained as a choice; your original was correct.
+- Changes on both sides of a line break or a blank line could show as one change, and its
+  explanation covered only half of it. Each line now has its own changes, each with its own
+  reason.
+- VoiceOver read a change in the list without its reason. It now reads the reason after the
+  change.
+
 ## [0.9.0] - 2026-11-06
 
 ### Added

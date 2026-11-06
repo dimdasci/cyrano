@@ -1,5 +1,5 @@
 // A Context eval case: a window with the draft in its input field, as a real screenshot or a
-// synthetic window drawn from a template. See docs/specs/04-prompts.md §5.
+// synthetic window drawn from a template. See evals/context/README.md.
 
 import CoreGraphics
 import Foundation

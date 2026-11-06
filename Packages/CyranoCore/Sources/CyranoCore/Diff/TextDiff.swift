@@ -22,7 +22,8 @@ public enum DiffSegment: Hashable, Sendable {
 public struct TextDiff: Hashable, Sendable {
   public let segments: [DiffSegment]
 
-  /// Changes separated by at most one unchanged word are merged into one.
+  /// Changes separated by at most one unchanged word are merged into one, unless a line break
+  /// separates them: a change never spans lines or paragraphs.
   public init(old: String, new: String) {
     var builder = SegmentBuilder()
     for operation in WordAlignment(old: words(old), new: words(new)).operations() {
@@ -76,24 +77,36 @@ private enum Operation {
   case insert(String)
 }
 
-/// Longest common subsequence alignment of two token lists.
+/// Longest common subsequence alignment of two token lists. Runs of whitespace match when they
+/// hold the same line breaks, so a changed space is no change and a paragraph stays a boundary.
 private struct WordAlignment {
   let old: [String]
   let new: [String]
+  private let oldKeys: [String]
+  private let newKeys: [String]
   private var table: [Int]
 
   init(old: [String], new: [String]) {
     self.old = old
     self.new = new
+    oldKeys = old.map(Self.key)
+    newKeys = new.map(Self.key)
     table = Array(repeating: 0, count: (old.count + 1) * (new.count + 1))
     for i in stride(from: old.count - 1, through: 0, by: -1) {
       for j in stride(from: new.count - 1, through: 0, by: -1) {
         let value =
-          old[i] == new[j] ? length(i + 1, j + 1) + 1 : max(length(i + 1, j), length(i, j + 1))
+          matches(i, j) ? length(i + 1, j + 1) + 1 : max(length(i + 1, j), length(i, j + 1))
         table[i * (new.count + 1) + j] = value
       }
     }
   }
+
+  private static func key(_ token: String) -> String {
+    guard token.first?.isWhitespace == true else { return token }
+    return String(repeating: "\n", count: token.count(where: \.isNewline))
+  }
+
+  private func matches(_ i: Int, _ j: Int) -> Bool { oldKeys[i] == newKeys[j] }
 
   private func length(_ i: Int, _ j: Int) -> Int { table[i * (new.count + 1) + j] }
 
@@ -102,8 +115,8 @@ private struct WordAlignment {
     var i = 0
     var j = 0
     while i < old.count || j < new.count {
-      if i < old.count, j < new.count, old[i] == new[j] {
-        result.append(.same(old[i]))
+      if i < old.count, j < new.count, matches(i, j) {
+        result.append(.same(new[j]))
         i += 1
         j += 1
       } else if j < new.count, i == old.count || length(i, j + 1) >= length(i + 1, j) {
@@ -118,7 +131,7 @@ private struct WordAlignment {
   }
 }
 
-/// Turns aligned operations into segments, merging changes that are one word apart.
+/// Turns aligned operations into segments, merging changes that are one word apart on one line.
 private struct SegmentBuilder {
   private var segments: [DiffSegment] = []
   private var open: (old: String, new: String)?
@@ -141,7 +154,9 @@ private struct SegmentBuilder {
   private mutating func addSame(_ token: String) {
     guard open != nil else { return appendSame(token) }
     gap.append(token)
-    if gap.count(where: { !$0.trimmed.isEmpty }) > 1 { closeChange() }
+    if token.contains(where: \.isNewline) || gap.count(where: { !$0.trimmed.isEmpty }) > 1 {
+      closeChange()
+    }
   }
 
   /// Adds to the open change; unchanged words since it become part of it.
