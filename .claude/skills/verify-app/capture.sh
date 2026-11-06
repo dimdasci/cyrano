@@ -29,6 +29,10 @@ osascript -e 'tell application "TextEdit" to activate' -e 'delay 0.5'
 sleep 0.3
 .build/ax key g option command >/dev/null
 sleep 2
+# A new build has a new ad-hoc signature, and macOS drops Cyrano's own Accessibility permission:
+# the hotkey still opens the panel, but without the selected text (see Permissions in SKILL.md).
+.build/ax tree Proofreading 2>/dev/null | grep -q "Accessibility not granted" \
+  && fail "Cyrano has no Accessibility permission (a new build); the user grants it again"
 [[ $(.build/ax windows | head -n 1) == "Proofreading — TextEdit" ]] \
   || fail "the panel did not open for TextEdit"
 .build/ax wait "${1:0:30}" 10 >/dev/null || fail "the panel has other text"

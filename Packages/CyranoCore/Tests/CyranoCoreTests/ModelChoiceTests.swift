@@ -55,9 +55,9 @@ extension ModelCall {
     return engine
   }
 
-  @Test func withoutAChoiceContextGoesToLunaAndTheRestToSol() {
+  @Test func withoutAChoiceContextGoesToTerraAndTheRestToSol() {
     let models = ModelChoice(from: stored.defaults)
-    #expect(models == ModelChoice(context: .luna, proofreading: .sol, explanations: .sol))
+    #expect(models == ModelChoice(context: .terra, proofreading: .sol, explanations: .sol))
   }
 
   @Test func theChoiceIsKeptForEachOperation() {
@@ -78,6 +78,6 @@ extension ModelCall {
     stored.defaults.set("gpt-6.1-luna", forKey: "model.context")
     let models = ModelChoice(from: stored.defaults)
     #expect(models.proofreading == .sol)
-    #expect(models.context == .luna)
+    #expect(models.context == .terra)
   }
 }

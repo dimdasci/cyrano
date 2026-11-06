@@ -8,6 +8,23 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Changed
+
+- Context is now read with gpt-6.1-terra by default: it reads the window as well as the other
+  models and doesn't keep you waiting before Check. If you've ever changed a model in Settings →
+  General, your choice for Read context stays; pick gpt-6.1-terra there to switch.
+- Context read from the window is shorter: what the conversation is about fits in one sentence
+  without invoice numbers, amounts or IDs, and the style of the conversation takes a few words.
+
+### Fixed
+
+- In a channel thread, Context could list everyone in the channel as recipients ("Daniel Ortiz
+  and 22 others"). It now names the person you're answering.
+- Context could come out in the conversation's language, for example in Russian. It's always in
+  English now, with names and job titles exactly as in the window.
+- Context could describe what your draft says as the topic of the conversation. It now takes the
+  topic only from the conversation in the window.
+
 ## [0.7.0] - 2026-11-05
 
 ### Added
