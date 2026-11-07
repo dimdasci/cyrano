@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+## [0.11.0] - 2026-11-07
+
 ### Added
 
 - Settings → Prompts shows the instructions Cyrano sends to the model, and you can edit them:
@@ -280,7 +282,8 @@ The first preview: check a short text in any app with your ChatGPT plan.
 - Sign in with ChatGPT (Plus or Pro). Text goes only to OpenAI and isn't stored there.
 - Menu bar menu: Check Text…, Check Clipboard, model choice, account, Settings.
 
-[Unreleased]: https://github.com/dimdasci/cyrano/compare/v0.10.0...HEAD
+[Unreleased]: https://github.com/dimdasci/cyrano/compare/v0.11.0...HEAD
+[0.11.0]: https://github.com/dimdasci/cyrano/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/dimdasci/cyrano/compare/v0.9.0...v0.10.0
 [0.9.0]: https://github.com/dimdasci/cyrano/compare/v0.8.0...v0.9.0
 [0.8.0]: https://github.com/dimdasci/cyrano/compare/v0.7.0...v0.8.0
