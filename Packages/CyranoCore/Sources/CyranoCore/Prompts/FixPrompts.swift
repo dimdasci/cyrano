@@ -3,18 +3,27 @@
 
 import Foundation
 
-extension Prompts {
-  /// The fixed part first and the settings last, so the prefix stays the same for caching.
-  static func proofreadInstructions(_ options: CheckOptions) -> String {
-    let custom = options.customInstructions
-      .split(whereSeparator: \.isNewline)
-      .map { "- \(String($0).trimmed)" }
-      .filter { $0 != "- " }
-    return ([fixInstructions, "", "# Settings"] + settings(options) + custom)
+extension PromptLibrary {
+  /// The Proofread prompt, then `# Settings` with the fragments the panel's options choose, the
+  /// output language and the custom instructions, a line each. The fixed part comes first and the
+  /// settings last, so the prefix stays the same for caching. The settings are added by the app,
+  /// so an edited Proofread prompt still gets them (02 M8).
+  func proofreadInstructions(_ options: CheckOptions) -> String {
+    let settings = [
+      text(.level(options.level)), text(.textType(options.textType)), text(.tone(options.tone)),
+      Prompts.language(options.language) + " Only the author's request can change the language.",
+      options.customInstructions,
+    ]
+    let lines = settings.flatMap { $0.split(whereSeparator: \.isNewline) }
+      .map { String($0).trimmed }
+      .filter { !$0.isEmpty }
+    return ([text(.proofread), "", "# Settings"] + lines.map { "- \($0)" })
       .joined(separator: "\n")
   }
+}
 
-  private static let fixInstructions = """
+extension Prompts {
+  static let fixInstructions = """
     You are a proofreader. The author writes short work messages, often in a language that isn't \
     their first.
 
@@ -72,16 +81,6 @@ extension Prompts {
     unnatural, or the tone asks for it.
     - Fit the context: who the author writes to and how formal the conversation is.
     """
-
-  /// The lines the panel's options choose.
-  private static func settings(_ options: CheckOptions) -> [String] {
-    [
-      "- \(level(options.level))",
-      "- \(textType(options.textType))",
-      "- \(tone(options.tone))",
-      "- \(language(options.language)) Only the author's request can change the language.",
-    ]
-  }
 
   static func language(_ language: OutputLanguage) -> String {
     language == .sameAsText

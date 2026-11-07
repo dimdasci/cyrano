@@ -122,7 +122,13 @@ extension ChangeList {
   fileprivate func rowLabel(_ change: Change) -> String {
     let reason = version.reasons[change.id]
     let kind = reason?.category == .style ? "style suggestion" : "error"
-    let label = "\(change.words[0]), replaced with \(change.words[1]), \(kind)"
+    let edit =
+      switch (change.words[0], change.words[1]) {
+      case ("", let new): "\(new), added"
+      case (let old, ""): "\(old), removed"
+      case (let old, let new): "\(old), replaced with \(new)"
+      }
+    let label = "\(edit), \(kind)"
     return reason.map { "\(label). \($0.reason)" } ?? label
   }
 

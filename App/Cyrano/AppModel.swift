@@ -30,6 +30,8 @@ final class AppModel {
 
   /// «Never change» terms, shared by every panel and Settings (02 M11).
   let dictionary = TermDictionary.standard()
+  /// The user's prompts over the built-in ones, read by every call (02 M8).
+  let prompts = PromptLibrary.standard()
   /// Context type, tone, level and language per app, from the panel header (05 §5).
   let appDefaults = AppDefaults()
 
@@ -86,7 +88,7 @@ final class AppModel {
     options.customInstructions = customInstructions
     return ProofreadingSession(
       original: captured.text, options: options, models: models, engine: makeEngine(),
-      dictionary: dictionary)
+      dictionary: dictionary, prompts: prompts)
   }
 
   private func makeEngine() -> any CorrectionEngine {

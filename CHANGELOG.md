@@ -8,6 +8,23 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Added
+
+- Settings → Prompts shows the instructions Cyrano sends to the model, and you can edit them:
+  Read Context, Proofread, Explain Changes, and the lines each text type, tone and level adds
+  to Proofread. An edit is saved as you type and applies from the next check, in an open panel
+  too.
+- A changed prompt is marked "•" in the list, and VoiceOver reads it as "Modified". Restore
+  Default brings back the built-in prompt.
+- The options you pick in the panel keep working whatever the prompts say, and so do the
+  version cards and explanations. A poor edit can only make the results worse; Restore Default
+  undoes it.
+
+### Fixed
+
+- VoiceOver read an added word in the list of changes as an empty word "replaced with" the new
+  one. It now reads "added", and "removed" for a removed word.
+
 ## [0.10.0] - 2026-11-06
 
 ### Fixed

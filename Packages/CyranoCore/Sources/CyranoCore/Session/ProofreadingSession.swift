@@ -43,6 +43,8 @@ public final class ProofreadingSession {
   public let models: ModelChoice
   /// Terms found in the text go with every Fix request, so a new one counts from the next.
   public let dictionary: TermDictionary
+  /// Read on every call, so an edit in Settings → Prompts counts from the next one (02 M8).
+  private let prompts: PromptLibrary
   public private(set) var feed: [FeedItem] = []
   public private(set) var activity = Activity.idle
   /// Tokens spent in this panel, all calls together (M12).
@@ -59,7 +61,8 @@ public final class ProofreadingSession {
 
   public init(
     original: String, context: String = "", options: CheckOptions,
-    models: ModelChoice = ModelChoice(), engine: any CorrectionEngine, dictionary: TermDictionary
+    models: ModelChoice = ModelChoice(), engine: any CorrectionEngine, dictionary: TermDictionary,
+    prompts: PromptLibrary = PromptLibrary()
   ) {
     self.original = original
     self.context = context
@@ -67,6 +70,7 @@ public final class ProofreadingSession {
     self.models = models
     self.engine = engine
     self.dictionary = dictionary
+    self.prompts = prompts
   }
 
   public var versions: [Version] {
@@ -184,7 +188,8 @@ public final class ProofreadingSession {
 
   private func explain(_ version: Version, diff: TextDiff, old: String) async {
     var explanations = Version.Explanations.unavailable
-    let call = ExplainCall.call(model: models.explanations, old: old, diff: diff)
+    let call = ExplainCall.call(
+      model: models.explanations, instructions: prompts.text(.explainChanges), old: old, diff: diff)
     if let output = try? await run(call),
       let parsed = try? ExplainCall.parse(output, diff: diff)
     {
@@ -203,7 +208,7 @@ public final class ProofreadingSession {
   ) async throws -> FixReply<Kind> {
     let input = history() + (prompt.map { [$0] } ?? [])
     let call = ModelCall(
-      model: models.proofreading, instructions: Prompts.proofreadInstructions(options),
+      model: models.proofreading, instructions: prompts.proofreadInstructions(options),
       input: input, schema: FixReply<Kind>.schema)
     let sent = (text: context, images: images)
     var partial = PartialReply()
@@ -314,7 +319,9 @@ extension ProofreadingSession {
     stopReadingContext()
     contextScreenshot = screenshot
     contextStatus = .reading(since: Date())
-    let call = ModelCall.readContext(screenshot: screenshot, draft: original, model: models.context)
+    let call = ModelCall.readContext(
+      screenshot: screenshot, draft: original, model: models.context,
+      instructions: prompts.text(.readContext))
     let reading = Task { try await run(call) }
     contextReading = reading
     let timer = Task {

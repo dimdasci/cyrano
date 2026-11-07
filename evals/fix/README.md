@@ -1,6 +1,6 @@
 # Fix eval
 
-Cases for Fix, Explain and the dialog ([04 §5.2, §5.3](../../docs/specs/04-prompts.md)). Each case goes through the full flow, as in the panel: the check (Fix, then Explain), then the dialog turns, where the model replies to each message with a new version or an answer, as in the panel. The runner calls the same code as the panel (`ProofreadingSession.check` and `send`) and keeps no copies of the prompts.
+Cases for Fix, Explain and the dialog ([04 §5.2, §5.3](../../docs/specs/04-prompts.md)). Each case goes through the full flow, as in the panel: the check (Fix, then Explain), then the dialog turns, where the model replies to each message with a new version or an answer, as in the panel. The runner calls the same code as the panel (`ProofreadingSession.check` and `send`) and keeps no copies of the prompts. It checks the built-in prompts: your edits in Settings → Prompts (`prompts.json`) don't reach it ([02 M8](../../docs/specs/02-tech-decisions.md)).
 
 Run from the repository root (build with `swift build --package-path Packages/CyranoCore --product cyrano-eval`):
 

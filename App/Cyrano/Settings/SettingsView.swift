@@ -1,4 +1,4 @@
-// Settings: General, Style, Dictionary, Account. See docs/specs/05-ui.md §5.
+// Settings: General, Style, Dictionary, Prompts, Account. See docs/specs/05-ui.md §5.
 
 import ApplicationServices
 import CoreGraphics
@@ -17,6 +17,7 @@ struct SettingsView: View {
       Tab("Dictionary", systemImage: "character.book.closed") {
         DictionaryPane(dictionary: app.dictionary)
       }
+      Tab("Prompts", systemImage: "text.bubble") { PromptsPane(prompts: app.prompts) }
       Tab("Account", systemImage: "person.crop.circle") { AccountPane(app: app) }
     }
     // Wide enough for the five columns of Style → Per-app defaults.
