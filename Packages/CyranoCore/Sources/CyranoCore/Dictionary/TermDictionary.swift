@@ -27,13 +27,12 @@ public final class TermDictionary {
   /// next to it as `.bak`, so the next change doesn't overwrite the user's terms.
   public init(file: URL) {
     self.file = file
-    terms = Self.read(file)
+    terms = JSONFile.read([Term].self, from: file) ?? []
   }
 
   /// ~/Library/Application Support/Cyrano/dictionary.json
   public static func standard() -> TermDictionary {
-    TermDictionary(
-      file: URL.applicationSupportDirectory.appending(path: "Cyrano/dictionary.json"))
+    TermDictionary(file: JSONFile.standard("dictionary.json"))
   }
 
   public func contains(_ text: String) -> Bool {
@@ -140,24 +139,7 @@ public final class TermDictionary {
   }
 
   private func save() {
-    let encoder = JSONEncoder()
-    encoder.dateEncodingStrategy = .iso8601
-    encoder.outputFormatting = [.prettyPrinted, .withoutEscapingSlashes]
-    try? FileManager.default.createDirectory(
-      at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
-    // A failed write keeps the terms in memory for this run; the next change writes again.
-    try? encoder.encode(terms).write(to: file, options: .atomic)
-  }
-
-  private static func read(_ file: URL) -> [Term] {
-    guard let data = try? Data(contentsOf: file) else { return [] }
-    let decoder = JSONDecoder()
-    decoder.dateDecodingStrategy = .iso8601
-    if let terms = try? decoder.decode([Term].self, from: data) { return terms }
-    let backup = file.appendingPathExtension("bak")
-    try? FileManager.default.removeItem(at: backup)
-    try? FileManager.default.moveItem(at: file, to: backup)
-    return []
+    JSONFile.write(terms, to: file)
   }
 }
 

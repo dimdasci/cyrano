@@ -30,6 +30,12 @@ enum FakeFix: ExpressibleByStringLiteral, Sendable {
   }
 }
 
+/// Calls are told apart by their schema: the instructions may be the user's (02 M8).
+extension ModelCall {
+  var isFix: Bool { schema == FixReply<CheckKind>.schema || schema == FixReply<DialogKind>.schema }
+  var isContext: Bool { schema == ConversationContext.schema }
+}
+
 /// Answers Fix calls from a queue, reads context with a fixed answer and explains with a fixed
 /// answer: by default change 1 is grammar.
 final class FakeEngine: CorrectionEngine {
@@ -56,8 +62,8 @@ final class FakeEngine: CorrectionEngine {
   var calls: [ModelCall] { state.withLock { $0.calls } }
   /// Answers not yet finished, failed or cancelled: a stopped call must not stay open.
   var openStreams: Int { state.withLock { $0.openStreams } }
-  var fixCalls: [ModelCall] { calls.filter { $0.instructions.hasPrefix("You are a proofreader") } }
-  var contextCalls: [ModelCall] { calls.filter { $0.instructions == Prompts.readContext } }
+  var fixCalls: [ModelCall] { calls.filter(\.isFix) }
+  var contextCalls: [ModelCall] { calls.filter(\.isContext) }
 
   func failNextFix(with error: EngineError) { state.withLock { $0.failNextFix = error } }
 
@@ -81,8 +87,8 @@ final class FakeEngine: CorrectionEngine {
   }
 
   func respond(_ call: ModelCall) -> AsyncThrowingStream<ResponseUpdate, any Error> {
-    let isFix = call.instructions.hasPrefix("You are a proofreader")
-    let isContext = call.instructions == Prompts.readContext
+    let isFix = call.isFix
+    let isContext = call.isContext
     let result = state.withLock { state -> Result<[String], EngineError> in
       state.calls.append(call)
       if isContext { return state.context.map { [$0] } }
@@ -408,12 +414,12 @@ final class FakeEngine: CorrectionEngine {
   }
 }
 
-@Suite struct PromptTests {
+@MainActor @Suite struct PromptTests {
   @Test func instructionsFollowTheOptions() {
     let options = CheckOptions(
       textType: .docs, tone: .professional, level: .errorsOnly, language: .englishUK,
       customInstructions: "Use Oxford commas.\n\nNo emoji.")
-    let text = Prompts.proofreadInstructions(options)
+    let text = PromptLibrary().proofreadInstructions(options)
     #expect(text.contains("- This is technical documentation"))
     #expect(text.contains("- Fix only clear errors."))
     #expect(text.contains("- Tone: professional: polite and businesslike"))
@@ -423,8 +429,8 @@ final class FakeEngine: CorrectionEngine {
 
   /// Only the settings at the end differ, so the instructions' prefix can be cached.
   @Test func theOptionsChangeOnlyTheSettingsAtTheEnd() {
-    let casual = Prompts.proofreadInstructions(CheckOptions(tone: .casual))
-    let docs = Prompts.proofreadInstructions(CheckOptions(textType: .docs, level: .rewrite))
+    let casual = PromptLibrary().proofreadInstructions(CheckOptions(tone: .casual))
+    let docs = PromptLibrary().proofreadInstructions(CheckOptions(textType: .docs, level: .rewrite))
     let fixed = casual.components(separatedBy: "# Settings")[0]
     #expect(docs.hasPrefix(fixed + "# Settings\n"))
   }

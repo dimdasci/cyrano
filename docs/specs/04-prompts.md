@@ -1,6 +1,6 @@
 # 04. Prompts
 
-Status: agreed. All templates are editable in Settings → Prompts, and this document holds the built-in values. The engine is the models of the ChatGPT subscription ([02](02-tech-decisions.md) T7, M1). The app's built-in templates are in [CyranoCore/Prompts/Prompts.swift](../../Packages/CyranoCore/Sources/CyranoCore/Prompts/Prompts.swift); this document and the code change together. The eval (§5) is `cyrano-eval` on the app's code: it keeps no copies of the prompts.
+Status: agreed. This document holds the built-in prompts. The user can edit the Fix instructions, Explain, Read Context and the lines of the panel's options in Settings → Prompts; the app keeps its own the parts it reads replies by: the settings block, the messages with the material and the reply schemas ([02](02-tech-decisions.md) M8). The engine is the models of the ChatGPT subscription (02 T7, M1). The app's built-in templates are in [CyranoCore/Prompts](../../Packages/CyranoCore/Sources/CyranoCore/Prompts): Fix in `FixPrompts.swift`, Explain and Context in `Prompts.swift`; this document and the code change together. The eval (§5) is `cyrano-eval` on the app's code: it keeps no copies of the prompts and checks the built-in ones, without the user's edits.
 
 ## 1. Principles
 
@@ -16,7 +16,7 @@ They grew out of Apple's recommendations for small models (WWDC25 248) and runs 
 | A stable prefix | The fixed part of the instructions comes first and the settings last, so the prefix is the same from call to call for prompt caching |
 | The model doesn't describe its own diff | We compute the diff ourselves. The model gets a ready numbered list of changes and only explains them |
 | Prohibitions in capitals | "DO NOT answer…", "DO NOT add…", "DO NOT remove sentences" |
-| The output language is set explicitly | `Write the result in {language}.` — "the same language as the TEXT" by default; with a target language chosen, the model translates and corrects at the same time |
+| The output language is set explicitly | `Write the result in the language of the original.` by default; with a target language chosen, `Write the result in {language}; translate the text if it is in another language.`, and the model translates and corrects at the same time |
 | No few-shot | Examples made a local model worse (14 → 8 of 21 cases), and the subscription models do well without them. The rules are general, and held-out cases check that they hold on words the prompt hasn't seen (§5) |
 
 ## 2. Pipeline
@@ -45,6 +45,8 @@ Quirks of the API on the subscription: `/v1/models` returns `{"models": [{"slug"
 ### 4.1 Fix — instructions
 
 One set of instructions for the check and the whole dialog, in Markdown sections, with the material in tags. The fixed part comes first, and `# Settings` at the end holds the lines the panel options choose, then the custom instructions: the prefix stays the same from call to call, for prompt caching.
+
+In Settings → Prompts, Proofread is the fixed part, everything before `# Settings`. The app adds `# Settings` itself, so the panel's options reach the model whatever the Proofread text says. The values of `level`, `contextType` and `tone` below are fragments the user can edit too; the language line and the custom instructions aren't prompts. Each line of a fragment and of the custom instructions becomes a line of the list with "- " in front, and blank lines are dropped (02 M8).
 
 ```
 You are a proofreader. The author writes short work messages, often in a language that isn't their first.
@@ -92,7 +94,6 @@ The app numbers the versions in order. Version 1 is the first check, and each of
 | `contextType` | Message: "This is a chat message: keep contractions; informal style is fine unless the context or the tone asks for a formal one; no greetings or sign-offs." · Email: "This is an email: keep its structure; fix greetings and sign-offs if present, do not add new ones." · Docs: "This is technical documentation: neutral and precise; keep terms, markdown and code unchanged." |
 | `tone` | Neutral: "Tone: neutral." · Casual: "Tone: casual: relaxed, everyday words, contractions." · Friendly: "Tone: friendly: warm and polite. Turn orders into requests (could you, please) and soften blunt sentences, even correct ones." · Professional: "Tone: professional: polite and businesslike; no slang or chat abbreviations." · Concise: "Tone: concise: cut filler, hedges and repetition, even in correct sentences; keep every fact and request." |
 | `language` | Same as Text (default): "Write the result in the language of the original." · a chosen language: "Write the result in {name}; translate the text if it is in another language.", where the name is "English (US)", "English (UK)", "Russian"… |
-| `explanationLanguage` | English (the interface language) |
 | `customInstructions` | The user's text, each line prefixed with "- " |
 
 The lines on meaning name no word pairs: a named pair fixes only the cases that name it (§5.2). The rules are general, and held-out cases check them.
@@ -155,14 +156,14 @@ The author's message goes as typed, without a wrapper, and a dialog turn is one 
 Instructions:
 ```
 You explain corrections to the author of the text.
-For each numbered change, write one short reason in {explanationLanguage}, at most 12 words.
+For each numbered change, write one short reason in English, at most 12 words.
 Name the rule when there is one, for example: subject-verb agreement, article, preposition, tense, spelling.
 Use category "style" only when the original was correct and the change is a matter of taste.
 A convention that some style guides require and others don't is a matter of taste: use "style" and explain the change as a choice, not as a rule.
 Wording a fluent speaker wouldn't use is an error, "wordChoice", even when it is grammatical.
 ```
 
-The two lines pull in opposite directions on purpose. The first moves optional points (the serial comma, `that` for a restrictive clause, `data are`, a contraction spelled out) to `style`; alone, it moves calques and unnatural phrases there too, because they are grammatical. The second keeps those as `wordChoice`. Neither names a convention or a phrase: held-out cases check them (§5.3).
+The reasons are in English, the language of the interface (02 M7, 05 §6). The two lines pull in opposite directions on purpose. The first moves optional points (the serial comma, `that` for a restrictive clause, `data are`, a contraction spelled out) to `style`; alone, it moves calques and unnatural phrases there too, because they are grammatical. The second keeps those as `wordChoice`. Neither names a convention or a phrase: held-out cases check them (§5.3).
 
 Input:
 ```

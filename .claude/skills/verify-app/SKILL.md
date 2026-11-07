@@ -12,7 +12,8 @@ The agent drives the app through Accessibility: the `.build/ax` utility (source 
 The user may be working at the computer at the same time, and the keyboard and mouse are shared.
 
 - Before you start, tell the user that for the next few minutes you'll be pressing keys and moving the mouse, and ask them not to switch windows.
-- Keys (`ax key`, `osascript … keystroke`) go to the window with keyboard focus, which isn't always the frontmost app. The Cyrano panel takes keys without making Cyrano frontmost (System Events then names TextEdit), and the Keychain password prompt (`SecurityAgent`) takes them from everyone. So `capture.sh` first closes Cyrano's windows (`ax close`), waits for the password prompt to close, and only then checks that TextEdit is in front. For keys meant for Cyrano, `osascript -e 'tell application "System Events" to get name of first process whose frontmost is true'` must return `Cyrano`. If something else is in front, don't press anything; say so.
+- Keys (`ax key`, `osascript … keystroke`) go to the window with keyboard focus, which isn't always the frontmost app. The Cyrano panel takes keys without making Cyrano frontmost (System Events then names TextEdit), and the Keychain password prompt (`SecurityAgent`) takes them from everyone. So `capture.sh` first closes Cyrano's windows (`ax close`), waits for the password prompt to close, and only then checks that TextEdit is in front. For keys meant for a Cyrano window (Settings, onboarding), `lsappinfo info -only bundleid $(lsappinfo front)` must print `io.github.dimdasci.cyrano`. System Events can't tell: Cyrano is a menu bar agent (`LSUIElement`), and System Events calls it background only and never frontmost, while it names the last regular app instead. If something else is in front, don't press anything; say so.
+- `ax appmenu "Settings…"` opens Settings but can't bring it to the front: macOS lets an app activate only on a real user action. A real click does it: `ax doubleclick` on a static text of the window, such as the title above the prompt editor (`Proofread, Main instructions…`). Then check the front app as above.
 - The Keychain password prompt appears when a fresh build reads the token for the first time. Only the user closes it: tell them and wait, and send no keys meanwhile.
 - Press Check only if the first line of `.build/ax windows` is `Proofreading — TextEdit`. Otherwise the panel may have taken text from the user's window: don't read it and don't send it for checking.
 - The dictionary and settings are the user's real data. Before the check, save a copy of `~/Library/Application Support/Cyrano/dictionary.json` (or note that the file doesn't exist) and run `defaults export io.github.dimdasci.cyrano <file>`; afterwards compare, and if something changed, quit Cyrano and restore it. While Cyrano is running, it keeps the dictionary in memory and writes it back on the next change.
@@ -37,6 +38,7 @@ If `.build/ax` prints `Accessibility is not granted to this process` or `osascri
 | `ax windows` | titles of Cyrano's windows, frontmost first |
 | `ax close [window]` | closes Cyrano's windows; window is a substring of the title |
 | `ax tree [window]` | the tree: `role \| label \| value \| hint`; window is a substring of the title (`Dictionary`) |
+| `ax focused` | the element with keyboard focus: `role \| label \| value`; with `ax key`, checks the Tab order (05 §7) |
 | `ax wait <text> [sec]` | waits until the text appears in a label or value (30 s by default) |
 | `ax press <label>` | presses a button or link (`Check`, `Send`, `Copy`, `Undo`, `▸ 1 fix`, `Add Term`) |
 | `ax select <text>` | selects text in the card text |
@@ -46,10 +48,10 @@ If `.build/ax` prints `Accessibility is not granted to this process` or `osascri
 | `ax dismiss` | closes the open context menu without picking anything |
 | `ax appmenu <item>` | an item of the app menu or of the menu bar icon (`Settings…`, `Check Text…`) |
 | `ax set <placeholder/label> <value>` | types a value into a field (`Search`, `Term`); `@N` is the Nth field from the top (a SwiftUI TextEditor has no label: Context is `@1`) |
-| `ax rows` | table rows |
-| `ax selectrow <value>` | selects a table row |
+| `ax rows` | table and list rows; a cell with a label and a value prints both |
+| `ax selectrow <value>` | selects a table or list row by a cell's value or label; `Casual` also finds `Casual, Modified` |
 | `ax doubleclick <value>` | double-clicks the element with this value |
-| `ax key <letter> [command] [option] [shift] [control]` | presses a key like a keyboard does (through HID); only when the right app is in front |
+| `ax key <key> [command] [option] [shift] [control]` | presses a letter, `return`, `tab`, `space`, `up` or `down` like a keyboard does (through HID); only when the right app is in front |
 | `ax announcements [sec]` | prints what Cyrano asks VoiceOver to announce during the next seconds (30 by default); start it in the background before the action, VoiceOver itself can stay off |
 
 Save the output of `ax tree` to a file and search in it: with `ax tree | head` the utility may die from SIGPIPE and print nothing. If the command before it failed, the file is stale: don't read it, deal with the error first.
@@ -71,7 +73,17 @@ Settings: `.build/ax appmenu "Settings…"`, the tab with `.build/ax press Dicti
 - SwiftUI button labels live in `AXAttributedDescription`; System Events (AppleScript, JXA) can't read them, which is why `ax` is written on `AXUIElement`.
 - `AXShowMenu` works for the card text (`NSTextView`) and fails for SwiftUI `.contextMenu` (error -25204); use `ax rightclick` there. The right click lands in the center of the element; if the menu didn't open, check that the row has `.contentShape`, otherwise empty space doesn't catch the click.
 - Close a menu opened by `ax menu` or `ax rightclick` right away, with `ax pick <item>` or `ax dismiss`, and only then press buttons. If `ax press` with the menu open removes the view the menu belongs to (Check removes "Text to check" and collapses Context), the menu never finishes tracking, KeyboardShortcuts keeps the hotkey paused, and ⌥⌘G doesn't work until Cyrano is relaunched. Signs: `capture.sh` prints `the panel did not open for TextEdit`, and according to the log the keys reached TextEdit. A user can't get into this state: their first click outside the menu closes it (2026-11-05).
+- A button that disables itself when pressed (Restore Default) makes `ax press` print `AXPress failed: -25200` although the press worked. Check the result (`ax rows`, the file) instead of trusting the error.
 - A button that opens a modal window (Import…, Export…) doesn't return from `AXPress` while the window is open: run `ax press` in the background (`… &`). A save window needs a path typed on the keyboard (⇧⌘G), only when Cyrano is in front; otherwise close it with `ax press Cancel`.
+
+## VoiceOver
+
+To hear what VoiceOver says, drive it through AppleScript. That needs "Allow VoiceOver to be controlled with AppleScript" in VoiceOver Utility → General; only the user turns it on. It's on when `/private/var/db/Accessibility/.VoiceOverAppleScriptEnabled` exists. Don't check with a `tell application "VoiceOver"` call: it starts VoiceOver.
+
+1. Tell the user VoiceOver will speak aloud. Start it with `open /System/Library/CoreServices/VoiceOver.app`. On first start it shows a welcome window that blocks AppleScript; close it with Use VoiceOver (`osascript -e 'tell application "System Events" to tell process "VoiceOver Quickstart" to click button "Use VoiceOver" of window 1'`).
+2. VoiceOver reads the window that has keyboard focus. Click into Cyrano's window first (`ax doubleclick` on a static text) and check with `lsappinfo info -only bundleid $(lsappinfo front)`.
+3. Each step: `osascript -e 'tell application "VoiceOver"' -e 'tell vo cursor to move right' -e 'delay 1' -e 'return content of last phrase' -e 'end tell'`. Moves: `right`, `left`, `up`, `down`, `into item`, `out of item`, `to first item`. A group or a table is entered with `into item`; in a table `down` also selects the row.
+4. Turn VoiceOver off: `osascript -e 'tell application "VoiceOver" to quit'`. Tell the user they can turn the AppleScript setting off.
 
 ## If keys didn't arrive
 

@@ -4,9 +4,11 @@
 public import Foundation
 
 extension ModelCall {
-  static func readContext(screenshot: Data, draft: String, model: Model) -> ModelCall {
+  static func readContext(
+    screenshot: Data, draft: String, model: Model, instructions: String
+  ) -> ModelCall {
     ModelCall(
-      model: model, instructions: Prompts.readContext,
+      model: model, instructions: instructions,
       input: [ChatMessage(.user, Prompts.contextInput(draft), images: [screenshot])],
       schema: ConversationContext.schema)
   }

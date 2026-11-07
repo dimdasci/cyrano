@@ -2,7 +2,7 @@
 
 The visual part of the UI spec. The text and rules are in [05-ui.md](../specs/05-ui.md); here is what it looks like and how to use it in development.
 
-Wireframes record the original intent, and the specs are the reference: the wireframes still show Insert and keyboard shortcuts inside the panel (05 §2.9), "More Languages…" in the language pop-up and older texts such as "Looks good".
+Wireframes record the original intent, and the specs are the reference: the wireframes still show Insert and keyboard shortcuts inside the panel (05 §2.9), "More Languages…" in the language pop-up, older texts such as "Looks good", and placeholders such as `{tone}` in the prompt editor, where the app now adds the settings after the Proofread text (02 M8).
 
 ## Where things are
 
@@ -22,7 +22,7 @@ Sync rule: edits are made on the canvas, then the sources are copied here, and [
 | `States.dc.html` — panel states | no | §2.8 | `ActivityRow` and `ErrorRow` in `FeedView`; the ⚠ icon in `PanelHeader` |
 | `Onboarding.dc.html` — first launch | yes: steps, sign-in, permission | §1 | `OnboardingView` |
 | `MenuBar.dc.html` — menu bar menu | no | §4 | the `MenuBarExtra` content in `CyranoApp` |
-| `Settings.dc.html` — settings | yes: tabs, toggles, dictionary search, prompt editor | §5 | `SettingsView` + `GeneralPane`, `StylePane`, `DictionaryPane`, `AccountPane`; the prompt editor is package 12 |
+| `Settings.dc.html` — settings | yes: tabs, toggles, dictionary search, prompt editor | §5 | `SettingsView` + `GeneralPane`, `StylePane`, `DictionaryPane`, `PromptsPane`, `AccountPane` |
 | `About.dc.html` — About window | no | Screen map | the standard About panel (`orderFrontStandardAboutPanel`) with `AboutCredits` |
 
 ## Moving to SwiftUI

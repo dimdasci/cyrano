@@ -2,7 +2,7 @@
 
 A native macOS app that checks and improves short messages in any app: hotkey → a panel with the corrected text, explanations and a dialog with the model → copy the result and paste it yourself. It works through your ChatGPT subscription (Plus or Pro) with the official Sign in with ChatGPT.
 
-Status: preview. The main flow, images as context, reading context from a window screenshot, the "Never change" dictionary and choosing a model for each operation all work. What's done, the next package and deviations from the spec are in [docs/plan.md](docs/plan.md).
+Status: preview. The main flow, images as context, reading context from a window screenshot, the "Never change" dictionary, choosing a model for each operation and editing the prompts in Settings → Prompts all work. What's done, the next package and deviations from the spec are in [docs/plan.md](docs/plan.md).
 
 ## Choosing models
 
