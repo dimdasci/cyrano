@@ -12,7 +12,12 @@ struct DictionaryPane: View {
   @State private var selection = Set<Term.ID>()
   @State private var sortOrder = [KeyPathComparator(\Term.added, order: .reverse)]
   @State private var editing: TermEdit?
-  @State private var note: String?
+  /// The result of Import or Export, heard by VoiceOver too.
+  @State private var note: String? {
+    didSet {
+      if let note { VoiceOver.announce(note) }
+    }
+  }
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
@@ -45,9 +50,14 @@ struct DictionaryPane: View {
       .width(120)
     }
     .frame(height: 280)
-    .contextMenu(forSelectionType: Term.ID.self) { _ in
+    // The menu gives the keyboard and VoiceOver what a double click does (05 §7).
+    .contextMenu(forSelectionType: Term.ID.self) { ids in
+      if let term = term(in: ids) {
+        Button("Edit Term…") { editing = .rename(term) }
+        Button("Delete") { remove(ids) }
+      }
     } primaryAction: { ids in
-      if let term = rows.first(where: { ids.contains($0.id) }) { editing = .rename(term) }
+      if let term = term(in: ids) { editing = .rename(term) }
     }
     .onDeleteCommand(perform: removeSelected)
   }
@@ -58,11 +68,19 @@ struct DictionaryPane: View {
       .sorted(using: sortOrder)
   }
 
+  private func term(in ids: Set<Term.ID>) -> Term? {
+    rows.first { ids.contains($0.id) }
+  }
+
   private func removeSelected() {
-    for term in rows where selection.contains(term.id) {
+    remove(selection)
+  }
+
+  private func remove(_ ids: Set<Term.ID>) {
+    for term in rows where ids.contains(term.id) {
       dictionary.remove(term.text)
     }
-    selection = []
+    selection.subtract(ids)
   }
 
   private func importTerms() {
@@ -131,7 +149,7 @@ private struct TermEditor: View {
         .frame(width: 280)
         .onSubmit(save)
       if taken {
-        Text("This term is already in the dictionary.").font(.caption).foregroundStyle(.red)
+        Warning(text: Self.takenMessage).font(.caption)
       }
       HStack {
         Spacer()
@@ -158,6 +176,13 @@ private struct TermEditor: View {
       case .add: dictionary.add(text)
       case .rename(let term): dictionary.rename(term.text, to: text)
       }
-    if saved { dismiss() } else { taken = true }
+    if saved {
+      dismiss()
+    } else {
+      taken = true
+      VoiceOver.announce(Self.takenMessage)
+    }
   }
+
+  private static let takenMessage = "This term is already in the dictionary."
 }

@@ -37,10 +37,7 @@ struct FeedView: View {
         visibleHeight = $0
         shortfall = max(contentHeight, Self.minHeight) - visibleHeight
       }
-      .onChange(of: session.feed) { old, new in
-        proxy.scrollTo("bottom")
-        announceAnswer(old: old, new: new)
-      }
+      .onChange(of: session.feed) { proxy.scrollTo("bottom") }
       .onChange(of: session.activity) { proxy.scrollTo("bottom") }
     }
     .accessibilityLabel("Proofreading results")
@@ -57,12 +54,6 @@ struct FeedView: View {
     case .answer(_, let text):
       Bubble(text: text, fromUser: false)
     }
-  }
-
-  /// VoiceOver reads a new answer once it is whole: it streamed into the bubble (05 §7).
-  private func announceAnswer(old: [FeedItem], new: [FeedItem]) {
-    guard new.count > old.count, case .answer(_, let text) = new.last else { return }
-    AccessibilityNotification.Announcement(text).post()
   }
 
   private var actions: VersionCard.Actions {
@@ -87,10 +78,12 @@ private struct TextToCheck: View {
       }
       .overlay(alignment: .topLeading) {
         if session.original.isEmpty {
-          Text("Select text in any app and press ⌥⌘G, or type or paste it here")
+          Text(EditableText.placeholder)
             .font(.system(size: 14))
             .foregroundStyle(.tertiary)
             .allowsHitTesting(false)
+            // The field itself reads it as its placeholder.
+            .accessibilityHidden(true)
         }
       }
     }
@@ -102,6 +95,8 @@ private struct TextToCheck: View {
   }
 }
 
+/// The author's message on the right on an accent tint, an answer on the left. Text keeps the
+/// label color: white on the accent color is below 4.5:1 (05 §7).
 struct Bubble: View {
   let text: String
   let fromUser: Bool
@@ -111,32 +106,39 @@ struct Bubble: View {
       .textSelection(.enabled)
       .padding(.horizontal, 10)
       .padding(.vertical, 6)
-      .foregroundStyle(fromUser ? Color.white : Color.primary)
       .background(
-        fromUser ? Color.accentColor : Color(nsColor: .controlBackgroundColor),
+        fromUser ? Color.accentColor.opacity(0.18) : Color(nsColor: .controlBackgroundColor),
         in: RoundedRectangle(cornerRadius: 10)
       )
+      .accessibilityElement(children: .ignore)
+      .accessibilityAddTraits(.isStaticText)
+      .accessibilityLabel((fromUser ? "You: " : "Answer: ") + text)
       .frame(maxWidth: 400, alignment: fromUser ? .trailing : .leading)
       .frame(maxWidth: .infinity, alignment: fromUser ? .trailing : .leading)
   }
 }
 
-/// What is happening now: a streaming version or answer, or an error with a way out.
+/// What is happening now: a streaming version or answer, or an error with a way out. With Reduce
+/// Motion nothing streams: the text shows whole once it's ready (05 §7).
 private struct ActivityRow: View {
   let model: PanelModel
   let session: ProofreadingSession
+  @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
   var body: some View {
     switch session.activity {
     case .idle:
       EmptyView()
     case .checking(let partial):
+      let partial = reduceMotion ? "" : partial
       Card(title: "Version \(session.versions.count + 1)") {
         ProgressView().progressViewStyle(.linear)
+          .accessibilityLabel("Checking")
         Text(partial.isEmpty ? session.latestText : partial)
           .foregroundStyle(partial.isEmpty ? .secondary : .primary)
       }
     case .replying(let partial):
+      let partial = reduceMotion ? "" : partial
       Bubble(text: partial.isEmpty ? "…" : partial, fromUser: false)
     case .failed(let error):
       ErrorRow(error: error, session: session) {
@@ -156,7 +158,7 @@ private struct ErrorRow: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      Text(message)
+      Text(error.message)
       HStack {
         if error == .notSignedIn {
           Button("Continue with ChatGPT", action: signIn).buttonStyle(.borderedProminent)
@@ -171,20 +173,6 @@ private struct ErrorRow: View {
     .padding(10)
     .frame(maxWidth: .infinity, alignment: .leading)
     .background(.red.opacity(0.08), in: RoundedRectangle(cornerRadius: 8))
-  }
-
-  private var message: String {
-    switch error {
-    case .notSignedIn: "Sign in to ChatGPT to check text."
-    case .planLimitReached: "Your ChatGPT plan limit for this app is reached."
-    case .planUsageUnavailable: "ChatGPT plan usage isn't available for this app right now."
-    case .network: "Couldn't reach OpenAI."
-    case .timedOut: "OpenAI stopped answering. Try again in a moment."
-    case .signInNotSaved:
-      "Cyrano couldn't save your ChatGPT sign-in to the Keychain. Choose Try Again and allow "
-        + "access when macOS asks; if Cyrano quits first, you'll need to sign in again."
-    case .failed(let detail): "The check failed: \(detail)"
-    }
   }
 }
 

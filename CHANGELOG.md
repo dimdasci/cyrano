@@ -8,6 +8,54 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+Cyrano now works with VoiceOver and with the keyboard alone, in the Proofreading panel, onboarding
+and Settings. The Proofreading panel is now an ordinary window that has the keyboard while you work
+in it.
+
+### Added
+
+- When ⌥⌘G, Check Text… or Check Clipboard would replace an open panel, Cyrano asks first: Check
+  New Text, or Return to Panel to keep its versions and conversation.
+- While a Cyrano window is open, Cyrano has a Dock icon, a place in ⌘Tab and the standard menus.
+  Help → Cyrano Help opens the documentation.
+- Press ⌘↩ to check or to send a message, anywhere in the panel; the same command is in the
+  Proofreading menu.
+- VoiceOver announces a new version ("Version 2, 1 change"), an answer once it's complete, an
+  error, how reading the context ended, and status lines such as "Copied." in full.
+- Never Change works from VoiceOver's actions on a change and on selected text. Without a mouse,
+  select the text and press ⌃↩ to open its menu.
+- A context image reads as "Image 1 of 2"; VoiceOver's press opens Quick Look, and Remove Image is
+  one of its actions.
+- With Reduce Motion on, a new version and an answer appear whole instead of being typed out.
+- Settings → Dictionary: the menu of a term has Edit Term… and Delete. VoiceOver announces the
+  result of Import and Export and "This term is already in the dictionary."
+
+### Changed
+
+- The Proofreading panel opens in front with the keyboard in it, and VoiceOver reads it. A click on
+  another app puts the panel behind that app, so you can read the conversation you're replying to;
+  ⌘Tab or the Dock icon brings it back.
+- The panel stays open until you close it with ✕, ⌘W or Esc. On closing, the app you were writing
+  in gets the keyboard back with the cursor where it was. The panel can also be minimized.
+- Edit → Paste adds an image on the clipboard to Context, the same as ⌘V.
+- After the first check the keyboard is in the message field, ready for the next request.
+- Tab and Shift-Tab move out of Context, the text to check and the message field instead of
+  typing a tab.
+- Your messages in the panel are shown on a light tint with regular text, and removed words in a
+  version are darker, so both are easier to read. Warnings such as "Plan limit reached" show a
+  colored sign next to regular text.
+
+### Fixed
+
+- The onboarding window was a little too short, and its content scrolled. It's now as tall as its
+  content, and only scrolls on a screen too small for it.
+- VoiceOver read a version with the removed words mixed in. It now reads the corrected text; the
+  changes are read from the list.
+- VoiceOver read the panel's pop-ups without their current values and the Context and changes
+  buttons with a triangle symbol. It now reads "Tone, Neutral" and "Expanded" or "Collapsed".
+- Context, the text to check and Custom instructions had no name for VoiceOver.
+- A version without changes was read as "Version 1," with nothing after it.
+
 ## [0.11.0] - 2026-11-07
 
 ### Added

@@ -151,8 +151,21 @@ struct SignInControls: View {
           .controlSize(.large)
       }
       if case .failed(let message) = app.signIn {
-        Text(message).foregroundStyle(.red)
+        Warning(text: message)
       }
+    }
+  }
+}
+
+/// A problem in words, with a red sign: red text falls below 4.5:1 on the light window (05 §7).
+struct Warning: View {
+  let text: String
+
+  var body: some View {
+    Label {
+      Text(text).fixedSize(horizontal: false, vertical: true)
+    } icon: {
+      Image(systemName: "exclamationmark.octagon.fill").foregroundStyle(.red)
     }
   }
 }
@@ -185,7 +198,12 @@ struct PermissionStatus: View {
       Text(title)
       Spacer()
       if granted {
-        Label("Granted", systemImage: "checkmark.circle.fill").foregroundStyle(.green)
+        // Green text falls below 4.5:1 on the light window; the check mark carries the color.
+        Label {
+          Text("Granted")
+        } icon: {
+          Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
+        }
       } else {
         Button("Open System Settings…") {
           request()
@@ -193,6 +211,7 @@ struct PermissionStatus: View {
         }
       }
     }
+    .accessibilityElement(children: .combine)
     .task {
       granted = isGranted()
       while !granted, !Task.isCancelled {

@@ -63,7 +63,7 @@ Context type and tone are independent: the type answers "what kind of text is th
 
 ## Settings (MVP)
 
-- Keyboard shortcut: the global "Check text" is configurable; inside the panel there are no shortcuts of its own (02 T6).
+- Keyboard shortcut: the global "Check text" is configurable; inside, only the standard macOS interface and its shortcuts, with ⌘↩ for Check or Send (02 T6).
 - Prompts: the built-in prompts of the pipeline (Read Context, Proofread, Explain Changes), text types, tones and levels can be viewed and edited, "Restore Default" brings back the original. The panel's options and the reply formats keep working whatever the prompts say (02 M8).
 - Models: `gpt-6.1-sol` (quality) · `gpt-6.1-terra` · `gpt-6-luna` (faster), separately for context reading, the check and explanations (02 M1).
 - Account: who is signed in, sign out.

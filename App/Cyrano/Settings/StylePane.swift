@@ -15,6 +15,7 @@ struct StylePane: View {
         TextEditor(text: $app.customInstructions)
           .font(.body)
           .frame(height: 96)
+          .accessibilityLabel("Custom instructions")
         Text("Added to every check, one rule per line. Changes apply to the next check.")
           .font(.caption)
           .foregroundStyle(.secondary)
@@ -41,6 +42,7 @@ private struct PerAppDefaults: View {
             Text(row.app.name)
           } icon: {
             Image(nsImage: row.app.icon).resizable().frame(width: 16, height: 16)
+              .accessibilityHidden(true)
           }
         }
         // The other columns fit their longest values ("Professional", "Errors Only").

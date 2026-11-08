@@ -174,14 +174,14 @@ func click(_ element: AXUIElement, count: Int) {
   }
 }
 
-/// Presses a letter key, or return, tab, space, up or down, with modifiers at the HID tap, like a real keyboard. System Events
+/// Presses a letter key, or return, tab, space, escape, up or down, with modifiers at the HID tap, like a real keyboard. System Events
 /// keystrokes reach the front app but don't always trigger global hot keys such as ⌥⌘G.
 func pressKey(_ letter: String, _ modifiers: [String]) {
   let codes: [String: CGKeyCode] = [
     "a": 0, "s": 1, "d": 2, "f": 3, "h": 4, "g": 5, "z": 6, "x": 7, "c": 8, "v": 9, "b": 11,
     "q": 12, "w": 13, "e": 14, "r": 15, "y": 16, "t": 17, "o": 31, "u": 32, "i": 34, "p": 35,
     "l": 37, "j": 38, "k": 40, "n": 45, "m": 46,
-    "return": 36, "tab": 48, "space": 49, "up": 126, "down": 125,
+    "return": 36, "tab": 48, "space": 49, "escape": 53, "up": 126, "down": 125,
   ]
   let flags: [String: CGEventFlags] = [
     "command": .maskCommand, "option": .maskAlternate, "shift": .maskShift,
@@ -319,7 +319,7 @@ case "appmenu":
   perform(item, "AXPress")
   print("chose \(arguments[1])")
 case "set":
-  // "@2" is the second field from the top: SwiftUI TextEditor has no label or placeholder.
+  // "@2" is the second field from the top.
   let fields = elements().filter { ["AXTextField", "AXTextArea"].contains(role($0)) }
   let field =
     arguments[1].hasPrefix("@")

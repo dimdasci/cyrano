@@ -226,6 +226,42 @@ import Testing
     #expect(session.options.language == .sameAsText)
   }
 
+  /// VoiceOver hears how reading ended: context, nothing, or why it failed (05 §7).
+  @Test func theEndOfReadingIsAnnounced() async {
+    let engine = FakeEngine(fixes: [], context: ravi)
+    let heard = await announcements(engine)
+    engine.answerContext(with: answer())
+    let nothing = await announcements(engine)
+    engine.failContext(with: .network)
+    let failed = await announcements(engine)
+
+    #expect(heard == ["Context read from the window."])
+    #expect(nothing == ["No conversation found in this window"])
+    #expect(failed == ["Couldn't reach OpenAI"])
+  }
+
+  @Test func skippedReadingIsNotAnnounced() async {
+    let engine = FakeEngine(fixes: [], context: ravi)
+    engine.holdContext()
+    let session = session(engine)
+    var heard: [String] = []
+    session.announce = { heard.append($0) }
+    let reading = Task { await session.readContext(from: screenshot) }
+    while engine.contextCalls.isEmpty { await Task.yield() }
+    session.stopReadingContext()
+    await reading.value
+
+    #expect(heard.isEmpty)
+  }
+
+  private func announcements(_ engine: FakeEngine) async -> [String] {
+    let session = session(engine)
+    var heard: [String] = []
+    session.announce = { heard.append($0) }
+    await session.readContext(from: screenshot)
+    return heard
+  }
+
   @Test func answerThatIsNotFieldsIsAFailure() async {
     let session = session(FakeEngine(fixes: [], context: "People: Ravi"))
     await session.readContext(from: screenshot)

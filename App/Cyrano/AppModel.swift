@@ -14,7 +14,11 @@ final class AppModel {
   }
 
   private(set) var account: Account?
-  private(set) var signIn = SignInState.idle
+  private(set) var signIn = SignInState.idle {
+    didSet {
+      if case .failed(let message) = signIn { VoiceOver.announce(message) }
+    }
+  }
   /// The model for each operation (02 M1).
   var models = ModelChoice(from: .standard) {
     didSet { models.save(to: .standard) }
@@ -36,7 +40,8 @@ final class AppModel {
   let appDefaults = AppDefaults()
 
   @ObservationIgnored private let auth = AuthService()
-  @ObservationIgnored private let panel = PanelController()
+  /// The open panel; its action is also in the menu bar.
+  @ObservationIgnored let panel = PanelController()
   @ObservationIgnored private let windows = WindowPresenter()
   @ObservationIgnored private var signInTask: Task<Void, Never>?
 
@@ -47,16 +52,15 @@ final class AppModel {
   // MARK: Checks
 
   /// ⌥⌘G: the text of the field or selection, then Context read from its window. Without text
-  /// the panel opens empty for the user to type or paste (02 C2, C6).
+  /// the panel opens empty for the user to type or paste (02 C2, C6). The text is read while its
+  /// app still has the keyboard. In Cyrano's own panel there is nothing else to check.
   func checkFocusedText() {
+    guard let app = TextCapture.frontApp else {
+      if !panel.isOpen { openPanel(for: TextCapture.manual("")) }
+      return
+    }
     Task {
-      guard let app = TextCapture.frontApp, let captured = await TextCapture.capture(from: app)
-      else {
-        openPanel(for: TextCapture.manual(""))
-        return
-      }
-      let session = openPanel(for: captured)
-      await readContext(into: session, from: captured)
+      openPanel(for: await TextCapture.capture(from: app) ?? TextCapture.manual(""))
     }
   }
 
@@ -69,11 +73,13 @@ final class AppModel {
   }
 
   /// Opens the panel without checking: the user adds context first, then presses Check.
-  @discardableResult
-  private func openPanel(for captured: CapturedText) -> ProofreadingSession {
-    let session = makeSession(for: captured)
-    panel.show(PanelModel(session: session, captured: captured, app: self), near: captured.frame)
-    return session
+  private func openPanel(for captured: CapturedText) {
+    panel.open(
+      { [self] in
+        let session = makeSession(for: captured)
+        Task { await readContext(into: session, from: captured) }
+        return PanelModel(session: session, captured: captured, app: self)
+      }, near: captured.frame)
   }
 
   private func readContext(into session: ProofreadingSession, from captured: CapturedText) async {
@@ -145,7 +151,9 @@ final class AppModel {
 
   func showOnboarding() {
     windows.show(id: "onboarding", title: "Cyrano", size: CGSize(width: 520, height: 700)) {
-      OnboardingView(app: self)
+      OnboardingView(app: self) { [windows] height in
+        windows.fit(id: "onboarding", contentHeight: height)
+      }
     }
   }
 
@@ -154,7 +162,7 @@ final class AppModel {
   }
 
   func showAbout() {
-    NSApp.activate()
+    AppPresence.activate()
     NSApp.orderFrontStandardAboutPanel(options: [.credits: AboutCredits.text])
   }
 }

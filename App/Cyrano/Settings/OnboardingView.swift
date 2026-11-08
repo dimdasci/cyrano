@@ -7,6 +7,8 @@ import SwiftUI
 
 struct OnboardingView: View {
   let app: AppModel
+  /// The height the form needs to show everything; the window follows it (05 §1).
+  let fitHeight: (CGFloat) -> Void
   @AppStorage("showInMenuBar") private var showInMenuBar = true
 
   var body: some View {
@@ -39,7 +41,13 @@ struct OnboardingView: View {
       }
     }
     .formStyle(.grouped)
-    .frame(minWidth: 520, minHeight: 700)
+    .frame(width: 520)
+    // Sections grow and shrink with the state: signed in or not, permissions, the toggle.
+    .onScrollGeometryChange(for: CGFloat.self) { geometry in
+      geometry.contentSize.height + geometry.contentInsets.top + geometry.contentInsets.bottom
+    } action: { _, height in
+      fitHeight(height)
+    }
   }
 
   private var signIn: some View {

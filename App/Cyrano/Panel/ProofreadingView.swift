@@ -24,13 +24,12 @@ struct ProofreadingView: View {
       Divider()
       FeedView(model: model, session: session, shortfall: $feedShortfall)
       Divider()
-      Composer(session: session)
+      Composer(model: model)
       StatusLine(session: session, status: model.status, undo: model.undo)
     }
     .frame(width: PanelLayout.width)
     .onGeometryChange(for: CGFloat.self, of: \.size.height) { laidOutHeight = $0 }
     .onChange(of: laidOutHeight + feedShortfall) { _, height in model.idealHeightChanged(height) }
-    .background(ImagePasteMonitor { session.images += $0 })
     .onDrop(of: [.image, .fileURL], isTargeted: nil) { providers in
       Task { session.images += await ContextImages.load(providers) }
       return true
@@ -53,7 +52,8 @@ private struct PanelHeader: View {
       if !AXIsProcessTrusted() {
         Image(systemName: "exclamationmark.triangle")
           .help("Grant Accessibility to read text directly")
-          .accessibilityLabel("Accessibility not granted")
+          .accessibilityLabel(
+            "Accessibility not granted. Grant Accessibility to read text directly")
       }
       Spacer(minLength: 6)
       popUp(
@@ -87,14 +87,16 @@ private struct PanelHeader: View {
     }
     .fixedSize()
     .accessibilityLabel(name)
+    .accessibilityValue(selection.wrappedValue[keyPath: title])
   }
 }
 
 /// The dialog field and the one action button (05 §2.7). Before the first check there is
 /// nothing to talk about yet, so only Check shows.
 private struct Composer: View {
-  let session: ProofreadingSession
-  @State private var draft = ""
+  @Bindable var model: PanelModel
+  private var session: ProofreadingSession { model.session }
+  private static let placeholder = "Ask or tell what to change… (any language)"
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
@@ -112,33 +114,29 @@ private struct Composer: View {
       if session.versions.isEmpty {
         Spacer()
       } else {
-        TextEditor(text: $draft)
-          .font(.body)
-          .frame(height: 44)
-          .accessibilityLabel("Ask or tell what to change")
-          .overlay(alignment: .topLeading) {
-            if draft.isEmpty {
-              Text("Ask or tell what to change… (any language)")
-                .foregroundStyle(.tertiary)
-                .padding(.leading, 5)
-                .allowsHitTesting(false)
-            }
+        // The first version replaces Text to check, which had the keyboard: the field takes it
+        // over, so the keyboard isn't left nowhere (05 §7).
+        FieldText(
+          text: $model.draft, label: "Ask or tell what to change", placeholder: Self.placeholder,
+          takesFocus: true
+        )
+        .frame(height: 44)
+        .overlay(alignment: .topLeading) {
+          if model.draft.isEmpty {
+            Text(Self.placeholder)
+              .foregroundStyle(.tertiary)
+              .allowsHitTesting(false)
+              // The field itself reads it as its placeholder.
+              .accessibilityHidden(true)
           }
+        }
       }
-      // Core decides between Check and Send.
-      Button(session.action(for: draft) == .check ? "Check" : "Send", action: perform)
-        .disabled(!session.canPerform(message: draft))
+      // ⌘↩ here as well as in the menu: the menu learns about a new panel only when it opens.
+      let action = model.action
+      Button(action.title, action: action.perform)
+        .keyboardShortcut(.return, modifiers: .command)
+        .disabled(!action.isEnabled)
     }
-  }
-
-  private func perform() {
-    let message = draft
-    draft = ""
-    switch session.action(for: message) {
-    case .check: ContextTip().invalidate(reason: .actionPerformed)
-    case .send: DialogTip().invalidate(reason: .actionPerformed)
-    }
-    Task { await session.perform(message: message) }
   }
 }
 
@@ -150,7 +148,12 @@ private struct StatusLine: View {
   var body: some View {
     HStack {
       if session.activity == .failed(.planLimitReached) {
-        Text("Plan limit reached").foregroundStyle(.red)
+        // Red text falls below 4.5:1 on the light window; the sign carries the color.
+        Label {
+          Text("Plan limit reached").foregroundStyle(.primary)
+        } icon: {
+          Image(systemName: "exclamationmark.octagon.fill").foregroundStyle(.red)
+        }
       } else {
         Text("\(tokens(session.tokens)) tokens")
       }

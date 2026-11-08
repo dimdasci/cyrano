@@ -49,6 +49,9 @@ public final class ProofreadingSession {
   public private(set) var activity = Activity.idle
   /// Tokens spent in this panel, all calls together (M12).
   public private(set) var tokens = 0
+  /// What VoiceOver says as it happens: a new card, an answer whole, an error, the end of
+  /// reading the context (05 §7).
+  @ObservationIgnored public var announce: (String) -> Void = { _ in }
 
   private let engine: any CorrectionEngine
   private var nextID = 1
@@ -165,6 +168,7 @@ public final class ProofreadingSession {
     feed.append(.answer(id: takeID(), text: text))
     activity = .idle
     retry = nil
+    announce(text)
   }
 
   private func addVersion(_ text: String, origin: Version.Origin) async {
@@ -174,6 +178,7 @@ public final class ProofreadingSession {
     feed.append(.version(version))
     activity = .idle
     retry = nil
+    announce(version.announcement)
     guard case .corrections(let diff, .pending) = version.edit else { return }
     await explain(version, diff: diff, old: previous)
   }
@@ -271,7 +276,9 @@ public final class ProofreadingSession {
   }
 
   private func fail(_ error: any Error) {
-    activity = .failed(error as? EngineError ?? .failed(String(describing: error)))
+    let error = error as? EngineError ?? .failed(String(describing: error))
+    activity = .failed(error)
+    announce(error.message)
   }
 
   private func takeID() -> Int {
@@ -288,12 +295,11 @@ extension ProofreadingSession {
       return
     }
     let text = diff.text(rejecting: change)
-    feed.append(
-      .version(
-        Version(
-          number: latest.number + 1, text: text,
-          edit: .corrections(TextDiff(old: latest.text, new: text), .unavailable),
-          origin: .rejection)))
+    let version = Version(
+      number: latest.number + 1, text: text,
+      edit: .corrections(TextDiff(old: latest.text, new: text), .unavailable), origin: .rejection)
+    feed.append(.version(version))
+    announce(version.announcement)
   }
 
   /// Rejects the change and adds one of its replaced words to the dictionary: one action
@@ -336,6 +342,7 @@ extension ProofreadingSession {
     guard contextReading == reading else { return }
     contextReading = nil
     finishReading(result, timedOut: timedOut)
+    announce(contextStatus?.message ?? "Context read from the window.")
   }
 
   /// Try Again after a failed read: the same screenshot, read again.
