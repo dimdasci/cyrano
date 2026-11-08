@@ -12,8 +12,8 @@ The agent drives the app through Accessibility: the `.build/ax` utility (source 
 The user may be working at the computer at the same time, and the keyboard and mouse are shared.
 
 - Before you start, tell the user that for the next few minutes you'll be pressing keys and moving the mouse, and ask them not to switch windows.
-- Keys (`ax key`, `osascript … keystroke`) go to the window with keyboard focus, which isn't always the frontmost app. The Cyrano panel takes keys without making Cyrano frontmost (System Events then names TextEdit), and the Keychain password prompt (`SecurityAgent`) takes them from everyone. So `capture.sh` first closes Cyrano's windows (`ax close`), waits for the password prompt to close, and only then checks that TextEdit is in front. For keys meant for a Cyrano window (Settings, onboarding), `lsappinfo info -only bundleid $(lsappinfo front)` must print `io.github.dimdasci.cyrano`. System Events can't tell: Cyrano is a menu bar agent (`LSUIElement`), and System Events calls it background only and never frontmost, while it names the last regular app instead. If something else is in front, don't press anything; say so.
-- `ax appmenu "Settings…"` opens Settings but can't bring it to the front: macOS lets an app activate only on a real user action. A real click does it: `ax doubleclick` on a static text of the window, such as the title above the prompt editor (`Proofread, Main instructions…`). Then check the front app as above.
+- Keys (`ax key`, `osascript … keystroke`) go to the window with keyboard focus. The Keychain password prompt (`SecurityAgent`) takes them from everyone, so `capture.sh` first closes Cyrano's windows (`ax close`), waits for the password prompt to close, and only then checks that TextEdit is in front. The panel activates Cyrano when it opens: while a window of Cyrano is open, Cyrano is a regular app with a Dock icon, and a new panel opens in front. For keys meant for a Cyrano window (the panel, Settings, onboarding), `lsappinfo info -only bundleid $(lsappinfo front)` must print `io.github.dimdasci.cyrano`. If something else is in front, don't press anything; say so.
+- `ax appmenu "Settings…"` takes the first item with that name, the app menu's Settings…, which exists even while Cyrano is only in the menu bar. It opens Settings behind the front app, and Cyrano gets no Dock icon or menus: only the menu bar icon's items make Cyrano a regular app, and macOS lets an app activate only on a real user action. A real click brings Settings forward: `ax doubleclick` on a static text of the window, such as the title above the prompt editor (`Proofread, Main instructions…`). Then check the front app as above.
 - The Keychain password prompt appears when a fresh build reads the token for the first time. Only the user closes it: tell them and wait, and send no keys meanwhile.
 - Press Check only if the first line of `.build/ax windows` is `Proofreading — TextEdit`. Otherwise the panel may have taken text from the user's window: don't read it and don't send it for checking.
 - The dictionary and settings are the user's real data. Before the check, save a copy of `~/Library/Application Support/Cyrano/dictionary.json` (or note that the file doesn't exist) and run `defaults export io.github.dimdasci.cyrano <file>`; afterwards compare, and if something changed, quit Cyrano and restore it. While Cyrano is running, it keeps the dictionary in memory and writes it back on the next change.
@@ -47,11 +47,11 @@ If `.build/ax` prints `Accessibility is not granted to this process` or `osascri
 | `ax pick <item>` | picks an item of the open context menu |
 | `ax dismiss` | closes the open context menu without picking anything |
 | `ax appmenu <item>` | an item of the app menu or of the menu bar icon (`Settings…`, `Check Text…`) |
-| `ax set <placeholder/label> <value>` | types a value into a field (`Search`, `Term`); `@N` is the Nth field from the top (a SwiftUI TextEditor has no label: Context is `@1`) |
+| `ax set <placeholder/label> <value>` | types a value into a field (`Search`, `Term`); `@N` is the Nth field from the top |
 | `ax rows` | table and list rows; a cell with a label and a value prints both |
 | `ax selectrow <value>` | selects a table or list row by a cell's value or label; `Casual` also finds `Casual, Modified` |
 | `ax doubleclick <value>` | double-clicks the element with this value |
-| `ax key <key> [command] [option] [shift] [control]` | presses a letter, `return`, `tab`, `space`, `up` or `down` like a keyboard does (through HID); only when the right app is in front |
+| `ax key <key> [command] [option] [shift] [control]` | presses a letter, `return`, `tab`, `space`, `escape`, `up` or `down` like a keyboard does (through HID); only when the right app is in front |
 | `ax announcements [sec]` | prints what Cyrano asks VoiceOver to announce during the next seconds (30 by default); start it in the background before the action, VoiceOver itself can stay off |
 
 Save the output of `ax tree` to a file and search in it: with `ax tree | head` the utility may die from SIGPIPE and print nothing. If the command before it failed, the file is stale: don't read it, deal with the error first.
@@ -59,10 +59,14 @@ Save the output of `ax tree` to a file and search in it: with `ax tree | head` t
 ## Scenario
 
 1. Open the panel: `.claude/skills/verify-app/capture.sh "I pushed the fix to Github, can you review it when you have a minute?"`. Wait 10–12 s: Cyrano reads the context from the screenshot, and Check stays disabled until then.
-2. `.build/ax press Check`, `.build/ax wait "Version 1" 60`, then `.build/ax tree > …`. The card text is in the `AXTextArea` line: removed and added text come one after the other (`Github, can GitHub. Can`). Explanations arrive 5–15 s later: the summary changes from `Explaining…` to `1 fix`.
+2. `.build/ax press Check`, `.build/ax wait "Version 1" 60`, then `.build/ax tree > …`. The card text is in the `AXTextArea` line, as VoiceOver reads it: the version's text without the removed words (`… to GitHub. Can you …`). Explanations arrive 5–15 s later: the summary changes from `Explaining…` to `1 fix`.
 3. Check what the user sees: labels, the summary, the status line (`AXStaticText` at the bottom), the files the app writes.
    The dialog: `ax set "Ask or tell what to change" "<message>"`, `ax press Send`; an answer is an `AXStaticText` bubble, a new version a `Version N` card. To hear what VoiceOver would say, run `.build/ax announcements 40 > file &` before Send.
-4. Close the panel and TextEdit: `.build/ax close`, `osascript -e 'tell application "TextEdit" to close every document saving no'`.
+4. Close the panel and TextEdit: `.build/ax close`, `osascript -e 'tell application "TextEdit" to close every document saving no'`. Closing the panel while Cyrano is in front gives the keyboard back to TextEdit.
+
+⌘↩ (`ax key return command`) presses Check or Send from anywhere in the panel; Proofreading → Check or Send is the same item in the menu bar.
+
+With a panel open, ⌥⌘G in another app, Check Text… and Check Clipboard show a sheet on the panel: `Check New Text` (the default, `ax key return`) or `Return to Panel` (`ax key escape`); `ax press` works on both buttons.
 
 Examples that `gpt-6.1-sol` reliably fixes (handy for the dictionary): `Github → GitHub`, `kibana → Kibana`, `grafana → Grafana`. In a message context the model may leave slang alone (`tmrw`, `pls`), so don't rely on it.
 
@@ -81,7 +85,7 @@ Settings: `.build/ax appmenu "Settings…"`, the tab with `.build/ax press Dicti
 To hear what VoiceOver says, drive it through AppleScript. That needs "Allow VoiceOver to be controlled with AppleScript" in VoiceOver Utility → General; only the user turns it on. It's on when `/private/var/db/Accessibility/.VoiceOverAppleScriptEnabled` exists. Don't check with a `tell application "VoiceOver"` call: it starts VoiceOver.
 
 1. Tell the user VoiceOver will speak aloud. Start it with `open /System/Library/CoreServices/VoiceOver.app`. On first start it shows a welcome window that blocks AppleScript; close it with Use VoiceOver (`osascript -e 'tell application "System Events" to tell process "VoiceOver Quickstart" to click button "Use VoiceOver" of window 1'`).
-2. VoiceOver reads the window that has keyboard focus. Click into Cyrano's window first (`ax doubleclick` on a static text) and check with `lsappinfo info -only bundleid $(lsappinfo front)`.
+2. VoiceOver reads the window that has keyboard focus. The panel opens with the keyboard. For Settings, click into its window first (`ax doubleclick` on a static text); then check with `lsappinfo info -only bundleid $(lsappinfo front)`.
 3. Each step: `osascript -e 'tell application "VoiceOver"' -e 'tell vo cursor to move right' -e 'delay 1' -e 'return content of last phrase' -e 'end tell'`. Moves: `right`, `left`, `up`, `down`, `into item`, `out of item`, `to first item`. A group or a table is entered with `into item`; in a table `down` also selects the row.
 4. Turn VoiceOver off: `osascript -e 'tell application "VoiceOver" to quit'`. Tell the user they can turn the AppleScript setting off.
 
@@ -94,7 +98,7 @@ To hear what VoiceOver says, drive it through AppleScript. That needs "Allow Voi
 ```
 
 - `destinations for Keyboard event: (<keyboardFocus; TextEdit…>)` — the keys reached TextEdit, but ⌥⌘G didn't fire as a hotkey: WindowServer doesn't pass a hotkey that fired to a window, so there's no line for it. Check that Cyrano is alive and that the shortcut isn't being recorded in Settings. Press the hotkey with `ax key`: System Events presses (`osascript … keystroke`) reach the app but don't always trigger a global hotkey (on 2026-11-02 they triggered it neither for Cyrano nor for a separate probe with `RegisterEventHotKey`).
-- `keyboardFocus; Cyrano…` or `SecurityAgent…` — the focus was held by the Cyrano panel or by the password prompt.
+- `SecurityAgent…` — the password prompt held the focus.
 - `AUTHREQ_RESULT … authValue=2` — macOS allowed access; `authValue=0` — it denied it, see "Permissions".
 
 ## Permissions

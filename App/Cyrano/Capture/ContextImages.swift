@@ -1,4 +1,4 @@
-// Images the user adds as context: pasted with ⌘V or dropped on the panel. See docs/specs/02 M10.
+// Images the user adds as context: pasted with Edit → Paste or dropped on the panel. See docs/specs/02 M10.
 
 import AppKit
 import UniformTypeIdentifiers
@@ -9,17 +9,26 @@ enum ContextImages {
   static func fromPasteboard() -> [Data] {
     let pasteboard = NSPasteboard.general
     let files =
-      pasteboard.readObjects(
-        forClasses: [NSURL.self],
-        options: [
-          .urlReadingFileURLsOnly: true,
-          .urlReadingContentsConformToTypes: [UTType.image.identifier],
-        ]) as? [URL] ?? []
+      pasteboard.readObjects(forClasses: [NSURL.self], options: imageFiles) as? [URL] ?? []
     if !files.isEmpty { return files.compactMap { try? Data(contentsOf: $0) }.compactMap(png) }
     guard pasteboard.string(forType: .string) == nil else { return [] }
     let images = pasteboard.readObjects(forClasses: [NSImage.self]) as? [NSImage] ?? []
     return images.compactMap { $0.tiffRepresentation }.compactMap(png)
   }
+
+  /// Whether `fromPasteboard` finds images, without reading them: Edit → Paste asks it to tell
+  /// an image paste from a text one.
+  static var onPasteboard: Bool {
+    let pasteboard = NSPasteboard.general
+    if pasteboard.canReadObject(forClasses: [NSURL.self], options: imageFiles) { return true }
+    return pasteboard.string(forType: .string) == nil
+      && pasteboard.canReadObject(forClasses: [NSImage.self])
+  }
+
+  private static let imageFiles: [NSPasteboard.ReadingOptionKey: Any] = [
+    .urlReadingFileURLsOnly: true,
+    .urlReadingContentsConformToTypes: [UTType.image.identifier],
+  ]
 
   /// Dropped images: the picture itself, else the image file it points to.
   static func load(_ providers: [NSItemProvider]) async -> [Data] {

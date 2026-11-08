@@ -1,8 +1,8 @@
 #!/bin/zsh
 # Puts the text into a TextEdit document, selects it and presses ⌥⌘G, then waits until the
 # panel shows that text. Presses keys only when they go to TextEdit:
-# - Cyrano's windows are closed first: its panel takes the keys without becoming the front app,
-#   so System Events would still name TextEdit;
+# - Cyrano's windows are closed first: with a panel open, ⌥⌘G asks in a sheet whether to close it
+#   instead of opening a new panel;
 # - a Keychain prompt (SecurityAgent) takes the keys too, so it waits until the prompt is gone;
 # - TextEdit must be the front app.
 #

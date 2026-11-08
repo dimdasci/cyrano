@@ -1,4 +1,5 @@
-// Menu bar agent: the menu, Settings and the global shortcut. See docs/specs/05-ui.md §4.
+// Menu bar agent: the menu, Settings, the menus while a window is open and the global shortcut.
+// See docs/specs/05-ui.md §4.
 
 import AppKit
 import CyranoCore
@@ -20,6 +21,20 @@ struct CyranoApp: App {
     Settings {
       SettingsView(app: delegate.app)
     }
+    // The standard menus, with the credits in About (05 §4).
+    .commands {
+      CommandGroup(replacing: .appInfo) {
+        Button("About Cyrano") { delegate.app.showAbout() }
+      }
+      PanelActionCommands(panel: delegate.app.panel)
+      CommandGroup(replacing: .help) {
+        Button("Cyrano Help") {
+          if let docs = URL(string: "https://dimdasci.github.io/cyrano") {
+            NSWorkspace.shared.open(docs)
+          }
+        }
+      }
+    }
   }
 }
 
@@ -29,6 +44,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   func applicationDidFinishLaunching(_ notification: Notification) {
     // Hints in the panel stay until closed or followed (05 §1).
     try? Tips.configure([.displayFrequency(.immediate)])
+    AppPresence.start()
     KeyboardShortcuts.onKeyUp(for: .checkText) { [app] in
       app.checkFocusedText()
     }
@@ -70,7 +86,7 @@ private struct MenuContent: View {
     // SettingsLink doesn't activate a menu bar agent, so a Settings window left behind another app
     // would stay there.
     Button("Settings…") {
-      NSApp.activate()
+      AppPresence.activate()
       openSettings()
     }
     .keyboardShortcut(",")

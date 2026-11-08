@@ -14,8 +14,6 @@ struct ContextBar: View {
   @Bindable var session: ProofreadingSession
   @State private var expanded: Bool
   @State private var explainingCapture = false
-  @FocusState private var editing: Bool
-  @FocusState private var selected: Int?
   @State private var previewing: URL?
   /// One hint at a time: Context first, then 📷.
   @State private var tips = TipGroup(.ordered) {
@@ -35,6 +33,9 @@ struct ContextBar: View {
         Button(expanded ? "▾ Context" : "▸ Context") { expanded.toggle() }
           .buttonStyle(.plain)
           .fontWeight(.semibold)
+          // VoiceOver hears the state in words instead of the triangle.
+          .accessibilityLabel("Context")
+          .accessibilityValue(expanded ? "Expanded" : "Collapsed")
         if let status = session.contextStatus {
           ContextStatusLine(session: session, status: status)
         } else if !expanded {
@@ -61,18 +62,17 @@ struct ContextBar: View {
   }
 
   private var contextEditor: some View {
-    TextEditor(text: $session.context)
-      .font(.body)
-      .frame(height: 64)
-      // The editor draws text edge to edge; the inset keeps it off the border.
-      .scrollContentBackground(.hidden)
-      .padding(.horizontal, 4)
-      .padding(.vertical, 6)
-      .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
-      .overlay(RoundedRectangle(cornerRadius: 6).stroke(.separator))
-      .focused($editing)
-      // Without captured text the cursor goes to Text to check instead.
-      .onAppear { editing = session.versions.isEmpty && !session.original.isEmpty }
+    // Without captured text the cursor goes to Text to check instead.
+    FieldText(
+      text: $session.context, label: "Context",
+      takesFocus: session.versions.isEmpty && !session.original.isEmpty
+    )
+    .frame(height: 64)
+    // The field draws text edge to edge; the inset keeps it off the border.
+    .padding(.horizontal, 6)
+    .padding(.vertical, 6)
+    .background(Color(nsColor: .textBackgroundColor), in: RoundedRectangle(cornerRadius: 6))
+    .overlay(RoundedRectangle(cornerRadius: 6).stroke(.separator))
   }
 
   /// Hints before the first check, while the user fills in the context.
@@ -97,12 +97,18 @@ struct ContextBar: View {
     thumbnails(size: CGSize(width: 30, height: 22), removable: false)
   }
 
+  /// Many images get a warning sign: orange text falls below 4.5:1 on the light window.
   private var imagesRow: some View {
     HStack(spacing: 8) {
       thumbnails(size: CGSize(width: 56, height: 38), removable: true)
+      if session.hasManyImages {
+        Image(systemName: "exclamationmark.triangle.fill")
+          .foregroundStyle(.orange)
+          .accessibilityHidden(true)
+      }
       Text(caption)
         .font(.caption)
-        .foregroundStyle(session.hasManyImages ? .orange : .secondary)
+        .foregroundStyle(.secondary)
         .lineLimit(2)
     }
   }
@@ -110,18 +116,10 @@ struct ContextBar: View {
   private func thumbnails(size: CGSize, removable: Bool) -> some View {
     ForEach(Array(session.images.enumerated()), id: \.offset) { index, png in
       Thumbnail(
-        png: png, size: size, remove: removable ? { session.images.remove(at: index) } : nil
+        png: png, size: size, name: "Image \(index + 1) of \(session.images.count)",
+        open: { preview(png, number: index + 1) },
+        remove: removable ? { session.images.remove(at: index) } : nil
       )
-      .focusable()
-      .focused($selected, equals: index)
-      .onTapGesture {
-        selected = index
-        preview(png, number: index + 1)
-      }
-      .onKeyPress(.space) {
-        if previewing == nil { preview(png, number: index + 1) } else { previewing = nil }
-        return .handled
-      }
     }
   }
 
@@ -193,30 +191,41 @@ private struct CaptureAccessPrompt: View {
   }
 }
 
+/// A thumbnail is a button that opens Quick Look, with Remove Image as its VoiceOver action; the
+/// ✕ on it is a button of its own, next in the Tab order (05 §7).
 private struct Thumbnail: View {
   let png: Data
   let size: CGSize
+  let name: String
+  let open: () -> Void
   let remove: (() -> Void)?
 
   var body: some View {
-    Image(nsImage: NSImage(data: png) ?? NSImage())
-      .resizable()
-      .aspectRatio(contentMode: .fill)
-      .frame(width: size.width, height: size.height)
-      .clipShape(RoundedRectangle(cornerRadius: 3))
-      .overlay(RoundedRectangle(cornerRadius: 3).stroke(.separator))
-      .overlay(alignment: .topTrailing) {
-        if let remove {
-          Button(action: remove) {
-            Image(systemName: "xmark.circle.fill")
-              .foregroundStyle(.white, .black.opacity(0.6))
-          }
-          .buttonStyle(.plain)
-          .offset(x: 5, y: -5)
-          .accessibilityLabel("Remove image")
-        }
+    ZStack(alignment: .topTrailing) {
+      Button(action: open) {
+        Image(nsImage: NSImage(data: png) ?? NSImage())
+          .resizable()
+          .aspectRatio(contentMode: .fill)
+          .frame(width: size.width, height: size.height)
+          .clipShape(RoundedRectangle(cornerRadius: 3))
+          .overlay(RoundedRectangle(cornerRadius: 3).stroke(.separator))
       }
-      .padding(.top, 5)
-      .accessibilityLabel("Context image")
+      .buttonStyle(.plain)
+      .accessibilityLabel(name)
+      .accessibilityHint("Opens Quick Look")
+      .accessibilityActions {
+        if let remove { Button("Remove Image", action: remove) }
+      }
+      if let remove {
+        Button(action: remove) {
+          Image(systemName: "xmark.circle.fill")
+            .foregroundStyle(.white, .black.opacity(0.6))
+        }
+        .buttonStyle(.plain)
+        .offset(x: 5, y: -5)
+        .accessibilityLabel("Remove \(name)")
+      }
+    }
+    .padding(.top, 5)
   }
 }
