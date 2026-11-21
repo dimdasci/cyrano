@@ -37,13 +37,13 @@ sleep 2
 # A new build has a new ad-hoc signature, and macOS drops both of Cyrano's own permissions
 # (see Permissions in SKILL.md). Without Accessibility the hotkey still opens the panel, but
 # without the selected text; without Screen Recording Context is silently not read. Cyrano logs
-# both when it captures.
-.build/ax tree Proofreading 2>/dev/null | grep -q "Accessibility not granted" \
-  && fail "No Accessibility. $lost"
-/usr/bin/log show --start "$started" --style compact \
-  --predicate 'subsystem == "io.github.dimdasci.cyrano" AND category == "capture"' \
-  | grep -q "screenRecording=false" && fail "No Screen Recording. $lost"
-[[ $(.build/ax windows | head -n 1) == "Proofreading — TextEdit" ]] \
+# both when it captures, in English whatever the interface language.
+captured=$(/usr/bin/log show --start "$started" --style compact \
+  --predicate 'subsystem == "io.github.dimdasci.cyrano" AND category == "capture"')
+grep -q "trusted=false" <<<"$captured" && fail "No Accessibility. $lost"
+grep -q "screenRecording=false" <<<"$captured" && fail "No Screen Recording. $lost"
+# "Proofreading — TextEdit", "Revisión — TextEdit" or "Проверка — TextEdit" in Spanish and Russian.
+[[ $(.build/ax windows | head -n 1) == *" — TextEdit" ]] \
   || fail "the panel did not open for TextEdit"
 .build/ax wait "${1:0:30}" 10 >/dev/null || fail "the panel has other text"
 echo "panel open with the text"

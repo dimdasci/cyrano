@@ -84,7 +84,7 @@ public struct OpenAIEngine: CorrectionEngine {
     } catch is URLError {
       throw EngineError.network
     }
-    throw EngineError.failed("The response ended before it was complete.")
+    throw EngineError.failed(localized("The response ended before it was complete."))
   }
 
   /// The stream's events; fails with `timedOut` when none arrives for `idle`. The request's own
@@ -123,7 +123,7 @@ public struct OpenAIEngine: CorrectionEngine {
   }
 
   private func makeRequest(_ call: ModelCall) async throws -> URLRequest {
-    guard let endpoint = Self.endpoint else { throw EngineError.failed("Bad endpoint") }
+    guard let endpoint = Self.endpoint else { throw EngineError.failed(localized("Bad endpoint")) }
     var request = URLRequest(url: endpoint, timeoutInterval: 30)
     request.httpMethod = "POST"
     request.setValue("Bearer \(try await accessToken())", forHTTPHeaderField: "Authorization")

@@ -23,7 +23,7 @@ struct VersionCard: View {
     Card(title: "Version \(version.number)") {
       SelectableText(
         text: DiffText.attributed(version, layout: layout), layout: layout,
-        label: "Version \(version.number) text"
+        label: String(localized: "Version \(version.number) text")
       ) { selection in
         TermDictionary.term(fromSelection: selection).map(actions.selectionItem)
       }
@@ -52,7 +52,7 @@ struct VersionCard: View {
         .foregroundStyle(.secondary)
         // VoiceOver hears the state in words instead of the triangle.
         .accessibilityLabel(version.summary)
-        .accessibilityValue(showsChanges ? "Expanded" : "Collapsed")
+        .accessibilityValue(showsChanges ? Text("Expanded") : Text("Collapsed"))
         .accessibilityHint("Shows the list of changes")
     }
   }

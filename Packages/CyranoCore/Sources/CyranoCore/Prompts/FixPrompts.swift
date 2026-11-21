@@ -83,9 +83,10 @@ extension Prompts {
     """
 
   static func language(_ language: OutputLanguage) -> String {
-    language == .sameAsText
-      ? "Write the result in the language of the original."
-      : "Write the result in \(language.title); translate the text if it is in another language."
+    guard let name = language.englishName else {
+      return "Write the result in the language of the original."
+    }
+    return "Write the result in \(name); translate the text if it is in another language."
   }
 
   static func level(_ level: Level) -> String {

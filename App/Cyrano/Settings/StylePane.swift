@@ -60,13 +60,17 @@ private struct PerAppDefaults: View {
         .buttonStyle(.borderless)
         .controlSize(.large)
         .disabled(selection.isEmpty)
-      Text(
-        "Filled from the Proofreading panel. Removing an app resets it to "
-          + "Message · Neutral · Fluency."
-      )
-      .font(.caption)
-      .foregroundStyle(.secondary)
+      Text("Filled from the Proofreading panel. Removing an app resets it to \(Self.defaults).")
+        .font(.caption)
+        .foregroundStyle(.secondary)
     }
+  }
+
+  /// What the panel opens with in an app it doesn't know: "Message · Neutral · Fluency".
+  private static var defaults: String {
+    let options = CheckOptions()
+    return [options.textType.title, options.tone.title, options.level.title]
+      .joined(separator: " · ")
   }
 
   private struct Row: Identifiable {
@@ -97,7 +101,7 @@ private struct InstalledApp {
 
   init(_ bundleID: String?) {
     guard let bundleID else {
-      name = "Manual"
+      name = String(localized: "Manual")
       icon = NSImage(systemSymbolName: "keyboard", accessibilityDescription: nil) ?? NSImage()
       return
     }

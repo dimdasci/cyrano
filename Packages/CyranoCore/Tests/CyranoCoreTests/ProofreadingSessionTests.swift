@@ -124,7 +124,7 @@ final class FakeEngine: CorrectionEngine {
   }
 }
 
-@MainActor @Suite struct ProofreadingSessionTests {
+@MainActor @Suite(.inEnglish) struct ProofreadingSessionTests {
   func session(_ engine: FakeEngine, original: String = "I has a cat.") -> ProofreadingSession {
     ProofreadingSession(
       original: original, context: "Do you have pets?", options: CheckOptions(), engine: engine,
@@ -263,7 +263,7 @@ final class FakeEngine: CorrectionEngine {
 
     let version = try #require(session.versions.first)
     #expect(version.text == german)
-    #expect(version.edit == .translation(into: "German"))
+    #expect(version.edit == .translation(into: "de"))
     #expect(version.diff == nil)
     #expect(engine.calls.count == 1)
   }

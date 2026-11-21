@@ -19,10 +19,12 @@ enum LoopbackCallback {
   }
 
   static func response(found: Bool) -> Data {
+    let language = InterfaceLanguage.current
+    let signedIn = language.text("Signed in. You can close this tab and return to Cyrano.")
     let body =
       found
-      ? "<html><body style='font-family:system-ui'>Signed in. You can close this tab "
-        + "and return to Cyrano.</body></html>"
+      ? "<html lang='\(language.code)'><body style='font-family:system-ui'>\(signedIn)"
+        + "</body></html>"
       : "Not found"
     let status = found ? "200 OK" : "404 Not Found"
     let head =

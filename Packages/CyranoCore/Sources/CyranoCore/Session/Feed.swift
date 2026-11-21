@@ -32,7 +32,7 @@ public struct Version: Hashable, Sendable {
   public enum Edit: Hashable, Sendable {
     /// Word-level corrections; their reasons arrive after the version appears.
     case corrections(TextDiff, Explanations)
-    /// The previous text in another language, named in English: a word diff would mark every
+    /// The previous text in another language, by its code ("de"): a word diff would mark every
     /// word as an error.
     case translation(into: String)
   }

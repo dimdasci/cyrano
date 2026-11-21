@@ -112,7 +112,9 @@ struct Bubble: View {
       )
       .accessibilityElement(children: .ignore)
       .accessibilityAddTraits(.isStaticText)
-      .accessibilityLabel((fromUser ? "You: " : "Answer: ") + text)
+      .accessibilityLabel(
+        fromUser ? String(localized: "You: \(text)") : String(localized: "Answer: \(text)")
+      )
       .frame(maxWidth: 400, alignment: fromUser ? .trailing : .leading)
       .frame(maxWidth: .infinity, alignment: fromUser ? .trailing : .leading)
   }
@@ -177,7 +179,7 @@ private struct ErrorRow: View {
 }
 
 struct Card<Content: View>: View {
-  let title: String
+  let title: LocalizedStringKey
   @ViewBuilder let content: Content
 
   var body: some View {

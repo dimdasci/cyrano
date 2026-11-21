@@ -2,6 +2,7 @@
 // See docs/specs/05-ui.md §2.4, §2.7.
 
 import CyranoCore
+import Foundation
 
 /// One line under the composer.
 enum PanelStatus: Equatable {
@@ -13,8 +14,8 @@ enum PanelStatus: Equatable {
   var text: String {
     switch self {
     case .note(let text): text
-    case .added(let term): "“\(term)” added to Dictionary."
-    case .removed(let term): "“\(term.text)” removed from Dictionary."
+    case .added(let term): String(localized: "“\(term)” added to Dictionary.")
+    case .removed(let term): String(localized: "“\(term.text)” removed from Dictionary.")
     }
   }
 
@@ -33,11 +34,11 @@ extension PanelModel {
   /// For selected text: Never Change, or Remove when the term is in the dictionary.
   func selectionItem(for term: String) -> DictionaryItem {
     if session.dictionary.contains(term) {
-      return DictionaryItem(title: "Remove “\(term)” from Dictionary") {
+      return DictionaryItem(title: String(localized: "Remove “\(term)” from Dictionary")) {
         self.removeFromDictionary(term)
       }
     }
-    return DictionaryItem(title: "Never Change “\(term)”") {
+    return DictionaryItem(title: String(localized: "Never Change “\(term)”")) {
       if self.session.dictionary.add(term) { self.status = .added(term) }
     }
   }
@@ -45,7 +46,7 @@ extension PanelModel {
   /// For a change: Never Change for each replaced word, which also rejects the change.
   func changeItems(for change: Change) -> [DictionaryItem] {
     change.terms.map { term in
-      DictionaryItem(title: "Never Change “\(term)”") {
+      DictionaryItem(title: String(localized: "Never Change “\(term)”")) {
         if self.session.neverChange(change, keeping: term) { self.status = .added(term) }
       }
     }

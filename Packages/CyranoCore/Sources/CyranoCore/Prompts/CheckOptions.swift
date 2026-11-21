@@ -9,9 +9,9 @@ public enum TextType: String, CaseIterable, Codable, Sendable {
 
   public var title: String {
     switch self {
-    case .message: "Message"
-    case .email: "Email"
-    case .docs: "Docs"
+    case .message: localized("Message")
+    case .email: localized("Email")
+    case .docs: localized("Docs")
     }
   }
 }
@@ -23,7 +23,15 @@ public enum Tone: String, CaseIterable, Codable, Sendable {
   case professional
   case concise
 
-  public var title: String { rawValue.capitalized }
+  public var title: String {
+    switch self {
+    case .neutral: localized("Neutral")
+    case .casual: localized("Casual")
+    case .friendly: localized("Friendly")
+    case .professional: localized("Professional")
+    case .concise: localized("Concise")
+    }
+  }
 }
 
 public enum Level: String, CaseIterable, Codable, Sendable {
@@ -33,9 +41,9 @@ public enum Level: String, CaseIterable, Codable, Sendable {
 
   public var title: String {
     switch self {
-    case .errorsOnly: "Errors Only"
-    case .fluency: "Fluency"
-    case .rewrite: "Rewrite"
+    case .errorsOnly: localized("Errors Only")
+    case .fluency: localized("Fluency")
+    case .rewrite: localized("Rewrite")
     }
   }
 }
@@ -50,7 +58,20 @@ public enum OutputLanguage: String, CaseIterable, Codable, Sendable {
 
   public var title: String {
     switch self {
-    case .sameAsText: "Same as Text"
+    case .sameAsText: localized("Same as Text")
+    case .englishUS: localized("English (US)")
+    case .englishUK: localized("English (UK)")
+    case .russian: localized("Russian")
+    case .german: localized("German")
+    case .spanish: localized("Spanish")
+    }
+  }
+
+  /// The name in the prompts and in the context reading's answer, whatever the interface
+  /// language; nil for the language of the text itself.
+  var englishName: String? {
+    switch self {
+    case .sameAsText: nil
     case .englishUS: "English (US)"
     case .englishUK: "English (UK)"
     case .russian: "Russian"
@@ -66,7 +87,7 @@ public enum OutputLanguage: String, CaseIterable, Codable, Sendable {
       self = .englishUS
       return
     }
-    guard let language = Self.allCases.first(where: { $0.title.lowercased() == name }) else {
+    guard let language = Self.allCases.first(where: { $0.englishName?.lowercased() == name }) else {
       return nil
     }
     self = language

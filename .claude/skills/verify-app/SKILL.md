@@ -18,7 +18,7 @@ The user may be working at the computer at the same time, and the keyboard and m
 - Clicks land where the element is on the screen. If the panel opened on a desktop (Space) other than the one on screen, the click hits whatever is there: before `ax click`, check that the window is on screen (`.build/ax windows` lists it, and the front app is Cyrano). If it isn't, stop and ask the user; they may be working on another desktop.
 - `ax type` switches the keyboard layout to the one that has the next character (British, Russian) and puts back the user's layout at the end. Run it only while the user isn't typing.
 - The Keychain password prompt appears when a fresh build reads the token for the first time. Only the user closes it: tell them and wait, and send no keys meanwhile.
-- Press Check only if the first line of `.build/ax windows` is `Proofreading — TextEdit`. Otherwise the panel may have taken text from the user's window: don't read it and don't send it for checking.
+- Press Check only if the first line of `.build/ax windows` is `Proofreading — TextEdit` (`Revisión — TextEdit`, `Проверка — TextEdit` in Spanish and Russian). Otherwise the panel may have taken text from the user's window: don't read it and don't send it for checking.
 - The dictionary and settings are the user's real data. Before the check, save a copy of `~/Library/Application Support/Cyrano/dictionary.json` (or note that the file doesn't exist) and run `defaults export io.github.dimdasci.cyrano <file>`; afterwards compare, and if something changed, quit Cyrano and restore it. While Cyrano is running, it keeps the dictionary in memory and writes it back on the next change.
 - Only the user changes system settings (permissions).
 - If a step of the skill fails (`capture.sh`, `ax`), stop: find the cause (see "If keys didn't arrive") and fix the skill. Don't work around it with your own scripts, and don't continue the check around it.
@@ -31,6 +31,8 @@ swiftc -O .claude/skills/verify-app/ax.swift -o .build/ax
 pkill -x Cyrano; sleep 1; open .build/xcode/Build/Products/Debug/Cyrano.app; sleep 3
 .build/ax windows    # no error means Accessibility is granted
 ```
+
+The interface speaks the Mac's language if it's Spanish or Russian. To check it in a given language, set it for the one process and never change the system language: `open .build/xcode/Build/Products/Debug/Cyrano.app --args -AppleLanguages '(es)'` (`(ru)`, `(en)`). Then the labels `ax` takes are in that language too: `ax press Revisar` (`Проверить`), `ax appmenu "Ajustes…"` (`Настройки…`), `ax wait "Versión 1"` (`Версия 1`). Their translations are in `App/Cyrano/Localizable.xcstrings`; `capture.sh` works in any of the three. A launch argument wins over Settings → General → Language for that process only and leaves the user's choice as it is. The pop-up itself writes the user's choice: after checking it, set it back to what it was (System, unless the defaults backup says otherwise).
 
 If `.build/ax` prints `Accessibility is not granted to this process` or `osascript` prints `not allowed assistive access`, see "Permissions" below. A fresh build of Cyrano itself usually comes without its Accessibility and Screen Recording permissions; `capture.sh` says so, and "Permissions" says how to restore both.
 

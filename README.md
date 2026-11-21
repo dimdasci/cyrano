@@ -2,7 +2,7 @@
 
 A native macOS app that checks and improves short messages in any app: hotkey → a panel with the corrected text, explanations and a dialog with the model → copy the result and paste it yourself. It works through your ChatGPT subscription (Plus or Pro) with the official Sign in with ChatGPT.
 
-Status: preview. The main flow, images as context, reading context from a window screenshot, the "Never change" dictionary, choosing a model for each operation and editing the prompts in Settings → Prompts all work, with VoiceOver and with the keyboard alone. What's done, the next package and deviations from the spec are in [docs/plan.md](docs/plan.md).
+Status: preview. The main flow, images as context, reading context from a window screenshot, the "Never change" dictionary, choosing a model for each operation and editing the prompts in Settings → Prompts all work, with VoiceOver and with the keyboard alone. The interface is in English, Spanish (Spain) and Russian, following the language order in System Settings, with English for any other language, or the one picked in Settings → General → Language; the explanations of changes come in the same language. What's done, the next package and deviations from the spec are in [docs/plan.md](docs/plan.md).
 
 ## Choosing models
 
@@ -23,7 +23,7 @@ docs/                  spec, wireframes, research (start with docs/README.md)
 Packages/CyranoCore/  Swift Package: OpenAI client, prompts, diff, dictionary, settings (tested without UI)
 App/                   Xcode project of the app: UI, AX, hotkeys, windows
 evals/                 example set and runner for testing prompts on ChatGPT models
-scripts/check          code quality check: format, build, tests, linter, duplicates, dead code
+scripts/check          code quality check: format, build, tests, linter, duplicates, dead code, translations
 scripts/release        releasing a version, see docs/releases.md
 ```
 

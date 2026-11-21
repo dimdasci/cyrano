@@ -16,7 +16,7 @@ final class TestDefaults {
 }
 
 extension ModelCall {
-  fileprivate var explains: Bool { instructions == Prompts.explain }
+  fileprivate var explains: Bool { schema == ExplainCall.schema }
   fileprivate var onTerra: Bool { model == Model.terra }
 }
 

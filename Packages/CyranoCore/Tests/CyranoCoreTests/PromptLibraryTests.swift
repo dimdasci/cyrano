@@ -120,7 +120,7 @@ private func write(_ text: String, to file: URL) throws {
   @Test func editedExplainAndContextPromptsGoToTheirCalls() async {
     let engine = await checked([.explainChanges: "Say why.", .readContext: "Who is it for?"])
     let explain = engine.calls.first { $0.schema == ExplainCall.schema }
-    #expect(explain?.instructions == "Say why.")
+    #expect(explain?.instructions.hasPrefix("Say why.\nWrite every reason in ") == true)
     #expect(engine.contextCalls.first?.instructions == "Who is it for?")
   }
 }

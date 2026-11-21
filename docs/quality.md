@@ -11,7 +11,7 @@ scripts/check          # everything at once; prints all failures, exit 1 if ther
 scripts/check --fix    # reformat Swift files first, then check
 ```
 
-Tools: `swift format` comes with Xcode, the rest are installed once:
+Tools: `swift format` comes with Xcode and `python3` with macOS developer tools (it runs `scripts/check-strings`), the rest are installed once:
 
 ```bash
 brew install swiftlint periphery
@@ -32,6 +32,7 @@ In CI the same `scripts/check` runs on every push to `main` and on every pull re
 | Unused code | Periphery | [.periphery.yml](../Packages/CyranoCore/.periphery.yml) | Unused types, functions, properties, parameters. The public API of CyranoCore counts as used: it's the contract with App |
 | Complexity and size | SwiftLint | [.swiftlint.yml](../.swiftlint.yml) | Thresholds below; plus `!`, `try!`, `as!`, IUO |
 | Duplicates | jscpd | [.jscpd.json](../.jscpd.json) | Matching fragments of 6 lines and 60 tokens or more; any clone found is a failure |
+| Interface texts | [scripts/check-strings](../scripts/check-strings) | the String Catalogs (05 §6) | Compares the keys both builds extracted from the code with the catalogs: a text missing from a catalog or no longer used, a language without a translation, a plural without the forms its language needs, placeholders that differ from the English text |
 
 ## Thresholds
 
@@ -59,6 +60,7 @@ Block `swiftlint:disable` without a matching `enable` is forbidden by the `blank
 
 ## Tests
 
+- A test that checks a text runs in a stated language: `.inEnglish` on the suite for English, `speaking("ru") { … }` for another one; otherwise it would depend on the language of the Mac that runs it.
 - A test calls the code the way the app calls it and checks what the user will see. Substitutes only at the boundaries: the network (`ScriptedTransport`), the engine (`FakeEngine`), UserDefaults with its own suite. A test that checks the implementation or repeats another test gets deleted (review of 2026-11-01).
 - A test body type-checks locally in about 40 ms at most (measurements vary by ±5 ms): CI can be four times slower (on 2026-11-05 a test that took 52 ms locally took 217 ms there), and the threshold is 200 ms. Measure with a sequential build in a separate folder: `swift build --build-tests -j 1 --scratch-path <tmp> -v -Xswiftc -Xfrontend -Xswiftc -debug-time-function-bodies`. Every `#expect` costs several milliseconds, and the most expensive ones compare optionals and untyped literals (`x?.origin == .check`): compute the values before `#expect` with explicit types, keep a test to one behavior with a few `#expect`s, move shared setup into a helper function.
 - The boundaries with the system — sign-in through the browser and loopback, Keychain, ScreenCaptureKit, Accessibility — aren't covered by Core tests; we check them in the app with the `verify-app` skill.

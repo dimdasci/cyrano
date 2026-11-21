@@ -4,7 +4,7 @@ import Testing
 @testable import CyranoCore
 
 /// Context read from a screenshot of the window before the first check (02 C6).
-@MainActor @Suite struct ContextReadingTests {
+@MainActor @Suite(.inEnglish) struct ContextReadingTests {
   let screenshot = Data([UInt8]([0x89, 0x50, 0x4E, 0x47]))
   /// The model answers with fields (04 §4.5); Context shows them as lines.
   let ravi = answer(with: "Ravi", language: "English", about: "Ravi asks about pets.")
@@ -267,7 +267,7 @@ import Testing
     await session.readContext(from: screenshot)
 
     #expect(session.context.isEmpty)
-    #expect(session.contextStatus == .failed(.failed("The answer was not the fields asked for.")))
+    #expect(session.contextStatus == .failed(.failed("The reply was not the fields asked for.")))
   }
 }
 

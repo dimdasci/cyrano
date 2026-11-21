@@ -8,6 +8,15 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+### Added
+
+- Cyrano speaks Spanish (Spain) and Russian as well as English: the panel, onboarding, Settings,
+  the menus and VoiceOver. It takes the first of these in your language order in System Settings →
+  General → Language & Region; for any other language it uses English.
+- Settings → General → Language picks the language of Cyrano alone, or System to follow macOS.
+  The new language applies after a relaunch, with a Relaunch button right there.
+- The explanations of changes come in the language of the interface.
+
 ## [0.13.0] - 2026-11-21
 
 Cyrano is now an ordinary app in the Dock, and the changes in a version look the same in the text

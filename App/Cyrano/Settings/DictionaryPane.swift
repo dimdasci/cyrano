@@ -21,7 +21,7 @@ struct DictionaryPane: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
-      TextField("Search \(plural(dictionary.terms.count, "term"))", text: $search)
+      TextField("Search \(dictionary.terms.count) terms", text: $search)
         .textFieldStyle(.roundedBorder)
       table
       HStack {
@@ -88,19 +88,23 @@ struct DictionaryPane: View {
     panel.allowedContentTypes = [.plainText]
     guard panel.runModal() == .OK, let url = panel.url else { return }
     guard let list = try? String(contentsOf: url, encoding: .utf8) else {
-      note = "Couldn't read the file."
+      note = String(localized: "Couldn't read the file.")
       return
     }
-    note = "Imported \(plural(dictionary.importTerms(from: list), "term"))."
+    let imported = dictionary.importTerms(from: list)
+    note = String(localized: "Imported \(imported) terms.")
   }
 
   private func exportTerms() {
     let panel = NSSavePanel()
     panel.allowedContentTypes = [.plainText]
-    panel.nameFieldStringValue = "Cyrano Dictionary.txt"
+    panel.nameFieldStringValue = String(localized: "Cyrano Dictionary") + ".txt"
     guard panel.runModal() == .OK, let url = panel.url else { return }
     let saved = (try? dictionary.exported.write(to: url, atomically: true, encoding: .utf8)) != nil
-    note = saved ? "Exported \(plural(dictionary.terms.count, "term"))." : "Couldn't save the file."
+    let count = dictionary.terms.count
+    note =
+      saved
+      ? String(localized: "Exported \(count) terms.") : String(localized: "Couldn't save the file.")
   }
 }
 
@@ -144,7 +148,7 @@ private struct TermEditor: View {
 
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
-      Text(isNew ? "Add Term" : "Edit Term").font(.headline)
+      (isNew ? Text("Add Term") : Text("Edit Term")).font(.headline)
       TextField("Term", text: $text)
         .frame(width: 280)
         .onSubmit(save)
@@ -155,7 +159,7 @@ private struct TermEditor: View {
         Spacer()
         Button("Cancel", role: .cancel) { dismiss() }
           .keyboardShortcut(.cancelAction)
-        Button(isNew ? "Add" : "Save", action: save)
+        Button(action: save) { isNew ? Text("Add") : Text("Save") }
           .keyboardShortcut(.defaultAction)
           .disabled(text.trimmingCharacters(in: .whitespaces).isEmpty)
       }
@@ -184,5 +188,5 @@ private struct TermEditor: View {
     }
   }
 
-  private static let takenMessage = "This term is already in the dictionary."
+  private static let takenMessage = String(localized: "This term is already in the dictionary.")
 }

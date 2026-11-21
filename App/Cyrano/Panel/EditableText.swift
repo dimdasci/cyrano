@@ -18,7 +18,8 @@ struct EditableText: NSViewRepresentable {
 
   static let font = NSFont.systemFont(ofSize: 14)
   static let minHeight: CGFloat = 120
-  static let placeholder = "Select text in any app and press ⌥⌘G, or type or paste it here"
+  static let placeholder = String(
+    localized: "Select text in any app and press ⌥⌘G, or type or paste it here")
 
   func makeCoordinator() -> TextBinding {
     TextBinding(text: $text)
@@ -26,7 +27,8 @@ struct EditableText: NSViewRepresentable {
 
   func makeNSView(context: Context) -> MenuTextView {
     let view = MenuTextView.editable(
-      text: text, font: Self.font, label: "Text to check", placeholder: Self.placeholder)
+      text: text, font: Self.font, label: String(localized: "Text to check"),
+      placeholder: Self.placeholder)
     view.delegate = context.coordinator
     // Nothing was captured: the cursor waits here for typing or pasting.
     view.takesFocus = text.isEmpty

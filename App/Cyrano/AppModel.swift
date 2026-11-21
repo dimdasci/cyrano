@@ -141,13 +141,18 @@ final class AppModel {
 
   private static func message(for error: any Error) -> String {
     switch error as? AuthError {
-    case .cancelled: "Sign-in was cancelled."
-    case .planNotAllowed: "Your plan doesn't allow apps to use it. Plus or Pro is required."
-    case .network: "Couldn't reach OpenAI."
+    case .cancelled: String(localized: "Sign-in was cancelled.")
+    case .planNotAllowed:
+      String(localized: "Your plan doesn't allow apps to use it. Plus or Pro is required.")
+    case .network: String(localized: "Couldn't reach OpenAI.")
     case .notSaved:
-      "Couldn't save the sign-in to the Keychain. Sign in again and allow access when macOS asks."
-    case .invalidResponse(let detail): "Couldn't sign in (\(detail))."
-    case nil: "Couldn't sign in."
+      String(
+        localized: """
+          Couldn't save the sign-in to the Keychain. Sign in again and allow access when macOS \
+          asks.
+          """)
+    case .invalidResponse(let detail): String(localized: "Couldn't sign in (\(detail)).")
+    case nil: String(localized: "Couldn't sign in.")
     }
   }
 
@@ -214,6 +219,11 @@ final class AppModel {
     NSApp.activate()
     NSApp.orderFrontStandardAboutPanel(options: [.credits: AboutCredits.text])
   }
+}
+
+extension Account {
+  /// How the menu, onboarding and Account name the signed-in user.
+  var name: String { email ?? String(localized: "ChatGPT user") }
 }
 
 /// Settings stored in UserDefaults. Tokens never go here (Keychain only).

@@ -102,6 +102,8 @@
 			knownRegions = (
 				en,
 				Base,
+				es,
+				ru,
 			);
 			mainGroup = C0000000000000000000A001;
 			minimizedProjectReferenceProxies = 1;
@@ -207,11 +209,12 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Dim Kharitonov. MIT License.";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				OTHER_SWIFT_FLAGS = "-enable-upcoming-feature ExistentialAny -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InternalImportsByDefault";
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.dimdasci.cyrano;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
 				SWIFT_VERSION = 6.0;
@@ -231,11 +234,12 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Dim Kharitonov. MIT License.";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				OTHER_SWIFT_FLAGS = "-enable-upcoming-feature ExistentialAny -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InternalImportsByDefault";
 				PRODUCT_BUNDLE_IDENTIFIER = io.github.dimdasci.cyrano;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
-				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_STRICT_CONCURRENCY = complete;
 				SWIFT_TREAT_WARNINGS_AS_ERRORS = YES;
 				SWIFT_VERSION = 6.0;

@@ -4,7 +4,7 @@ import Testing
 
 /// A change is an error or a style suggestion only once its reason says so; until then, and when
 /// Explain failed or skipped it, its category is unknown (05 §2.4).
-@Suite struct ChangeKindTests {
+@Suite(.inEnglish) struct ChangeKindTests {
   let diff = TextDiff(old: "I has a big cat today.", new: "I have a big dog today.")
   let grammar = Explanation(category: .grammar, reason: "Tense.")
   let style = Explanation(category: .style, reason: "Reads better.")

@@ -4,7 +4,7 @@
 enum Prompts {
   static let explain = """
     You explain corrections to the author of the text.
-    For each numbered change, write one short reason in English, at most 12 words.
+    For each numbered change, write one short reason, at most 12 words.
     Name the rule when there is one, for example: subject-verb agreement, article, preposition, \
     tense, spelling.
     Use category "style" only when the original was correct and the change is a matter of taste.
@@ -12,6 +12,12 @@ enum Prompts {
     "style" and explain the change as a choice, not as a rule.
     Wording a fluent speaker wouldn't use is an error, "wordChoice", even when it is grammatical.
     """
+
+  /// The line the app adds after the Explain prompt, edited or not: the reasons are in the
+  /// interface language (02 M7).
+  static func reasons(in language: InterfaceLanguage) -> String {
+    "Write every reason in \(language.englishName)."
+  }
 
   static func explainInput(old: String, diff: TextDiff) -> String {
     let changes = diff.changes.map { change in

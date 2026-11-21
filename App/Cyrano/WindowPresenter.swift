@@ -56,10 +56,10 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
 enum AboutCredits {
   static var text: NSAttributedString {
     let lines = [
-      "Author: Dim Kharitonov",
-      "License: MIT",
-      "Source: github.com/dimdasci/cyrano",
-      "Docs: dimdasci.github.io/cyrano",
+      String(localized: "Author: \("Dim Kharitonov")"),
+      String(localized: "License: \("MIT")"),
+      String(localized: "Source: \("github.com/dimdasci/cyrano")"),
+      String(localized: "Docs: \("dimdasci.github.io/cyrano")"),
     ]
     return NSAttributedString(
       string: lines.joined(separator: "\n"),

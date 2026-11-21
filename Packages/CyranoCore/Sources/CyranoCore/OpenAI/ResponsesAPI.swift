@@ -90,7 +90,7 @@ struct APIError: Decodable {
     switch code {
     case "subscription_sharing_usage_limit_exceeded": .planLimitReached
     case "subscription_sharing_usage_unavailable": .planUsageUnavailable
-    default: .failed(message ?? code ?? "Unknown error")
+    default: .failed(message ?? code ?? localized("Unknown error"))
     }
   }
 
