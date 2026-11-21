@@ -42,7 +42,7 @@ import Testing
 
     #expect(session.context.isEmpty)
     #expect(session.contextStatus == .failed(.network))
-    #expect(session.canPerform(message: ""))
+    #expect(session.canAct)
   }
 
   @Test func readingShowsWhenItStarted() async throws {
@@ -70,10 +70,10 @@ import Testing
     while engine.contextCalls.isEmpty { await Task.yield() }
 
     #expect(session.isReadingContext)
-    #expect(!session.canPerform(message: ""))
+    #expect(!session.canAct)
     engine.release()
     await reading.value
-    #expect(session.canPerform(message: ""))
+    #expect(session.canAct)
   }
 
   @Test func typingInContextStopsReadingAndKeepsTheText() async {
@@ -100,7 +100,7 @@ import Testing
 
     session.stopReadingContext()
     #expect(session.contextStatus == nil)
-    #expect(session.canPerform(message: ""))
+    #expect(session.canAct)
     await reading.value
     #expect(engine.openStreams == 0)
     engine.release()
@@ -132,7 +132,7 @@ import Testing
 
     #expect(session.context.isEmpty)
     #expect(session.contextStatus == .timedOut)
-    #expect(session.canPerform(message: ""))
+    #expect(session.canAct)
     #expect(engine.openStreams == 0)
     engine.release()
   }

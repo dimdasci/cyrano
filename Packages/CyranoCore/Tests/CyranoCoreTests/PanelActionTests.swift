@@ -13,11 +13,11 @@ import Testing
 
   @Test func actionIsCheckBeforeTheFirstCheck() async {
     let session = session(FakeEngine(fixes: ["I have a cat."]))
-    let action: ProofreadingSession.Action = session.action(for: "")
-    let enabled: Bool = session.canPerform(message: "")
+    let action: ProofreadingSession.Action = session.action
+    let enabled: Bool = session.canAct
     #expect(action == ProofreadingSession.Action.check && enabled)
 
-    await session.perform(message: "")
+    await session.act()
     let origin: Version.Origin? = session.versions.last?.origin
     #expect(origin == Version.Origin.check)
   }
@@ -26,14 +26,32 @@ import Testing
     let engine = FakeEngine(fixes: ["I have a cat.", "I have two cats."])
     let session = session(engine)
     await session.check()
-    #expect(session.action(for: "") == .send)
-    #expect(!session.canPerform(message: "  "))
-    #expect(session.canPerform(message: "make it two cats"))
+    #expect(session.action == .send)
+    session.draft = "  "
+    #expect(!session.canAct)
+    session.draft = "make it two cats"
+    #expect(session.canAct)
 
-    await session.perform(message: "make it two cats")
+    await session.act()
     let first = try #require(engine.fixCalls.last?.input.first)
     #expect(first.text.contains("Do you have pets?"))
     #expect(session.versions.last?.origin == .request)
+  }
+
+  /// The button and its menu item may be drawn while the field held less: the first letter
+  /// enables Send. A press sends what the field holds when pressed, and empties it.
+  @Test func pressSendsWhatIsInTheFieldWhenPressed() async {
+    let engine = FakeEngine(fixes: ["I have a cat.", "I have a cat!"])
+    let session = session(engine)
+    await session.check()
+    session.draft = "m"
+    let enabledByFirstLetter: Bool = session.canAct
+    session.draft = "make it more excited"
+
+    await session.act()
+    let sent: String = engine.fixCalls.last?.input.last?.text ?? ""
+    let field: String = session.draft
+    #expect(enabledByFirstLetter && sent.contains("make it more excited") && field.isEmpty)
   }
 
   @Test func changedContextWithAnEmptyFieldRechecks() async {
@@ -49,9 +67,9 @@ import Testing
     session.images = [imageA]
     await session.check()
     session.images = [imageA]
-    #expect(session.action(for: "") == .send)
+    #expect(session.action == .send)
     session.images.append(imageB)
-    #expect(session.action(for: "") == .check)
+    #expect(session.action == .check)
   }
 
   @Test func changedContextWithAMessageSendsBoth() async {
@@ -79,38 +97,40 @@ import Testing
     let session = session(engine)
     await session.check()
     session.context = context
-    let label = session.action(for: message)
-    await session.perform(message: message)
+    session.draft = message
+    let label = session.action
+    await session.act()
     let input: [String] = engine.fixCalls.last?.input.map(\.text) ?? []
     return Press(
       label: label, messages: input.count, firstMessage: input.first ?? "",
       lastMessage: input.last ?? "", origin: session.versions.last?.origin,
-      nextLabel: session.action(for: ""))
+      nextLabel: session.action)
   }
 
   @Test func actionIsDisabledWhileACheckRuns() async {
     let engine = FakeEngine(fixes: ["I have a cat."])
     let session = session(engine)
     engine.holdFixes()
-    let check = Task { await session.perform(message: "") }
+    let check = Task { await session.act() }
     while engine.fixCalls.isEmpty { await Task.yield() }
 
-    #expect(!session.canPerform(message: ""))
+    #expect(!session.canAct)
     engine.release()
     await check.value
-    #expect(!session.canPerform(message: ""))
-    #expect(session.canPerform(message: "two cats"))
+    #expect(!session.canAct)
+    session.draft = "two cats"
+    #expect(session.canAct)
   }
 
   @Test func emptyTextCannotBeChecked() async throws {
     let engine = FakeEngine(fixes: ["I have a cat."])
     let session = session(engine, original: "")
-    #expect(session.action(for: "") == .check)
-    #expect(!session.canPerform(message: ""))
+    #expect(session.action == .check)
+    #expect(!session.canAct)
 
     session.original = "I has a cat."
-    #expect(session.canPerform(message: ""))
-    await session.perform(message: "")
+    #expect(session.canAct)
+    await session.act()
     let input = try #require(engine.fixCalls.first?.input)
     #expect(input[0].text.hasSuffix("<text>\nI has a cat.\n</text>"))
     #expect(session.versions.first?.diff?.changes.map(\.words) == [["has", "have"]])

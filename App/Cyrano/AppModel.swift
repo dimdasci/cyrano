@@ -26,6 +26,10 @@ final class AppModel {
   var customInstructions: String = StoredSettings.customInstructions {
     didSet { StoredSettings.customInstructions = customInstructions }
   }
+  /// The Settings tab shown, kept for the next time Settings opens (05 §5).
+  var settingsTab: SettingsTab = StoredSettings.settingsTab {
+    didSet { StoredSettings.settingsTab = settingsTab }
+  }
   /// Read who the user is writing to, what about and in which language from a screenshot of
   /// the window (02 C6).
   var readsContext: Bool = StoredSettings.readsContext {
@@ -149,7 +153,38 @@ final class AppModel {
 
   // MARK: Windows
 
-  func showOnboarding() {
+  /// Where the first setup stands, for the window Cyrano opens by itself (05 §1, §4).
+  var setup: Setup {
+    Setup(
+      onboardingDone: StoredSettings.onboardingDone, signedIn: account != nil,
+      hasAccessibility: AXIsProcessTrusted())
+  }
+
+  func open(_ window: AppWindow) {
+    switch window {
+    case .onboarding: showOnboarding()
+    case .settings(let tab): showSettings(tab)
+    }
+  }
+
+  /// A click on the Dock icon or launching Cyrano again: the panel comes forward first, then the
+  /// front window; a minimized one comes back. With no window open, Settings opens.
+  func reopen() {
+    // The panel's sheet and the menu bar icon's windows are no windows of their own.
+    let isOwn = { (window: NSWindow) in window.styleMask.contains(.titled) && !window.isSheet }
+    let shown = NSApp.orderedWindows.filter { isOwn($0) && $0.isVisible }
+    let minimized = NSApp.windows.filter { isOwn($0) && $0.isMiniaturized }
+    switch setup.reopen(shown + minimized, panel: panel.openWindow) {
+    case .show(let window):
+      NSApp.activate()
+      if window.isMiniaturized { window.deminiaturize(nil) }
+      window.makeKeyAndOrderFront(nil)
+    case .open(let window):
+      open(window)
+    }
+  }
+
+  private func showOnboarding() {
     windows.show(id: "onboarding", title: "Cyrano", size: CGSize(width: 520, height: 700)) {
       OnboardingView(app: self) { [windows] height in
         windows.fit(id: "onboarding", contentHeight: height)
@@ -157,12 +192,26 @@ final class AppModel {
     }
   }
 
-  func closeOnboarding() {
+  /// Done: onboarding never shows again; Settings has everything it offers.
+  func finishOnboarding() {
+    StoredSettings.onboardingDone = true
     windows.close(id: "onboarding")
   }
 
+  /// Settings on a tab, or on the tab used last. SwiftUI opens its Settings scene only from a
+  /// view or from the app menu's Settings… item; the Dock icon and a launch have no view, so
+  /// every way into Settings goes through the item.
+  func showSettings(_ tab: SettingsTab? = nil) {
+    if let tab { settingsTab = tab }
+    NSApp.activate()
+    guard let menu = NSApp.mainMenu?.items.first?.submenu,
+      let item = menu.items.firstIndex(where: { $0.keyEquivalent == "," })
+    else { return }
+    menu.performActionForItem(at: item)
+  }
+
   func showAbout() {
-    AppPresence.activate()
+    NSApp.activate()
     NSApp.orderFrontStandardAboutPanel(options: [.credits: AboutCredits.text])
   }
 }
@@ -172,6 +221,19 @@ private enum StoredSettings {
   static var customInstructions: String {
     get { UserDefaults.standard.string(forKey: "customInstructions") ?? "" }
     set { UserDefaults.standard.set(newValue, forKey: "customInstructions") }
+  }
+
+  /// Onboarding's Done was pressed once.
+  static var onboardingDone: Bool {
+    get { UserDefaults.standard.bool(forKey: "onboardingDone") }
+    set { UserDefaults.standard.set(newValue, forKey: "onboardingDone") }
+  }
+
+  static var settingsTab: SettingsTab {
+    get {
+      UserDefaults.standard.string(forKey: "settingsTab").flatMap(SettingsTab.init) ?? .general
+    }
+    set { UserDefaults.standard.set(newValue.rawValue, forKey: "settingsTab") }
   }
 
   static var readsContext: Bool {

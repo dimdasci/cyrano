@@ -1,19 +1,22 @@
 ---
 name: verify-app
-description: Verify a change in the running Cyrano with the agent's own hands — relaunch a fresh build, open the panel on text from TextEdit, press buttons and menu items, read cards and Settings through Accessibility. Use before saying that a change in App is done, and when the user asks to check something in the app. Also covers what to do if macOS has revoked the Accessibility or Screen Recording permission.
+description: Verify a change in the running Cyrano with the agent's own hands — relaunch a fresh build, open the panel on text from TextEdit, type letter by letter with real keys, press buttons, shortcuts and menu items, click the Dock icon, read cards and Settings through Accessibility. Use before saying that a change in App is done, and when the user asks to check something in the app. Also covers what to do if macOS has revoked the Accessibility or Screen Recording permission.
 ---
 
 # Verifying in the running Cyrano
 
-The agent drives the app through Accessibility: the `.build/ax` utility (source [ax.swift](ax.swift)) reads the element tree, presses buttons, opens context menus and picks items; [capture.sh](capture.sh) opens the panel on text from TextEdit. Card text is read as text, without recognizing screenshots.
+The agent uses the app the way a person does: it types with real keys, letter by letter, presses shortcuts after typing, clicks with the mouse, and reads what the app shows. The `.build/ax` utility (source [ax.swift](ax.swift)) types and presses keys through the HID tap, clicks, reads the element tree through Accessibility, presses buttons, opens context menus and picks items; [capture.sh](capture.sh) opens the panel on text from TextEdit. Card text is read as text, without recognizing screenshots.
+
+Text never goes into a field by setting its Accessibility value: that skips the key events the app reacts to, and a check that does it passes while the app is broken. On 2026-11-08 ⌘↩ sent only the first letter of a typed message, and the check didn't see it because it had set the whole message at once. So: click into the field (`ax click`), type the text (`ax type`) in English and in Russian, then press the shortcut (`ax key return command`), and read what the app did with it.
 
 ## Safety rules
 
 The user may be working at the computer at the same time, and the keyboard and mouse are shared.
 
 - Before you start, tell the user that for the next few minutes you'll be pressing keys and moving the mouse, and ask them not to switch windows.
-- Keys (`ax key`, `osascript … keystroke`) go to the window with keyboard focus. The Keychain password prompt (`SecurityAgent`) takes them from everyone, so `capture.sh` first closes Cyrano's windows (`ax close`), waits for the password prompt to close, and only then checks that TextEdit is in front. The panel activates Cyrano when it opens: while a window of Cyrano is open, Cyrano is a regular app with a Dock icon, and a new panel opens in front. For keys meant for a Cyrano window (the panel, Settings, onboarding), `lsappinfo info -only bundleid $(lsappinfo front)` must print `io.github.dimdasci.cyrano`. If something else is in front, don't press anything; say so.
-- `ax appmenu "Settings…"` takes the first item with that name, the app menu's Settings…, which exists even while Cyrano is only in the menu bar. It opens Settings behind the front app, and Cyrano gets no Dock icon or menus: only the menu bar icon's items make Cyrano a regular app, and macOS lets an app activate only on a real user action. A real click brings Settings forward: `ax doubleclick` on a static text of the window, such as the title above the prompt editor (`Proofread, Main instructions…`). Then check the front app as above.
+- Keys (`ax key`, `ax type`) go to the window with keyboard focus. The Keychain password prompt (`SecurityAgent`) takes them from everyone, so `capture.sh` first closes Cyrano's windows (`ax close`), waits for the password prompt to close, and only then checks that TextEdit is in front. The panel activates Cyrano when it opens, and a new panel opens in front. For keys meant for a Cyrano window (the panel, Settings, onboarding), `lsappinfo info -only bundleid $(lsappinfo front)` must print `io.github.dimdasci.cyrano`; `ax type` checks it itself and refuses otherwise. If something else is in front, don't press anything; say so.
+- Clicks land where the element is on the screen. If the panel opened on a desktop (Space) other than the one on screen, the click hits whatever is there: before `ax click`, check that the window is on screen (`.build/ax windows` lists it, and the front app is Cyrano). If it isn't, stop and ask the user; they may be working on another desktop.
+- `ax type` switches the keyboard layout to the one that has the next character (British, Russian) and puts back the user's layout at the end. Run it only while the user isn't typing.
 - The Keychain password prompt appears when a fresh build reads the token for the first time. Only the user closes it: tell them and wait, and send no keys meanwhile.
 - Press Check only if the first line of `.build/ax windows` is `Proofreading — TextEdit`. Otherwise the panel may have taken text from the user's window: don't read it and don't send it for checking.
 - The dictionary and settings are the user's real data. Before the check, save a copy of `~/Library/Application Support/Cyrano/dictionary.json` (or note that the file doesn't exist) and run `defaults export io.github.dimdasci.cyrano <file>`; afterwards compare, and if something changed, quit Cyrano and restore it. While Cyrano is running, it keeps the dictionary in memory and writes it back on the next change.
@@ -47,7 +50,9 @@ If `.build/ax` prints `Accessibility is not granted to this process` or `osascri
 | `ax pick <item>` | picks an item of the open context menu |
 | `ax dismiss` | closes the open context menu without picking anything |
 | `ax appmenu <item>` | an item of the app menu or of the menu bar icon (`Settings…`, `Check Text…`) |
-| `ax set <placeholder/label> <value>` | types a value into a field (`Search`, `Term`); `@N` is the Nth field from the top |
+| `ax click <placeholder/label>` | a real click into a field (`Ask or tell what to change`, `Search`, `Term`) or on a pop-up button, which opens its menu for `ax pick` (`Level`, then `ax pick Rewrite`); `@N` is the Nth one from the top |
+| `ax type <text>` | types the text letter by letter with real keys, switching between the enabled layouts for each character (Latin and Cyrillic); `\n` is Return; only while Cyrano is in front |
+| `ax dock [click\|press]` | says whether Cyrano's icon is in the Dock; `click` clicks it with the mouse, `press` presses it as VoiceOver does |
 | `ax rows` | table and list rows; a cell with a label and a value prints both |
 | `ax selectrow <value>` | selects a table or list row by a cell's value or label; `Casual` also finds `Casual, Modified` |
 | `ax doubleclick <value>` | double-clicks the element with this value |
@@ -61,16 +66,28 @@ Save the output of `ax tree` to a file and search in it: with `ax tree | head` t
 1. Open the panel: `.claude/skills/verify-app/capture.sh "I pushed the fix to Github, can you review it when you have a minute?"`. Wait 10–12 s: Cyrano reads the context from the screenshot, and Check stays disabled until then.
 2. `.build/ax press Check`, `.build/ax wait "Version 1" 60`, then `.build/ax tree > …`. The card text is in the `AXTextArea` line, as VoiceOver reads it: the version's text without the removed words (`… to GitHub. Can you …`). Explanations arrive 5–15 s later: the summary changes from `Explaining…` to `1 fix`.
 3. Check what the user sees: labels, the summary, the status line (`AXStaticText` at the bottom), the files the app writes.
-   The dialog: `ax set "Ask or tell what to change" "<message>"`, `ax press Send`; an answer is an `AXStaticText` bubble, a new version a `Version N` card. To hear what VoiceOver would say, run `.build/ax announcements 40 > file &` before Send.
-4. Close the panel and TextEdit: `.build/ax close`, `osascript -e 'tell application "TextEdit" to close every document saving no'`. Closing the panel while Cyrano is in front gives the keyboard back to TextEdit.
+   The dialog: `ax click "Ask or tell what to change"`, `ax type "<message>"`, then `ax key return command` (⌘↩) or `ax press Send`; an answer is an `AXStaticText` bubble, a new version a `Version N` card. Check that the bubble holds the whole message, and that the field is empty after it went. Type one message in English and one in Russian (`ax type "сделай короче"`). To hear what VoiceOver would say, run `.build/ax announcements 40 > file &` before Send.
+4. Close the panel and TextEdit: `.build/ax close`, `osascript -e 'tell application "TextEdit" to close (every document whose name is "cyrano-verify.txt") saving no'`. Close only that document: the user's own documents in TextEdit stay open and unsaved changes in them stay. Closing the panel while Cyrano is in front gives the keyboard back to TextEdit.
 
-⌘↩ (`ax key return command`) presses Check or Send from anywhere in the panel; Proofreading → Check or Send is the same item in the menu bar.
+⌘↩ (`ax key return command`) presses Check or Send from anywhere in the panel; it is the key of Proofreading → Check or Send in the menu bar. Press it after typing, never on a field filled some other way.
 
 With a panel open, ⌥⌘G in another app, Check Text… and Check Clipboard show a sheet on the panel: `Check New Text` (the default, `ax key return`) or `Return to Panel` (`ax key escape`); `ax press` works on both buttons.
 
 Examples that `gpt-6.1-sol` reliably fixes (handy for the dictionary): `Github → GitHub`, `kibana → Kibana`, `grafana → Grafana`. In a message context the model may leave slang alone (`tmrw`, `pls`), so don't rely on it.
 
-Settings: `.build/ax appmenu "Settings…"`, the tab with `.build/ax press Dictionary`, then `ax tree Dictionary`, `ax rows`.
+Settings: `.build/ax appmenu "Settings…"`, the tab with `.build/ax press Dictionary`, then `ax tree Dictionary`, `ax rows`. Typing into a Settings field: `ax click Search`, `ax type "kibana"`.
+
+## Dock and launch
+
+Cyrano is an ordinary app (02 T5, 05 §4): it's in the Dock while it runs, with or without a window. Check each of these as a person does it, and read the result:
+
+- Launch with no window: `pkill -x Cyrano; open "$PWD/.build/xcode/Build/Products/Debug/Cyrano.app"; sleep 3`. Once onboarding is done and the sign-in and Accessibility are in place, `.build/ax windows` prints nothing, and `.build/ax dock` prints `Cyrano is in the Dock`.
+- A Dock click with no window: `.build/ax dock click`, then `.build/ax windows` prints the Settings tab (`General`, or the tab used last) and the front app is Cyrano.
+- A Dock click with the panel open: open the panel with `capture.sh`, click another app's window or open Settings, then `.build/ax dock click`; the first line of `.build/ax windows` is `Proofreading — TextEdit`. With the panel minimized (`ax key m command` while it's in front), the click brings it back.
+- Launching again while it runs: `open "$PWD/.build/xcode/Build/Products/Debug/Cyrano.app"` does the same as the Dock click. Check with no window and with the panel open.
+- Closing the last window: `ax key w command` while the window is in front, then `.build/ax windows` prints nothing, `pgrep -x Cyrano` still finds it and `.build/ax dock` still prints `Cyrano is in the Dock`.
+
+The Dock doesn't always take a synthetic click: on 2026-11-21 `ax dock click` sometimes left no window and Finder in front while the pointer was on the icon, and the logs gave no cause, though the same press through Accessibility and the user's own click worked every time. When the click shows nothing, check the same state with `ax dock press`, and ask the user for one real click to confirm; don't count the synthetic click as the app's failure. The Dock click needs the Dock on screen; if the user has it hidden, `ax dock click` misses it: say so instead of working around it. Onboarding shows at launch until Done is pressed once (the `onboardingDone` key in the app's defaults); don't change that key in the user's defaults to test it.
 
 ## Quirks
 

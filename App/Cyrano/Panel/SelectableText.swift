@@ -27,13 +27,41 @@ struct SelectableText: NSViewRepresentable {
     view.setAccessibilityLabel(label)
   }
 
-  /// As tall as the text laid out at the offered width.
   func sizeThatFits(_ proposal: ProposedViewSize, nsView: DiffTextView, context: Context)
     -> CGSize?
   {
-    guard let width = proposal.width, width.isFinite else { return nil }
-    return CGSize(width: width, height: MenuTextView.height(of: text, width: width))
+    MenuTextView.size(of: text, proposal)
   }
+}
+
+/// A change in the list of changes with its mark (05 §2.4). The row reads it to VoiceOver and
+/// opens its menu, so the text takes no clicks and is hidden from VoiceOver.
+struct MarkedText: NSViewRepresentable {
+  let text: NSAttributedString
+
+  func makeNSView(context: Context) -> MenuTextView {
+    let view = PassiveTextView()
+    view.isSelectable = false
+    view.setAccessibilityElement(false)
+    return view
+  }
+
+  func updateNSView(_ view: MenuTextView, context: Context) {
+    if view.textStorage?.isEqual(to: text) != true {
+      view.textStorage?.setAttributedString(text)
+    }
+  }
+
+  func sizeThatFits(_ proposal: ProposedViewSize, nsView: MenuTextView, context: Context)
+    -> CGSize?
+  {
+    MenuTextView.size(of: text, proposal)
+  }
+}
+
+/// Clicks and right clicks go through to the SwiftUI row under it.
+private final class PassiveTextView: MenuTextView {
+  override func hitTest(_ point: NSPoint) -> NSView? { nil }
 }
 
 class MenuTextView: NSTextView {
@@ -59,6 +87,12 @@ class MenuTextView: NSTextView {
   }
 
   required init?(coder: NSCoder) { nil }
+
+  /// As tall as the text laid out at the offered width.
+  static func size(of text: NSAttributedString, _ proposal: ProposedViewSize) -> CGSize? {
+    guard let width = proposal.width, width.isFinite else { return nil }
+    return CGSize(width: width, height: height(of: text, width: width))
+  }
 
   /// The height of the text laid out at a width, the same way this view lays it out.
   static func height(of text: NSAttributedString, width: CGFloat) -> CGFloat {

@@ -19,8 +19,6 @@ final class PanelModel {
       if let status { VoiceOver.announce(status.text) }
     }
   }
-  /// The message in the dialog field, for the action button and its menu item.
-  var draft = ""
   /// The panel content measured the height it needs to show everything (05 §2.1).
   @ObservationIgnored var idealHeightChanged: (CGFloat) -> Void = { _ in }
 
@@ -42,19 +40,17 @@ final class PanelModel {
 
   /// Check or Send, with the label and state Core decides (05 §2.7).
   var action: PanelAction {
-    let message = draft
-    let kind = session.action(for: message)
-    return PanelAction(
-      title: kind == .check ? "Check" : "Send", isEnabled: session.canPerform(message: message)
-    ) { [self] in
-      guard session.canPerform(message: message) else { return }
-      draft = ""
-      switch kind {
-      case .check: ContextTip().invalidate(reason: .actionPerformed)
-      case .send: DialogTip().invalidate(reason: .actionPerformed)
-      }
-      Task { await session.perform(message: message) }
+    PanelAction(title: session.action == .check ? "Check" : "Send", isEnabled: session.canAct)
+  }
+
+  /// The action button or ⌘↩: Core takes what is in the dialog field at this moment.
+  func act() {
+    guard session.canAct else { return }
+    switch session.action {
+    case .check: ContextTip().invalidate(reason: .actionPerformed)
+    case .send: DialogTip().invalidate(reason: .actionPerformed)
     }
+    Task { await session.act() }
   }
 
   /// Panel settings changed: remember them for the app and check the latest version again.
@@ -95,6 +91,8 @@ final class PanelController: NSObject, NSWindowDelegate {
   private(set) var keyModel: PanelModel?
 
   var isOpen: Bool { window != nil }
+  /// The panel's window, for the Dock icon to bring it forward.
+  var openWindow: NSWindow? { window }
 
   /// With a panel open, the user decides first: close it for the new text, or return to it with
   /// everything in it. Without one, the new panel opens at once (05 §2.1).
@@ -103,7 +101,7 @@ final class PanelController: NSObject, NSWindowDelegate {
       show(makeModel(), near: field)
       return
     }
-    AppPresence.activate()
+    NSApp.activate()
     window.makeKeyAndOrderFront(nil)
     // A second press while the question is up asks nothing new.
     guard window.attachedSheet == nil else { return }
@@ -152,7 +150,7 @@ final class PanelController: NSObject, NSWindowDelegate {
     }
     self.window = window
     self.model = model
-    AppPresence.activate()
+    NSApp.activate()
     window.makeKeyAndOrderFront(nil)
   }
 

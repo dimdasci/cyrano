@@ -8,6 +8,37 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+Cyrano is now an ordinary app in the Dock, and the changes in a version look the same in the text
+and in the list of changes.
+
+### Changed
+
+- Cyrano stays in the Dock, in ⌘Tab and in the menu bar menus while it runs, with or without a
+  window open. The menu bar icon is optional: turn it off in Settings → General.
+- A click on the Dock icon, or opening Cyrano again, brings its window forward, the Proofreading
+  panel first, and brings back a minimized one. With no window open, it opens Settings.
+- Cyrano starts without a window once it's set up. Closing the last window leaves it running for
+  ⌥⌘G; ⌘Q quits it.
+- Onboarding welcomes you and shows until you press Done once. After that, everything it offers is
+  in Settings: Sign In with ChatGPT… opens Settings → Account, Grant Accessibility… opens
+  Settings → General.
+- A change is marked the same way in the text and in the list of changes: a thick solid green
+  underline for an error, a thick dashed blue one for a style suggestion. In the text, the line and
+  a light fill run under the whole change, the crossed-out words and the new ones, so a removed
+  word is marked too. Until Cyrano knows whether a change is an error or a style suggestion, its
+  line is solid graphite, and VoiceOver calls it a change. The list uses plain bullets instead of ●
+  and ◇.
+
+### Fixed
+
+- ⌘↩ sent only the first letter of a message typed in the dialog field. It now sends everything in
+  the field, typed, dictated or pasted, the same as the Send button.
+- A click on the Dock icon opened onboarding even when everything was set up.
+- In the list of changes, an error and a style suggestion looked almost the same: both markers were
+  grey.
+- Every change was first marked as an error and could turn into a style suggestion once its
+  explanation arrived, and if the explanation failed, every change stayed an error.
+
 ## [0.12.0] - 2026-11-08
 
 Cyrano now works with VoiceOver and with the keyboard alone, in the Proofreading panel, onboarding

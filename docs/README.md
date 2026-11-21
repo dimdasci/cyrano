@@ -9,6 +9,7 @@
 | [plan.md](plan.md) | MVP broken down into work packages, what's done, the next package, deviations from the spec | in progress |
 | [quality.md](quality.md) | Code quality checks: `scripts/check`, tools, thresholds | accepted |
 | [releases.md](releases.md) | Version and build number, changelog and release notes, releasing, `main` protection, distribution | accepted |
+| [bug-log.md](bug-log.md) | Bugs found in released versions: what the user saw, what they expected and a hypothesis about the cause | in progress |
 | [style.md](style.md) | Writing style: voice, formatting rules | accepted |
 | [wireframes/](wireframes/) | Wireframes of all screens and how to use them in development | agreed |
 | [research/openai-sign-in-with-chatgpt.md](research/openai-sign-in-with-chatgpt.md) | Sign in with ChatGPT: protocol, limitations, assessment | accepted |

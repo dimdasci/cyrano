@@ -8,17 +8,21 @@ import ServiceManagement
 import SwiftUI
 
 struct SettingsView: View {
-  let app: AppModel
+  @Bindable var app: AppModel
 
   var body: some View {
-    TabView {
-      Tab("General", systemImage: "gearshape") { GeneralPane(app: app) }
-      Tab("Style", systemImage: "textformat") { StylePane(app: app) }
-      Tab("Dictionary", systemImage: "character.book.closed") {
+    TabView(selection: $app.settingsTab) {
+      Tab("General", systemImage: "gearshape", value: .general) { GeneralPane(app: app) }
+      Tab("Style", systemImage: "textformat", value: .style) { StylePane(app: app) }
+      Tab("Dictionary", systemImage: "character.book.closed", value: .dictionary) {
         DictionaryPane(dictionary: app.dictionary)
       }
-      Tab("Prompts", systemImage: "text.bubble") { PromptsPane(prompts: app.prompts) }
-      Tab("Account", systemImage: "person.crop.circle") { AccountPane(app: app) }
+      Tab("Prompts", systemImage: "text.bubble", value: .prompts) {
+        PromptsPane(prompts: app.prompts)
+      }
+      Tab("Account", systemImage: "person.crop.circle", value: SettingsTab.account) {
+        AccountPane(app: app)
+      }
     }
     // Wide enough for the five columns of Style → Per-app defaults.
     .frame(width: 600)

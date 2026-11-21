@@ -38,13 +38,13 @@ Usage is visible: the panel shows how many tokens the current dialog has used an
 
 The user can write in the dialog in any language. The output language is the conversation's language if it could be read from the window, otherwise the same as the source text; you can choose another target language (the pop-up in the panel header); with another language chosen, the model translates and corrects at the same time.
 
-### S2. Menu bar
+### S2. Dock and menu bar
 
-An icon in the menu bar: Check Text… (the same panel with empty text: type or paste → the result and the same dialog as in S1a), Check Clipboard (the same panel with the text from the clipboard), the ChatGPT sign-in status, Grant Accessibility… while there's no permission, About Cyrano, Settings, Quit.
+Cyrano is in the Dock while it runs; a click on its icon brings its window forward or opens Settings. An optional icon in the menu bar: Check Text… (the same panel with empty text: type or paste → the result and the same dialog as in S1a), Check Clipboard (the same panel with the text from the clipboard), the ChatGPT sign-in status, Grant Accessibility… while there's no permission, About Cyrano, Settings, Quit.
 
 ### S0. First launch
 
-One window with four sections ([05](05-ui.md) §1):
+One window with a welcome and four sections, shown until the user presses Done once; later changes are in Settings ([05](05-ui.md) §1):
 
 1. "Continue with ChatGPT" → sign-in in the system browser → permission to spend the subscription limit (Plus or Pro).
 2. The Accessibility permission.

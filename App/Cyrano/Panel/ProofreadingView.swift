@@ -94,8 +94,13 @@ private struct PanelHeader: View {
 /// The dialog field and the one action button (05 §2.7). Before the first check there is
 /// nothing to talk about yet, so only Check shows.
 private struct Composer: View {
-  @Bindable var model: PanelModel
-  private var session: ProofreadingSession { model.session }
+  let model: PanelModel
+  @Bindable private var session: ProofreadingSession
+
+  init(model: PanelModel) {
+    self.model = model
+    session = model.session
+  }
   private static let placeholder = "Ask or tell what to change… (any language)"
 
   var body: some View {
@@ -117,12 +122,12 @@ private struct Composer: View {
         // The first version replaces Text to check, which had the keyboard: the field takes it
         // over, so the keyboard isn't left nowhere (05 §7).
         FieldText(
-          text: $model.draft, label: "Ask or tell what to change", placeholder: Self.placeholder,
+          text: $session.draft, label: "Ask or tell what to change", placeholder: Self.placeholder,
           takesFocus: true
         )
         .frame(height: 44)
         .overlay(alignment: .topLeading) {
-          if model.draft.isEmpty {
+          if session.draft.isEmpty {
             Text(Self.placeholder)
               .foregroundStyle(.tertiary)
               .allowsHitTesting(false)
@@ -131,10 +136,9 @@ private struct Composer: View {
           }
         }
       }
-      // ⌘↩ here as well as in the menu: the menu learns about a new panel only when it opens.
+      // ⌘↩ is the menu item's, Proofreading → Check or Send (05 §2.9).
       let action = model.action
-      Button(action.title, action: action.perform)
-        .keyboardShortcut(.return, modifiers: .command)
+      Button(action.title, action: model.act)
         .disabled(!action.isEnabled)
     }
   }
