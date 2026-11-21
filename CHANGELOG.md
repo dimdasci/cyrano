@@ -8,6 +8,8 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [Unreleased]
 
+## [0.13.0] - 2026-11-21
+
 Cyrano is now an ordinary app in the Dock, and the changes in a version look the same in the text
 and in the list of changes.
 
@@ -363,7 +365,8 @@ The first preview: check a short text in any app with your ChatGPT plan.
 - Sign in with ChatGPT (Plus or Pro). Text goes only to OpenAI and isn't stored there.
 - Menu bar menu: Check Text…, Check Clipboard, model choice, account, Settings.
 
-[Unreleased]: https://github.com/dimdasci/cyrano/compare/v0.12.0...HEAD
+[Unreleased]: https://github.com/dimdasci/cyrano/compare/v0.13.0...HEAD
+[0.13.0]: https://github.com/dimdasci/cyrano/compare/v0.12.0...v0.13.0
 [0.12.0]: https://github.com/dimdasci/cyrano/compare/v0.11.0...v0.12.0
 [0.11.0]: https://github.com/dimdasci/cyrano/compare/v0.10.0...v0.11.0
 [0.10.0]: https://github.com/dimdasci/cyrano/compare/v0.9.0...v0.10.0
