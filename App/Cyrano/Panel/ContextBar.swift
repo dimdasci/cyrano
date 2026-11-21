@@ -30,12 +30,12 @@ struct ContextBar: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
       HStack(spacing: 8) {
-        Button(expanded ? "▾ Context" : "▸ Context") { expanded.toggle() }
+        Button((expanded ? "▾ " : "▸ ") + String(localized: "Context")) { expanded.toggle() }
           .buttonStyle(.plain)
           .fontWeight(.semibold)
           // VoiceOver hears the state in words instead of the triangle.
           .accessibilityLabel("Context")
-          .accessibilityValue(expanded ? "Expanded" : "Collapsed")
+          .accessibilityValue(expanded ? Text("Expanded") : Text("Collapsed"))
         if let status = session.contextStatus {
           ContextStatusLine(session: session, status: status)
         } else if !expanded {
@@ -64,7 +64,7 @@ struct ContextBar: View {
   private var contextEditor: some View {
     // Without captured text the cursor goes to Text to check instead.
     FieldText(
-      text: $session.context, label: "Context",
+      text: $session.context, label: String(localized: "Context"),
       takesFocus: session.versions.isEmpty && !session.original.isEmpty
     )
     .frame(height: 64)
@@ -116,7 +116,8 @@ struct ContextBar: View {
   private func thumbnails(size: CGSize, removable: Bool) -> some View {
     ForEach(Array(session.images.enumerated()), id: \.offset) { index, png in
       Thumbnail(
-        png: png, size: size, name: "Image \(index + 1) of \(session.images.count)",
+        png: png, size: size,
+        name: String(localized: "Image \(index + 1) of \(session.images.count)"),
         open: { preview(png, number: index + 1) },
         remove: removable ? { session.images.remove(at: index) } : nil
       )
@@ -126,7 +127,7 @@ struct ContextBar: View {
   /// Quick Look needs a file. Each preview gets a new folder: Quick Look caches by URL.
   private func preview(_ png: Data, number: Int) {
     let folder = FileManager.default.temporaryDirectory.appending(path: UUID().uuidString)
-    let url = folder.appending(path: "Context image \(number).png")
+    let url = folder.appending(path: String(localized: "Context image \(number)") + ".png")
     do {
       try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
       try png.write(to: url)
@@ -137,13 +138,12 @@ struct ContextBar: View {
   }
 
   private var caption: String {
-    var text = "or paste ⌘V / drop images"
-    switch session.images.count {
-    case 0: break
-    case 1: text += " · 1 image"
-    default: text += " · \(session.images.count) images"
+    var text = String(localized: "or paste ⌘V / drop images")
+    let count = session.images.count
+    if count > 0 { text += " · " + String(localized: "\(count) images") }
+    if session.hasManyImages {
+      text += " — " + String(localized: "checks get slower and use more of your limit")
     }
-    if session.hasManyImages { text += " — checks get slower and use more of your limit" }
     return text
   }
 

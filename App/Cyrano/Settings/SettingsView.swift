@@ -35,6 +35,7 @@ private struct GeneralPane: View {
 
   var body: some View {
     Form {
+      LanguagePicker()
       Toggle("Show in menu bar", isOn: $showInMenuBar)
       LaunchAtLogin()
       ReadContextToggle(app: app)
@@ -58,7 +59,8 @@ private struct GeneralPane: View {
   }
 
   private func modelPicker(
-    _ title: String, _ detail: String, _ operation: WritableKeyPath<ModelChoice, Model>
+    _ title: LocalizedStringKey, _ detail: LocalizedStringKey,
+    _ operation: WritableKeyPath<ModelChoice, Model>
   ) -> some View {
     Picker(selection: $app.models[dynamicMember: operation]) {
       ForEach(Model.allCases, id: \.self) { Text($0.rawValue).tag($0) }
@@ -77,8 +79,10 @@ struct ReadContextToggle: View {
     Toggle(isOn: $app.readsContext) {
       Text("Read context from the window")
       Text(
-        "A screenshot of the window goes to OpenAI to find who you're writing to, what about "
-          + "and in which language.")
+        """
+        A screenshot of the window goes to OpenAI to find who you're writing to, what about and \
+        in which language.
+        """)
     }
   }
 }
@@ -113,7 +117,7 @@ private struct LaunchAtLogin: View {
       }
       failure = nil
     } catch {
-      failure = "Couldn't change the login item: \(error.localizedDescription)"
+      failure = String(localized: "Couldn't change the login item: \(error.localizedDescription)")
     }
     status = SMAppService.mainApp.status
   }
@@ -125,7 +129,7 @@ private struct AccountPane: View {
   var body: some View {
     Form {
       if let account = app.account {
-        LabeledContent("Signed in as", value: account.email ?? "ChatGPT user")
+        LabeledContent("Signed in as", value: account.name)
         Button("Sign Out") { Task { await app.signOut() } }
       } else {
         SignInControls(app: app)
@@ -186,7 +190,7 @@ struct PermissionStatus: View {
     // macOS lists an app in Screen Recording only after it asked for access once.
     request: { CGRequestScreenCaptureAccess() })
 
-  let title: String
+  let title: LocalizedStringKey
   let pane: String
   let isGranted: () -> Bool
   var request: () -> Void = {}

@@ -36,7 +36,8 @@ struct PromptsPane: View {
             let modified = prompts.isModified(prompt)
             // One label: VoiceOver reads a row by its value alone and would drop the name.
             Text(prompt.title + (modified ? " •" : ""))
-              .accessibilityLabel(prompt.title + (modified ? ", Modified" : ""))
+              .accessibilityLabel(
+                modified ? String(localized: "\(prompt.title), Modified") : prompt.title)
           }
         }
       }
@@ -52,10 +53,14 @@ private struct PromptGroup {
   let prompts: [EditablePrompt]
 
   static let all = [
-    PromptGroup(title: "Pipeline", prompts: [.readContext, .proofread, .explainChanges]),
-    PromptGroup(title: "Text Types", prompts: TextType.allCases.map(EditablePrompt.textType)),
-    PromptGroup(title: "Tones", prompts: Tone.allCases.map(EditablePrompt.tone)),
-    PromptGroup(title: "Levels", prompts: Level.allCases.map(EditablePrompt.level)),
+    PromptGroup(
+      title: String(localized: "Pipeline"), prompts: [.readContext, .proofread, .explainChanges]),
+    PromptGroup(
+      title: String(localized: "Text Types"),
+      prompts: TextType.allCases.map(EditablePrompt.textType)),
+    PromptGroup(title: String(localized: "Tones"), prompts: Tone.allCases.map(EditablePrompt.tone)),
+    PromptGroup(
+      title: String(localized: "Levels"), prompts: Level.allCases.map(EditablePrompt.level)),
   ]
 }
 
@@ -99,9 +104,9 @@ private struct PromptEditor: View {
 extension EditablePrompt {
   fileprivate var title: String {
     switch self {
-    case .proofread: "Proofread"
-    case .explainChanges: "Explain Changes"
-    case .readContext: "Read Context"
+    case .proofread: String(localized: "Proofread")
+    case .explainChanges: String(localized: "Explain Changes")
+    case .readContext: String(localized: "Read Context")
     case .textType(let type): type.title
     case .tone(let tone): tone.title
     case .level(let level): level.title
@@ -111,12 +116,12 @@ extension EditablePrompt {
   /// What the prompt does, next to its title.
   fileprivate var role: String {
     switch self {
-    case .proofread: "Main instructions for every check and dialog message"
-    case .explainChanges: "Writes the reason for each change"
-    case .readContext: "Describes the conversation from a window screenshot"
-    case .textType: "Text type"
-    case .tone: "Tone"
-    case .level: "Level"
+    case .proofread: String(localized: "Main instructions for every check and dialog message")
+    case .explainChanges: String(localized: "Writes the reason for each change")
+    case .readContext: String(localized: "Describes the conversation from a window screenshot")
+    case .textType: String(localized: "Text type")
+    case .tone: String(localized: "Tone")
+    case .level: String(localized: "Level")
     }
   }
 
@@ -124,21 +129,32 @@ extension EditablePrompt {
   fileprivate var note: String {
     switch self {
     case .proofread:
-      "The app adds # Settings after this text: the level, text type and tone chosen in the "
-        + "panel, the output language and your custom instructions from Style. The text, context "
-        + "and dictionary go in a separate message, and the reply format is set by the app."
+      String(
+        localized: """
+          The app adds # Settings after this text: the level, text type and tone chosen in the \
+          panel, the output language and your custom instructions from Style. The text, context \
+          and dictionary go in a separate message, and the reply format is set by the app.
+          """)
     case .explainChanges:
-      "The app sends the original, the corrected text and the numbered changes. The reply "
-        + "format, a category and a reason for each change, is set by the app."
+      String(
+        localized: """
+          The app adds a line after this text: write every reason in the language of the \
+          interface. It sends the original, the corrected text and the numbered changes. The \
+          reply format, a category and a reason for each change, is set by the app.
+          """)
     case .readContext:
-      "The app sends the window screenshot and your text. The reply format, the fields of "
-        + "Context, is set by the app."
+      String(
+        localized: """
+          The app sends the window screenshot and your text. The reply format, the fields of \
+          Context, is set by the app.
+          """)
     case .textType:
-      "Added to # Settings in Proofread when this type is selected in the panel."
+      String(localized: "Added to # Settings in Proofread when this type is selected in the panel.")
     case .tone:
-      "Added to # Settings in Proofread when this tone is selected in the panel."
+      String(localized: "Added to # Settings in Proofread when this tone is selected in the panel.")
     case .level:
-      "Added to # Settings in Proofread when this level is selected in the panel."
+      String(
+        localized: "Added to # Settings in Proofread when this level is selected in the panel.")
     }
   }
 }

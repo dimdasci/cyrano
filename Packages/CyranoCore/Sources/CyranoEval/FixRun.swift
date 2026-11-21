@@ -14,6 +14,9 @@ struct CaseReport {
 struct FixRun {
   let engine: any CorrectionEngine
   let models: ModelChoice
+  /// The reasons and the panel's texts are in this language; English keeps reports comparable
+  /// whatever language the Mac is in.
+  var language = InterfaceLanguage(preferences: ["en"])
 
   /// True when every case ran without an error.
   func run(_ casesFile: URL) async throws -> Bool {
@@ -21,7 +24,7 @@ struct FixRun {
     print("# Fix eval: \(models.proofreading.rawValue)\n")
     print(
       "\(Date.now.formatted(date: .abbreviated, time: .shortened)) · \(cases.count) cases · "
-        + "explanations: \(models.explanations.rawValue)\n")
+        + "explanations: \(models.explanations.rawValue) in \(language.code)\n")
     let reports = await reports(cases)
     for report in reports { print(report.markdown) }
     let failed = reports.count { $0.failed }
@@ -44,6 +47,10 @@ struct FixRun {
 
   /// One case as one panel: the first check, then each dialog message in turn.
   func report(_ item: FixCase) async -> CaseReport {
+    await InterfaceLanguage.$current.withValue(language) { await panel(item) }
+  }
+
+  private func panel(_ item: FixCase) async -> CaseReport {
     let dictionaryFile = URL.temporaryDirectory.appending(path: "cyrano-eval-\(UUID()).json")
     defer { try? FileManager.default.removeItem(at: dictionaryFile) }
     let dictionary = TermDictionary(file: dictionaryFile)

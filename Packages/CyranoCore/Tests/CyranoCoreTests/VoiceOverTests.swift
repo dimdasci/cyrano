@@ -4,7 +4,7 @@ import Testing
 @testable import CyranoCore
 
 /// What VoiceOver announces and reads in the panel (05 §2.4, §7).
-@MainActor @Suite struct VoiceOverTests {
+@MainActor @Suite(.inEnglish) struct VoiceOverTests {
   let grammar = Explanation(category: .grammar, reason: "Tense.")
   let style = Explanation(category: .style, reason: "Reads better.")
 
@@ -69,7 +69,7 @@ import Testing
 
   @Test func aCardWithoutChangesSaysSo() {
     let same = version(.corrections(TextDiff(old: "Fine.", new: "Fine."), .ready([:])))
-    let translated = version(.translation(into: "German"))
+    let translated = version(.translation(into: "de"))
     let summaries: [String] = [same.summary, translated.summary, translated.announcement]
     #expect(
       summaries == ["No changes needed", "Translated to German", "Version 1, translated to German"])

@@ -7,8 +7,10 @@ struct ContextTip: Tip {
   var title: Text { Text("Add who you're writing to") }
   var message: Text? {
     Text(
-      "Who it's for, what about, or the message you're replying to. Type or paste it, or paste "
-        + "a screenshot. The check takes it into account.")
+      """
+      Who it's for, what about, or the message you're replying to. Type or paste it, or paste a \
+      screenshot. The check takes it into account.
+      """)
   }
   var image: Image? { Image(systemName: "text.bubble") }
 }

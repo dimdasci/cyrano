@@ -201,8 +201,10 @@ public final class ProofreadingSession {
 
   private func explain(_ version: Version, diff: TextDiff, old: String) async {
     var explanations = Version.Explanations.unavailable
+    let instructions =
+      prompts.text(.explainChanges) + "\n" + Prompts.reasons(in: InterfaceLanguage.current)
     let call = ExplainCall.call(
-      model: models.explanations, instructions: prompts.text(.explainChanges), old: old, diff: diff)
+      model: models.explanations, instructions: instructions, old: old, diff: diff)
     if let output = try? await run(call),
       let parsed = try? ExplainCall.parse(output, diff: diff)
     {
@@ -230,7 +232,7 @@ public final class ProofreadingSession {
       self.activity = progress(partial.kind.flatMap(Kind.init(rawValue:)), partial.text)
     }
     guard let reply = FixReply<Kind>(output: output) else {
-      throw EngineError.failed("The reply was not the fields asked for.")
+      throw EngineError.failed(localized("The reply was not the fields asked for."))
     }
     sentContext = sent
     let text = Prompts.restoringTags(Prompts.cleanOutput(reply.text, original: latestText))
@@ -250,7 +252,7 @@ public final class ProofreadingSession {
         return text
       }
     }
-    throw EngineError.failed("The response ended before it was complete.")
+    throw EngineError.failed(localized("The response ended before it was complete."))
   }
 
   private func history() -> [ChatMessage] {
@@ -350,7 +352,7 @@ extension ProofreadingSession {
     guard contextReading == reading else { return }
     contextReading = nil
     finishReading(result, timedOut: timedOut)
-    announce(contextStatus?.message ?? "Context read from the window.")
+    announce(contextStatus?.message ?? localized("Context read from the window."))
   }
 
   /// Try Again after a failed read: the same screenshot, read again.
@@ -371,7 +373,7 @@ extension ProofreadingSession {
     switch result {
     case .success(let answer):
       guard let read = ConversationContext(answer: answer) else {
-        contextStatus = .failed(.failed("The answer was not the fields asked for."))
+        contextStatus = .failed(.failed(localized("The reply was not the fields asked for.")))
         return
       }
       context = read.text

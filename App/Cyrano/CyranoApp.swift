@@ -80,7 +80,7 @@ private struct MenuContent: View {
     Button("Check Clipboard") { app.checkClipboard() }
     Divider()
     if let account = app.account {
-      Text("Signed in as \(account.email ?? "ChatGPT user")")
+      Text("Signed in as \(account.name)")
     } else {
       Button("Sign In with ChatGPT…") { app.showSettings(.account) }
     }

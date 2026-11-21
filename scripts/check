@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Quality gate: format, build (warnings are errors), tests, lint, duplication, unused code.
+# Quality gate: format, build (warnings are errors), tests, lint, duplication, unused code,
+# translated interface texts.
 # Runs every step and reports all failures. See docs/quality.md.
 #
 #   scripts/check         check everything
@@ -56,6 +57,9 @@ step "Cyrano: build" xcodebuild -project App/Cyrano.xcodeproj -scheme Cyrano -co
   -derivedDataPath .build/xcode -quiet build
 step "Cyrano: periphery" periphery scan --project App/Cyrano.xcodeproj --schemes Cyrano \
   --strict --quiet --skip-build --index-store-path .build/xcode/Index.noindex/DataStore
+
+# Every interface text is in a String Catalog and translated: reads the keys both builds extracted.
+step "strings" scripts/check-strings
 
 step "swiftlint" swiftlint lint --strict --quiet
 step "jscpd" jscpd --silent

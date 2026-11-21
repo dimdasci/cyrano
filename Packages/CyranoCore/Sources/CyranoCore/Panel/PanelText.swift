@@ -1,10 +1,7 @@
 // What the panel says in words: card summaries, error lines, and what VoiceOver reads and
-// announces. See docs/specs/05-ui.md §2.3a, §2.4, §2.8, §7.
+// announces, in the interface language. See docs/specs/05-ui.md §2.3a, §2.4, §2.8, §7.
 
-/// "1 fix", "2 fixes".
-public func plural(_ count: Int, _ one: String, _ many: String? = nil) -> String {
-  "\(count) \(count == 1 ? one : many ?? one + "s")"
-}
+import Foundation
 
 /// A change as the user sees it: an error or a style suggestion, once its reason says which. Until
 /// the reason arrives, and when Explain failed or skipped the change, its category is unknown.
@@ -28,24 +25,27 @@ extension Version {
   public var summary: String {
     switch edit {
     case .translation(let language):
-      return "Translated to \(language)"
+      return localized("Translated to \(InterfaceLanguage.current.name(of: language))")
     case .corrections(let diff, _) where diff.changes.isEmpty:
-      return "No changes needed"
+      return localized("No changes needed")
     case .corrections(_, .pending):
-      return "Explaining…"
+      return localized("Explaining…")
     case .corrections(let diff, .unavailable):
-      return plural(diff.changes.count, "change")
+      return localized("\(diff.changes.count) changes")
     case .corrections(let diff, .ready):
       let kinds = diff.changes.map(kind(of:))
       let fixes = kinds.count(.error)
       let style = kinds.count(.style)
       let unknown = kinds.count(.unknown)
       let known = [
-        fixes > 0 ? plural(fixes, "fix", "fixes") : nil,
-        style > 0 ? plural(style, "style suggestion") : nil,
+        fixes > 0 ? localized("\(fixes) fixes") : nil,
+        style > 0 ? localized("\(style) style suggestions") : nil,
       ].compactMap(\.self)
       // A change Explain skipped isn't counted as a fix.
-      let other = unknown > 0 ? plural(unknown, known.isEmpty ? "change" : "other change") : nil
+      let other =
+        unknown == 0
+        ? nil
+        : known.isEmpty ? localized("\(unknown) changes") : localized("\(unknown) other changes")
       return (known + [other].compactMap(\.self)).joined(separator: " · ")
     }
   }
@@ -63,13 +63,14 @@ extension Version {
 
   /// What VoiceOver says when the card appears, before its reasons arrive: "Version 2, 1 change".
   public var announcement: String {
-    let what =
-      switch edit {
-      case .translation(let language): "translated to \(language)"
-      case .corrections(let diff, _) where diff.changes.isEmpty: "no changes needed"
-      case .corrections(let diff, _): plural(diff.changes.count, "change")
-      }
-    return "Version \(number), \(what)"
+    switch edit {
+    case .translation(let language):
+      localized("Version \(number), translated to \(InterfaceLanguage.current.name(of: language))")
+    case .corrections(let diff, _) where diff.changes.isEmpty:
+      localized("Version \(number), no changes needed")
+    case .corrections(let diff, _):
+      localized("Version \(number), \(diff.changes.count) changes")
+    }
   }
 }
 
@@ -83,15 +84,15 @@ extension Change {
   public func spoken(reason: Explanation?) -> String {
     let kind =
       switch ChangeKind(reason) {
-      case .error: "error"
-      case .style: "style suggestion"
-      case .unknown: "change"
+      case .error: localized("error")
+      case .style: localized("style suggestion")
+      case .unknown: localized("change")
       }
     let edit =
       switch (words[0], words[1]) {
-      case ("", let new): "\(new), added"
-      case (let old, ""): "\(old), removed"
-      case (let old, let new): "\(old), replaced with \(new)"
+      case ("", let new): localized("\(new), added")
+      case (let old, ""): localized("\(old), removed")
+      case (let old, let new): localized("\(old), replaced with \(new)")
       }
     let label = "\(edit), \(kind)"
     return reason.map { "\(label). \($0.reason)" } ?? label
@@ -102,15 +103,19 @@ extension EngineError {
   /// The error card in the feed (05 §2.8).
   public var message: String {
     switch self {
-    case .notSignedIn: "Sign in to ChatGPT to check text."
-    case .planLimitReached: "Your ChatGPT plan limit for this app is reached."
-    case .planUsageUnavailable: "ChatGPT plan usage isn't available for this app right now."
-    case .network: "Couldn't reach OpenAI."
-    case .timedOut: "OpenAI stopped answering. Try again in a moment."
+    case .notSignedIn: localized("Sign in to ChatGPT to check text.")
+    case .planLimitReached: localized("Your ChatGPT plan limit for this app is reached.")
+    case .planUsageUnavailable:
+      localized("ChatGPT plan usage isn't available for this app right now.")
+    case .network: localized("Couldn't reach OpenAI.")
+    case .timedOut: localized("OpenAI stopped answering. Try again in a moment.")
     case .signInNotSaved:
-      "Cyrano couldn't save your ChatGPT sign-in to the Keychain. Choose Try Again and allow "
-        + "access when macOS asks; if Cyrano quits first, you'll need to sign in again."
-    case .failed(let detail): "The check failed: \(detail)"
+      localized(
+        """
+        Cyrano couldn't save your ChatGPT sign-in to the Keychain. Choose Try Again and allow \
+        access when macOS asks; if Cyrano quits first, you'll need to sign in again.
+        """)
+    case .failed(let detail): localized("The check failed: \(detail)")
     }
   }
 }
@@ -119,16 +124,17 @@ extension ContextStatus {
   /// The line by the Context title (05 §2.3a).
   public var message: String {
     switch self {
-    case .reading: "Reading the conversation…"
-    case .nothingFound: "No conversation found in this window"
-    case .timedOut: "Reading took too long"
-    case .failed(.notSignedIn): "Couldn't read: not signed in to ChatGPT"
-    case .failed(.planLimitReached): "Couldn't read: plan limit reached"
-    case .failed(.planUsageUnavailable): "Couldn't read: plan usage unavailable"
-    case .failed(.network): "Couldn't reach OpenAI"
-    case .failed(.timedOut): "Couldn't read: OpenAI stopped answering"
-    case .failed(.signInNotSaved): "Couldn't read: sign-in not saved to the Keychain"
-    case .failed(.failed): "Couldn't read the conversation"
+    case .reading: localized("Reading the conversation…")
+    case .nothingFound: localized("No conversation found in this window")
+    case .timedOut: localized("Reading took too long")
+    case .failed(.notSignedIn): localized("Couldn't read: not signed in to ChatGPT")
+    case .failed(.planLimitReached): localized("Couldn't read: plan limit reached")
+    case .failed(.planUsageUnavailable): localized("Couldn't read: plan usage unavailable")
+    case .failed(.network): localized("Couldn't reach OpenAI")
+    case .failed(.timedOut): localized("Couldn't read: OpenAI stopped answering")
+    case .failed(.signInNotSaved):
+      localized("Couldn't read: sign-in not saved to the Keychain")
+    case .failed(.failed): localized("Couldn't read the conversation")
     }
   }
 

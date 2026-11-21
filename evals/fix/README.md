@@ -14,6 +14,12 @@ Without a model argument it uses the default check model (`gpt-6.1-sol`); the mo
 Packages/CyranoCore/.build/debug/cyrano-eval fix evals/fix/cases.json gpt-6.1-sol gpt-6-luna > evals/private/fix-runs/sol-luna.md
 ```
 
+The explanations are in the interface language (05 §6). The runner explains in English whatever language the Mac is in; a third argument, `es` or `ru`, runs it as Cyrano does with a Spanish or Russian interface, and the report's header names the language:
+
+```bash
+Packages/CyranoCore/.build/debug/cyrano-eval fix evals/fix/cases.json gpt-6.1-sol gpt-6.1-sol ru > evals/private/fix-runs/sol-ru.md
+```
+
 The runner checks four cases at a time, so a run of the whole set takes two and a half to three and a half minutes (measured 2026-11-06); the report keeps the order of the cases. Don't run the eval and the app at the same time, or two evals at once: each refreshes the token.
 
 The first run after a build asks for access to Cyrano's Keychain item, and its first cases wait until the user allows it: once 840 s. Their times are then useless, so after a build, first run a file with a single case, and measure from the next run.

@@ -46,6 +46,6 @@ struct ContextStatusLine: View {
   /// Seconds appear once the wait is longer than usual.
   private func reading(for elapsed: TimeInterval) -> String {
     let seconds = Int(elapsed)
-    return seconds < 3 ? status.message : "\(status.message) \(seconds) s"
+    return seconds < 3 ? status.message : String(localized: "\(status.message) \(seconds) s")
   }
 }

@@ -15,13 +15,17 @@ let strictSettings: [SwiftSetting] = [
 
 let package = Package(
   name: "CyranoCore",
+  // The interface texts are in a String Catalog with English as the source (05 §6).
+  defaultLocalization: "en",
   platforms: [.macOS("27.0")],
   products: [
     .library(name: "CyranoCore", targets: ["CyranoCore"]),
     .executable(name: "cyrano-eval", targets: ["CyranoEval"]),
   ],
   targets: [
-    .target(name: "CyranoCore", swiftSettings: strictSettings),
+    .target(
+      name: "CyranoCore", resources: [.process("Localizable.xcstrings")],
+      swiftSettings: strictSettings),
     // Runs the prompts on eval cases with the app's code (docs/specs/04-prompts.md §5).
     .executableTarget(
       name: "CyranoEval", dependencies: ["CyranoCore"], swiftSettings: strictSettings),

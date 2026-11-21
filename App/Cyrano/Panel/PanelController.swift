@@ -31,16 +31,16 @@ final class PanelModel {
 
   /// The source app goes into the title bar, which truncates it natively; the header row keeps
   /// its width for the pop-ups.
-  var title: String { "Proofreading — \(captured.appName)" }
+  var title: String { String(localized: "Proofreading — \(captured.appName)") }
 
   func copy(_ text: String) {
     Clipboard.copy(text)
-    status = .note("Copied.")
+    status = .note(String(localized: "Copied."))
   }
 
   /// Check or Send, with the label and state Core decides (05 §2.7).
   var action: PanelAction {
-    PanelAction(title: session.action == .check ? "Check" : "Send", isEnabled: session.canAct)
+    PanelAction(action: session.action, isEnabled: session.canAct)
   }
 
   /// The action button or ⌘↩: Core takes what is in the dialog field at this moment.
@@ -69,7 +69,8 @@ final class PanelModel {
     guard let app = captured.source else { return }
     Task {
       guard let png = await ScreenCapture.frontWindow(of: app) else {
-        status = .note("Couldn't capture the window. Check Screen Recording in Settings.")
+        status = .note(
+          String(localized: "Couldn't capture the window. Check Screen Recording in Settings."))
         return
       }
       session.images.append(png)
@@ -106,10 +107,10 @@ final class PanelController: NSObject, NSWindowDelegate {
     // A second press while the question is up asks nothing new.
     guard window.attachedSheet == nil else { return }
     let alert = NSAlert()
-    alert.messageText = "Close this panel and check the new text?"
-    alert.informativeText = "Its versions and conversation will be closed."
-    alert.addButton(withTitle: "Check New Text")
-    alert.addButton(withTitle: "Return to Panel").keyEquivalent = "\u{1b}"
+    alert.messageText = String(localized: "Close this panel and check the new text?")
+    alert.informativeText = String(localized: "Its versions and conversation will be closed.")
+    alert.addButton(withTitle: String(localized: "Check New Text"))
+    alert.addButton(withTitle: String(localized: "Return to Panel")).keyEquivalent = "\u{1b}"
     alert.beginSheetModal(for: window) { [weak self] response in
       guard response == .alertFirstButtonReturn else { return }
       self?.show(makeModel(), near: field)

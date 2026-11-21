@@ -58,7 +58,8 @@ private struct PanelHeader: View {
       Spacer(minLength: 6)
       popUp(
         "Output language", $session.options.language, OutputLanguage.allCases, \.title,
-        label: session.options.language == .sameAsText ? "Auto" : nil, icon: "globe"
+        label: session.options.language == .sameAsText ? String(localized: "Auto") : nil,
+        icon: "globe"
       )
       .help("Language of the corrected text")
     }
@@ -72,7 +73,7 @@ private struct PanelHeader: View {
 
   /// A pop-up as wide as its current value, not as its longest option.
   private func popUp<Value: Hashable>(
-    _ name: String, _ selection: Binding<Value>, _ values: [Value],
+    _ name: LocalizedStringKey, _ selection: Binding<Value>, _ values: [Value],
     _ title: KeyPath<Value, String>, label: String? = nil, icon: String? = nil
   ) -> some View {
     Menu {
@@ -101,7 +102,7 @@ private struct Composer: View {
     self.model = model
     session = model.session
   }
-  private static let placeholder = "Ask or tell what to change… (any language)"
+  private static let placeholder = String(localized: "Ask or tell what to change… (any language)")
 
   var body: some View {
     VStack(alignment: .leading, spacing: 8) {
@@ -122,8 +123,8 @@ private struct Composer: View {
         // The first version replaces Text to check, which had the keyboard: the field takes it
         // over, so the keyboard isn't left nowhere (05 §7).
         FieldText(
-          text: $session.draft, label: "Ask or tell what to change", placeholder: Self.placeholder,
-          takesFocus: true
+          text: $session.draft, label: String(localized: "Ask or tell what to change"),
+          placeholder: Self.placeholder, takesFocus: true
         )
         .frame(height: 44)
         .overlay(alignment: .topLeading) {
@@ -159,7 +160,7 @@ private struct StatusLine: View {
           Image(systemName: "exclamationmark.octagon.fill").foregroundStyle(.red)
         }
       } else {
-        Text("\(tokens(session.tokens)) tokens")
+        Text("\(session.tokens.formatted(.number.notation(.compactName))) tokens")
       }
       Spacer()
       if let status {
@@ -173,9 +174,5 @@ private struct StatusLine: View {
     .foregroundStyle(.secondary)
     .padding(.horizontal, 12)
     .padding(.vertical, 6)
-  }
-
-  private func tokens(_ count: Int) -> String {
-    count < 1000 ? "\(count)" : String(format: "%.1fk", Double(count) / 1000)
   }
 }

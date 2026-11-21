@@ -27,7 +27,7 @@ struct CapturedText {
 
   init(text: String, app: NSRunningApplication, frame: CGRect? = nil) {
     self.text = text
-    appName = app.localizedName ?? "App"
+    appName = app.localizedName ?? String(localized: "App")
     bundleID = app.bundleIdentifier
     self.frame = frame
     source = app
@@ -61,7 +61,7 @@ enum TextCapture {
   }
 
   static func manual(_ text: String) -> CapturedText {
-    CapturedText(text: text, appName: "Manual")
+    CapturedText(text: text, appName: String(localized: "Manual"))
   }
 
   private static func fromSelection(_ app: NSRunningApplication) async -> CapturedText? {

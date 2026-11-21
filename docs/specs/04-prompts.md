@@ -156,14 +156,16 @@ The author's message goes as typed, without a wrapper, and a dialog turn is one 
 Instructions:
 ```
 You explain corrections to the author of the text.
-For each numbered change, write one short reason in English, at most 12 words.
+For each numbered change, write one short reason, at most 12 words.
 Name the rule when there is one, for example: subject-verb agreement, article, preposition, tense, spelling.
 Use category "style" only when the original was correct and the change is a matter of taste.
 A convention that some style guides require and others don't is a matter of taste: use "style" and explain the change as a choice, not as a rule.
 Wording a fluent speaker wouldn't use is an error, "wordChoice", even when it is grammatical.
 ```
 
-The reasons are in English, the language of the interface (02 M7, 05 §6). The two lines pull in opposite directions on purpose. The first moves optional points (the serial comma, `that` for a restrictive clause, `data are`, a contraction spelled out) to `style`; alone, it moves calques and unnatural phrases there too, because they are grammatical. The second keeps those as `wordChoice`. Neither names a convention or a phrase: held-out cases check them (§5.3).
+The two lines pull in opposite directions on purpose. The first moves optional points (the serial comma, `that` for a restrictive clause, `data are`, a contraction spelled out) to `style`; alone, it moves calques and unnatural phrases there too, because they are grammatical. The second keeps those as `wordChoice`. Neither names a convention or a phrase: held-out cases check them (§5.3).
+
+The reasons are in the language of the interface (02 M7, 05 §6): after the prompt, edited or not, the app adds `Write every reason in {language}.`, with the language's English name ("Russian"). The runs in §5.3 were made before this line, with `in English` in the prompt; the prompt with the line hasn't been through the eval.
 
 Input:
 ```

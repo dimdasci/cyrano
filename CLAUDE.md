@@ -6,7 +6,7 @@ A native macOS app for checking short texts with models available through a Chat
 - `App/` — only UI, AX, hotkeys, windows. Keep logic that can be covered by a test in CyranoCore.
 - `evals/` — the example set and the runner for testing prompts.
 
-Everything is in English: docs, code and code comments, and everything the user sees (interface, CHANGELOG and release notes, README). Write docs by the voice and formatting rules in [docs/style.md](docs/style.md). Indent with 2 spaces.
+Docs, code and code comments, the CHANGELOG, release notes and the README are in English. The interface is in English, Spanish and Russian: every text the user sees or hears, VoiceOver included, goes through a String Catalog (`App/Cyrano/Localizable.xcstrings`, Core's in `Packages/CyranoCore/Sources/CyranoCore/Localizable.xcstrings`) with English as the source, and a new text comes with its Spanish and Russian translations ([05 §6](docs/specs/05-ui.md#6-interface-texts)). The prompts and what goes to the model stay in English. Write docs by the voice and formatting rules in [docs/style.md](docs/style.md). Indent with 2 spaces.
 
 ## Releases
 

@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+"""Every interface text is in a String Catalog and translated into each language (docs/quality.md).
+
+Reads the keys the compiler extracted from the code during the builds of scripts/check and
+compares them with the catalogs: a text missing from a catalog, a catalog text the code no longer
+uses, a language without a translation, a plural without the forms its language needs, and a
+translation whose placeholders differ from the English text are failures. The languages are the
+ones the catalogs have, so a new language must be translated in full.
+"""
+
+import glob
+import json
+import re
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent.parent
+
+# A catalog and where its target's build leaves the extracted keys.
+CATALOGS = [
+    (
+        "Packages/CyranoCore/Sources/CyranoCore/Localizable.xcstrings",
+        "Packages/CyranoCore/.build/out/Intermediates.noindex/CyranoCore.build/**/*.stringsdata",
+    ),
+    (
+        "App/Cyrano/Localizable.xcstrings",
+        ".build/xcode/Build/Intermediates.noindex/Cyrano.build/**/*.stringsdata",
+    ),
+]
+# Translated, but filled from the Info.plist keys rather than from the code.
+INFO_PLIST = "App/Cyrano/InfoPlist.xcstrings"
+
+PLURAL_FORMS = {"en": {"one", "other"}, "es": {"one", "other"}, "ru": {"one", "few", "many", "other"}}
+PLACEHOLDER = re.compile(r"%(?:\d+\$)?(?:lld|ld|d|@|#@\w+@)")
+
+
+def placeholders(text):
+    """The kinds of the format arguments, in no particular order: ["@", "lld"]."""
+    kinds = []
+    for match in PLACEHOLDER.findall(text):
+        kind = re.sub(r"^%(\d+\$)?", "", match)
+        kinds.append("lld" if kind.startswith("#@") else kind)
+    return sorted(kinds)
+
+
+def units(localization):
+    """Every text of one language: the text itself, its plural forms and substitutions."""
+    if "stringUnit" in localization:
+        yield None, localization["stringUnit"]
+    for form, variation in localization.get("variations", {}).get("plural", {}).items():
+        yield form, variation["stringUnit"]
+    for substitution in localization.get("substitutions", {}).values():
+        for form, variation in substitution["variations"]["plural"].items():
+            yield form, variation["stringUnit"]
+
+
+def plural_forms(localization):
+    """The plural forms of each plural in the text: its variations and its substitutions."""
+    plurals = []
+    if "variations" in localization:
+        plurals.append(set(localization["variations"]["plural"]))
+    for substitution in localization.get("substitutions", {}).values():
+        plurals.append(set(substitution["variations"]["plural"]))
+    return plurals
+
+
+def problems_of(key, entry, languages):
+    if entry.get("shouldTranslate") is False:
+        return
+    localizations = entry.get("localizations", {})
+    for language in languages:
+        localization = localizations.get(language)
+        if localization is None:
+            if language != "en":
+                yield f"no {language} translation"
+            continue
+        texts = list(units(localization))
+        if not texts:
+            yield f"{language}: empty"
+        for _, unit in texts:
+            if unit.get("state") != "translated" or not unit.get("value"):
+                yield f"{language}: not translated"
+        needed = PLURAL_FORMS.get(language, {"other"})
+        for forms in plural_forms(localization):
+            if not needed <= forms:
+                yield f"{language}: plural lacks {', '.join(sorted(needed - forms))}"
+        if "variations" not in localization and "stringUnit" in localization:
+            value = localization["stringUnit"]["value"]
+            if placeholders(value) != placeholders(key):
+                yield f"{language}: placeholders differ from the English text"
+
+
+def extracted_keys(pattern):
+    files = glob.glob(str(ROOT / pattern), recursive=True)
+    if not files:
+        sys.exit(f"no extracted strings at {pattern}: build first (scripts/check does)")
+    keys = set()
+    for file in files:
+        with open(file, encoding="utf-8") as handle:
+            for item in json.load(handle).get("tables", {}).get("Localizable", []):
+                keys.add(item["key"])
+    return keys
+
+
+def load(path):
+    with open(ROOT / path, encoding="utf-8") as handle:
+        return json.load(handle)["strings"]
+
+
+def main():
+    catalogs = {path: load(path) for path, _ in CATALOGS}
+    catalogs[INFO_PLIST] = load(INFO_PLIST)
+    languages = sorted(
+        {
+            language
+            for strings in catalogs.values()
+            for entry in strings.values()
+            for language in entry.get("localizations", {})
+        }
+        | {"en"}
+    )
+    failures = []
+    for path, pattern in CATALOGS:
+        used = extracted_keys(pattern)
+        strings = catalogs[path]
+        failures += [f"{path}: missing “{key}”" for key in sorted(used - strings.keys())]
+        failures += [f"{path}: unused “{key}”" for key in sorted(strings.keys() - used)]
+    for path, strings in catalogs.items():
+        for key, entry in strings.items():
+            failures += [f"{path}: “{key}”: {problem}" for problem in problems_of(key, entry, languages)]
+    for failure in failures:
+        print(failure)
+    if failures:
+        sys.exit(1)
+    total = sum(len(strings) for strings in catalogs.values())
+    print(f"{total} texts in {', '.join(languages)}")
+
+
+main()

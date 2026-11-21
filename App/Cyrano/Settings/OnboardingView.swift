@@ -73,8 +73,7 @@ struct OnboardingView: View {
     Section("1. Sign in") {
       Text("Cyrano uses your ChatGPT Plus or Pro plan to check your messages.")
       if let account = app.account {
-        Label(
-          "Signed in as \(account.email ?? "ChatGPT user")", systemImage: "checkmark.circle.fill")
+        Label("Signed in as \(account.name)", systemImage: "checkmark.circle.fill")
       } else {
         SignInControls(app: app)
       }
