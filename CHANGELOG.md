@@ -10,6 +10,9 @@ The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); ver
 
 ## [0.14.0] - 2026-11-21
 
+Cyrano now speaks Spanish and Russian as well as English, and you can pick its language in
+Settings.
+
 ### Added
 
 - Cyrano speaks Spanish (Spain) and Russian as well as English: the panel, onboarding, Settings,
