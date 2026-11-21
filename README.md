@@ -51,7 +51,7 @@ Once, before the first build, create a local signing certificate; otherwise the 
 scripts/make-signing-identity
 ```
 
-On first launch: Continue with ChatGPT → the Accessibility permission → Screen Recording, if you keep reading context from the window turned on → ⌥⌘G in any text field. Core tests:
+On first launch onboarding welcomes you: Continue with ChatGPT → the Accessibility permission → Screen Recording, if you keep reading context from the window turned on → Done. After that Cyrano starts without a window and stays in the Dock; a click on its icon opens Settings, and ⌥⌘G in any text field opens the Proofreading panel. Core tests:
 
 ```bash
 cd Packages/CyranoCore && swift test

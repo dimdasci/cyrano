@@ -94,14 +94,15 @@ private struct ChangeList: View {
   }
 
   private func description(_ change: Change) -> some View {
-    let reason = version.reasons[change.id]
+    let reason = version.reason(for: change)
+    let ascender = DiffText.changeFont.ascender
     return HStack(alignment: .firstTextBaseline, spacing: 8) {
-      // The shape tells error from style; green and blue on white fall below 3:1.
-      Text(reason?.category == .style ? "◇" : "●")
-        .foregroundStyle(.secondary)
+      // An ordinary list bullet: the line under the change tells error from style.
+      Text("•").foregroundStyle(.secondary)
       VStack(alignment: .leading, spacing: 2) {
-        Text("\(change.words[0]) → \(change.words[1])").font(
-          .system(.body, design: .monospaced))
+        MarkedText(text: DiffText.change(change, kind: version.kind(of: change)))
+          // The bullet and Reject sit on the first line's baseline.
+          .alignmentGuide(.firstTextBaseline) { _ in ascender }
         if let reason { Text(reason.reason).foregroundStyle(.secondary) }
       }
     }
@@ -130,16 +131,10 @@ private struct ChangeList: View {
 
 extension Version {
   fileprivate var changes: [Change] { diff?.changes ?? [] }
-
-  fileprivate var reasons: [Int: Explanation] {
-    guard case .corrections(_, .ready(let reasons)) = edit else { return [:] }
-    return reasons
-  }
 }
 
-/// Removed words struck through and dimmed; added words underlined on a tinted background,
-/// solid for errors and dashed for style. Color is never the only signal, and every text keeps
-/// 4.5:1 against its background. A translation is shown as plain text.
+/// Removed words struck through and dimmed; each change's whole block carries its mark (`ChangeMark`).
+/// Every text keeps 4.5:1 against its background. A translation is shown as plain text.
 enum DiffText {
   private static let plain: [NSAttributedString.Key: Any] = [
     .font: NSFont.systemFont(ofSize: 14), .foregroundColor: NSColor.labelColor,
@@ -156,27 +151,31 @@ enum DiffText {
     return result
   }
 
-  /// Removed words in the label color at 60%: 5.7:1 on the card, where the system's secondary
-  /// label color gives 3.95:1 in the light theme.
+  /// A change's removed words, the space and its added words carry its mark as one block. Removed
+  /// words are struck through in the label color at 60%, where the system's secondary label color
+  /// gives 3.95:1 on the light card.
   private static func attributes(_ piece: DiffLayout.Piece, _ version: Version)
     -> [NSAttributedString.Key: Any]
   {
-    var attributes = plain
-    switch piece.kind {
-    case .same, .gap:
-      break
-    case .removed:
-      attributes[.strikethroughStyle] = NSUnderlineStyle.single.rawValue
-      attributes[.foregroundColor] = NSColor.labelColor.withAlphaComponent(0.6)
-    case .added(let change):
-      let isStyle = version.reasons[change.id]?.category == .style
-      attributes[.underlineStyle] =
-        isStyle
-        ? NSUnderlineStyle([.single, .patternDash]).rawValue : NSUnderlineStyle.single.rawValue
-      attributes[.backgroundColor] =
-        isStyle
-        ? NSColor.systemBlue.withAlphaComponent(0.15) : NSColor.systemGreen.withAlphaComponent(0.2)
-    }
-    return attributes
+    guard let change = piece.change else { return plain }
+    let marked = plain.merging(ChangeMark.text(version.kind(of: change))) { $1 }
+    guard case .removed = piece.kind else { return marked }
+    return marked.merging([
+      .strikethroughStyle: NSUnderlineStyle.single.rawValue,
+      .foregroundColor: NSColor.labelColor.withAlphaComponent(0.6),
+    ]) { $1 }
+  }
+
+  /// A row of the list of changes: `before → after` with the change's line under it.
+  static let changeFont = NSFont.monospacedSystemFont(
+    ofSize: NSFont.systemFontSize, weight: .regular)
+
+  static func change(_ change: Change, kind: ChangeKind) -> NSAttributedString {
+    let attributes: [NSAttributedString.Key: Any] = [
+      .font: changeFont, .foregroundColor: NSColor.labelColor,
+    ]
+    return NSAttributedString(
+      string: "\(change.words[0]) → \(change.words[1])",
+      attributes: attributes.merging(ChangeMark.line(kind)) { $1 })
   }
 }

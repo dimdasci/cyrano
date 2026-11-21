@@ -50,7 +50,8 @@ import Testing
     let session = session(engine, terms: [])
     await session.check()
     session.dictionary.add("k8s")
-    await session.perform(message: "make it shorter")
+    session.draft = "make it shorter"
+    await session.act()
     #expect(try !firstMessage(of: engine.fixCalls.first).contains("Keep these words"))
     #expect(try firstMessage(of: engine.fixCalls.last).contains("written: \"k8s\".\n</dict"))
   }

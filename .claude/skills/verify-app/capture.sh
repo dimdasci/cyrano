@@ -22,7 +22,9 @@ pgrep -xq SecurityAgent && fail "a Keychain or password prompt is open; not pres
 started=$(date '+%Y-%m-%d %H:%M:%S')
 file=${TMPDIR:-/tmp}/cyrano-verify.txt
 printf '%s' "$1" > "$file"
-osascript -e 'tell application "TextEdit" to close every document saving no' >/dev/null 2>&1
+# Only its own document: the user's documents in TextEdit stay as they are.
+osascript -e 'tell application "TextEdit" to close (every document whose name is "cyrano-verify.txt") saving no' \
+  >/dev/null 2>&1
 open -a TextEdit "$file"
 sleep 1.5
 osascript -e 'tell application "TextEdit" to activate' -e 'delay 0.5'

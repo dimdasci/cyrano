@@ -205,7 +205,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Cyrano;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Dim Kharitonov. MIT License.";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				OTHER_SWIFT_FLAGS = "-enable-upcoming-feature ExistentialAny -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InternalImportsByDefault";
@@ -230,7 +229,6 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = Cyrano;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
-				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSHumanReadableCopyright = "© 2026 Dim Kharitonov. MIT License.";
 				LD_RUNPATH_SEARCH_PATHS = "@executable_path/../Frameworks";
 				OTHER_SWIFT_FLAGS = "-enable-upcoming-feature ExistentialAny -enable-upcoming-feature MemberImportVisibility -enable-upcoming-feature InternalImportsByDefault";

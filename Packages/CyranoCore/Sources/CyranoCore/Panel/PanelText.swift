@@ -6,6 +6,23 @@ public func plural(_ count: Int, _ one: String, _ many: String? = nil) -> String
   "\(count) \(count == 1 ? one : many ?? one + "s")"
 }
 
+/// A change as the user sees it: an error or a style suggestion, once its reason says which. Until
+/// the reason arrives, and when Explain failed or skipped the change, its category is unknown.
+public enum ChangeKind: Sendable {
+  case error
+  case style
+  case unknown
+
+  init(_ reason: Explanation?) {
+    self =
+      switch reason?.category {
+      case nil: .unknown
+      case .style: .style
+      case .grammar, .spelling, .punctuation, .wordChoice: .error
+      }
+  }
+}
+
 extension Version {
   /// The summary line of the card: "5 fixes · 1 style suggestion", "Explaining…".
   public var summary: String {
@@ -18,15 +35,30 @@ extension Version {
       return "Explaining…"
     case .corrections(let diff, .unavailable):
       return plural(diff.changes.count, "change")
-    case .corrections(let diff, .ready(let reasons)):
-      let style = diff.changes.count { reasons[$0.id]?.category == .style }
-      let fixes = diff.changes.count - style
-      let parts = [
+    case .corrections(let diff, .ready):
+      let kinds = diff.changes.map(kind(of:))
+      let fixes = kinds.count(.error)
+      let style = kinds.count(.style)
+      let unknown = kinds.count(.unknown)
+      let known = [
         fixes > 0 ? plural(fixes, "fix", "fixes") : nil,
         style > 0 ? plural(style, "style suggestion") : nil,
-      ]
-      return parts.compactMap(\.self).joined(separator: " · ")
+      ].compactMap(\.self)
+      // A change Explain skipped isn't counted as a fix.
+      let other = unknown > 0 ? plural(unknown, known.isEmpty ? "change" : "other change") : nil
+      return (known + [other].compactMap(\.self)).joined(separator: " · ")
     }
+  }
+
+  /// The reason for a change, once Explain has given one.
+  public func reason(for change: Change) -> Explanation? {
+    guard case .corrections(_, .ready(let reasons)) = edit else { return nil }
+    return reasons[change.id]
+  }
+
+  /// How the card marks a change (05 §2.4).
+  public func kind(of change: Change) -> ChangeKind {
+    ChangeKind(reason(for: change))
   }
 
   /// What VoiceOver says when the card appears, before its reasons arrive: "Version 2, 1 change".
@@ -41,11 +73,20 @@ extension Version {
   }
 }
 
+extension [ChangeKind] {
+  fileprivate func count(_ kind: ChangeKind) -> Int { count { $0 == kind } }
+}
+
 extension Change {
-  /// A row of the list of changes as VoiceOver reads it: the change, error or style, then its
-  /// reason once it came. "has, replaced with have, error. Tense."
+  /// A row of the list of changes as VoiceOver reads it: the change, its kind ("change" until the
+  /// reason comes), then the reason. "has, replaced with have, error. Tense."
   public func spoken(reason: Explanation?) -> String {
-    let kind = reason?.category == .style ? "style suggestion" : "error"
+    let kind =
+      switch ChangeKind(reason) {
+      case .error: "error"
+      case .style: "style suggestion"
+      case .unknown: "change"
+      }
     let edit =
       switch (words[0], words[1]) {
       case ("", let new): "\(new), added"

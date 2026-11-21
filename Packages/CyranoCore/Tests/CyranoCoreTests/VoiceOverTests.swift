@@ -80,7 +80,7 @@ import Testing
     let added = Change(id: 2, old: "", new: "really ").spoken(reason: nil)
     let removed = Change(id: 3, old: "very ", new: "").spoken(reason: style)
     #expect(replaced == "has, replaced with have, error. Tense.")
-    #expect(added == "really, added, error")
+    #expect(added == "really, added, change")
     #expect(removed == "very, removed, style suggestion. Reads better.")
   }
 

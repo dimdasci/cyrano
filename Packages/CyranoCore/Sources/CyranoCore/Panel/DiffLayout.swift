@@ -7,17 +7,27 @@ public import Foundation
 /// VoiceOver reads the version's own text, without the removed words, so the card maps its text
 /// ranges between the two.
 public struct DiffLayout: Sendable {
+  /// Each piece of a change carries it: the card marks the removed words, the space and the added
+  /// words as one block.
   public enum Kind: Hashable, Sendable {
     case same
-    case removed
+    case removed(Change)
     /// The space between a change's removed and added words.
-    case gap
+    case gap(Change)
     case added(Change)
   }
 
   public struct Piece: Hashable, Sendable {
     public let text: String
     public let kind: Kind
+
+    /// The change this piece belongs to; nil for unchanged text.
+    public var change: Change? {
+      switch kind {
+      case .same: nil
+      case .removed(let change), .gap(let change), .added(let change): change
+      }
+    }
   }
 
   /// What the card shows, in order.
@@ -35,7 +45,7 @@ public struct DiffLayout: Sendable {
       case .changed(let change):
         let gap = change.old.isEmpty || change.new.isEmpty ? "" : " "
         return [
-          Piece(text: change.old, kind: .removed), Piece(text: gap, kind: .gap),
+          Piece(text: change.old, kind: .removed(change)), Piece(text: gap, kind: .gap(change)),
           Piece(text: change.new, kind: .added(change)),
         ].filter { !$0.text.isEmpty }
       }

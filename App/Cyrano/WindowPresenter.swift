@@ -7,7 +7,7 @@ final class WindowPresenter: NSObject, NSWindowDelegate {
   private var windows: [String: NSWindow] = [:]
 
   func show(id: String, title: String, size: CGSize, @ViewBuilder content: () -> some View) {
-    AppPresence.activate()
+    NSApp.activate()
     if let window = windows[id] {
       window.makeKeyAndOrderFront(nil)
       return

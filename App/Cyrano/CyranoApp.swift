@@ -1,5 +1,5 @@
-// Menu bar agent: the menu, Settings, the menus while a window is open and the global shortcut.
-// See docs/specs/05-ui.md §4.
+// An ordinary app in the Dock, with its menus, Settings, the optional menu bar icon and the global
+// shortcut. See docs/specs/02-tech-decisions.md T5, docs/specs/05-ui.md §4.
 
 import AppKit
 import CyranoCore
@@ -42,22 +42,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
   let app = AppModel()
 
   func applicationDidFinishLaunching(_ notification: Notification) {
+    // With no window open, macOS would count Cyrano as quit and may end it, taking ⌥⌘G with it;
+    // a Dock click then reaches no one (02 T5).
+    ProcessInfo.processInfo.disableAutomaticTermination("Cyrano waits for ⌥⌘G with no window open")
     // Hints in the panel stay until closed or followed (05 §1).
     try? Tips.configure([.displayFrequency(.immediate)])
-    AppPresence.start()
     KeyboardShortcuts.onKeyUp(for: .checkText) { [app] in
       app.checkFocusedText()
     }
     Task {
       await app.start()
-      if app.account == nil || !AXIsProcessTrusted() { app.showOnboarding() }
+      if let window = app.setup.windowAtLaunch { app.open(window) }
     }
   }
 
-  /// With the menu bar icon hidden, launching the app again is the way back in.
+  /// A click on the Dock icon and launching Cyrano again come here alike (05 §4).
   func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows: Bool) -> Bool {
-    app.showOnboarding()
-    return true
+    app.reopen()
+    return false
+  }
+
+  /// Closing the last window leaves Cyrano running, for the shortcut and the Dock; ⌘Q quits it.
+  func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+    false
   }
 }
 
@@ -67,7 +74,6 @@ extension KeyboardShortcuts.Name {
 
 private struct MenuContent: View {
   let app: AppModel
-  @Environment(\.openSettings) private var openSettings
 
   var body: some View {
     Button("Check Text…") { app.checkText() }
@@ -76,20 +82,16 @@ private struct MenuContent: View {
     if let account = app.account {
       Text("Signed in as \(account.email ?? "ChatGPT user")")
     } else {
-      Button("Sign In with ChatGPT…") { app.showOnboarding() }
+      Button("Sign In with ChatGPT…") { app.showSettings(.account) }
     }
     if !AXIsProcessTrusted() {
-      Button("Grant Accessibility…") { app.showOnboarding() }
+      Button("Grant Accessibility…") { app.showSettings(.general) }
     }
     Divider()
     Button("About Cyrano") { app.showAbout() }
-    // SettingsLink doesn't activate a menu bar agent, so a Settings window left behind another app
-    // would stay there.
-    Button("Settings…") {
-      AppPresence.activate()
-      openSettings()
-    }
-    .keyboardShortcut(",")
+    // A click on the menu bar icon doesn't activate Cyrano: Settings comes forward on its own.
+    Button("Settings…") { app.showSettings() }
+      .keyboardShortcut(",")
     Button("Quit Cyrano") { NSApp.terminate(nil) }
       .keyboardShortcut("q")
   }

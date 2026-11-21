@@ -1,5 +1,5 @@
-// First launch: sign in, Accessibility, context from the window, shortcut.
-// See docs/specs/05-ui.md §1.
+// The first setup: a welcome, sign in, Accessibility, context from the window, shortcut. It shows
+// until Done is pressed once. See docs/specs/05-ui.md §1.
 
 import CyranoCore
 import KeyboardShortcuts
@@ -13,6 +13,7 @@ struct OnboardingView: View {
 
   var body: some View {
     Form {
+      welcome
       signIn
       Section("2. Accessibility") {
         Text(
@@ -34,11 +35,7 @@ struct OnboardingView: View {
           .foregroundStyle(.secondary)
         Toggle("Show in menu bar", isOn: $showInMenuBar)
       }
-      HStack {
-        Spacer()
-        Button("Done") { app.closeOnboarding() }
-          .keyboardShortcut(.defaultAction)
-      }
+      done
     }
     .formStyle(.grouped)
     .frame(width: 520)
@@ -47,6 +44,28 @@ struct OnboardingView: View {
       geometry.contentSize.height + geometry.contentInsets.top + geometry.contentInsets.bottom
     } action: { _, height in
       fitHeight(height)
+    }
+  }
+
+  private var welcome: some View {
+    Section {
+      Text("Welcome to Cyrano")
+        .font(.title2)
+        .accessibilityAddTraits(.isHeader)
+      Text(
+        "Cyrano checks what you write in any app with your ChatGPT plan. Set up what it needs.")
+    }
+  }
+
+  /// Pressed once, Done ends onboarding for good (05 §1).
+  private var done: some View {
+    HStack {
+      Text("You can change all of this later in Settings.")
+        .font(.caption)
+        .foregroundStyle(.secondary)
+      Spacer()
+      Button("Done") { app.finishOnboarding() }
+        .keyboardShortcut(.defaultAction)
     }
   }
 

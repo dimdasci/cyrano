@@ -27,6 +27,8 @@ public final class ProofreadingSession {
 
   /// The text to check; the user may edit it until the first check.
   public var original: String
+  /// The message in the dialog field (05 §2.7).
+  public var draft = ""
   /// Who the text is for, what about, or the message it replies to; used from the next check on.
   /// Typing here stops reading it.
   public var context: String {
@@ -96,22 +98,28 @@ public final class ProofreadingSession {
     }
   }
 
-  /// Check until the first version, and again when the context changed and there is no message.
-  public func action(for message: String) -> Action {
+  /// Check until the first version, and again when the context changed and the field is empty.
+  public var action: Action {
     if versions.isEmpty { return .check }
-    return contextChanged && message.trimmed.isEmpty ? .check : .send
+    return contextChanged && draft.trimmed.isEmpty ? .check : .send
   }
 
-  public func canPerform(message: String) -> Bool {
+  public var canAct: Bool {
     guard !isBusy else { return false }
-    return switch action(for: message) {
+    return switch action {
     case .check: !latestText.trimmed.isEmpty
-    case .send: !message.trimmed.isEmpty
+    case .send: !draft.trimmed.isEmpty
     }
   }
 
-  public func perform(message: String) async {
-    switch action(for: message) {
+  /// The action button and ⌘↩: Check, or Send with what is in the field at this moment, however
+  /// it got there. The message leaves the field as it goes.
+  public func act() async {
+    guard canAct else { return }
+    let action = action
+    let message = draft
+    draft = ""
+    switch action {
     case .check: await check()
     case .send: await send(message)
     }

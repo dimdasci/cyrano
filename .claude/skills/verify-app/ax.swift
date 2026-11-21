@@ -15,8 +15,13 @@
 //   ax pick <title>           presses the open menu's item with this title
 //   ax dismiss                closes the open context menu without choosing an item
 //   ax appmenu <title>        presses a menu item of the app or its menu bar icon (Settings…)
-//   ax set <placeholder> <v>  puts the value into the text field with this placeholder or label,
-//                             or into the Nth field from the top for @N
+//   ax click <placeholder>    clicks into the text field with this placeholder or label, or
+//                             into the Nth field from the top for @N, with a real mouse click
+//   ax type <text>            types the text into the front app letter by letter with real keys,
+//                             switching between the enabled layouts (British, Russian) as needed;
+//                             only while Cyrano is in front
+//   ax dock [click]           says whether Cyrano's icon is in the Dock; with click, clicks it
+//                             with a real mouse click
 //   ax rows                   prints the rows of tables
 //   ax selectrow <value>      selects the table or list row that has a cell with this text, or
 //                             with this text followed by ", " and a state (Casual, Modified)
@@ -29,6 +34,7 @@
 
 import AppKit
 import ApplicationServices
+import Carbon
 
 let bundleID = "io.github.dimdasci.cyrano"
 
@@ -163,14 +169,19 @@ func rightClick(_ element: AXUIElement) {
 func click(_ element: AXUIElement, count: Int) {
   let rect = frame(element)
   let point = CGPoint(x: rect.midX, y: rect.midY)
+  // As a hand does: the pointer moves there first, and the button is held for a moment. The Dock
+  // ignores a press and release that come at the same instant.
+  CGEvent(mouseEventSource: nil, mouseType: .mouseMoved, mouseCursorPosition: point, mouseButton: .left)?
+    .post(tap: .cghidEventTap)
+  Thread.sleep(forTimeInterval: 0.3)
   for number in 1...count {
     for type in [CGEventType.leftMouseDown, .leftMouseUp] {
       let event = CGEvent(
         mouseEventSource: nil, mouseType: type, mouseCursorPosition: point, mouseButton: .left)
       event?.setIntegerValueField(.mouseEventClickState, value: Int64(number))
       event?.post(tap: .cghidEventTap)
+      Thread.sleep(forTimeInterval: 0.08)
     }
-    Thread.sleep(forTimeInterval: 0.05)
   }
 }
 
@@ -195,6 +206,128 @@ func pressKey(_ letter: String, _ modifiers: [String]) {
     event?.post(tap: .cghidEventTap)
     Thread.sleep(forTimeInterval: 0.05)
   }
+}
+
+/// One enabled keyboard layout and the key, with or without Shift, that types each character.
+struct KeyboardLayout {
+  let source: TISInputSource
+  let keys: [Character: (code: CGKeyCode, shift: Bool)]
+
+  static func enabled() -> [KeyboardLayout] {
+    let filter = [kTISPropertyInputSourceType: kTISTypeKeyboardLayout] as CFDictionary
+    // TISCreateInputSourceList returns a CFArray of TISInputSource.
+    let sources = TISCreateInputSourceList(filter, false).takeRetainedValue() as! [TISInputSource]
+    return sources.compactMap(KeyboardLayout.init)
+  }
+
+  static var current: TISInputSource { TISCopyCurrentKeyboardLayoutInputSource().takeRetainedValue() }
+
+  init?(_ source: TISInputSource) {
+    guard let raw = TISGetInputSourceProperty(source, kTISPropertyUnicodeKeyLayoutData) else {
+      return nil
+    }
+    let data = Unmanaged<CFData>.fromOpaque(raw).takeUnretainedValue() as Data
+    var keys: [Character: (code: CGKeyCode, shift: Bool)] = [:]
+    data.withUnsafeBytes { buffer in
+      guard let layout = buffer.baseAddress?.assumingMemoryBound(to: UCKeyboardLayout.self) else {
+        return
+      }
+      for shift in [false, true] {
+        // The main keys first: the keypad's digits come later and lose.
+        for code in 0..<UInt16(64) {
+          var dead: UInt32 = 0
+          var length = 0
+          var chars = [UniChar](repeating: 0, count: 4)
+          let modifiers = shift ? UInt32(shiftKey >> 8) & 0xFF : 0
+          UCKeyTranslate(
+            layout, code, UInt16(kUCKeyActionDown), modifiers, UInt32(LMGetKbdType()),
+            OptionBits(kUCKeyTranslateNoDeadKeysMask), &dead, chars.count, &length, &chars)
+          guard length == 1, let char = String(utf16CodeUnits: chars, count: 1).first,
+            !char.isNewline, keys[char] == nil
+          else { continue }
+          keys[char] = (CGKeyCode(code), shift)
+        }
+      }
+    }
+    self.source = source
+    self.keys = keys
+  }
+
+  var id: String {
+    let raw = TISGetInputSourceProperty(source, kTISPropertyInputSourceID)
+    return raw.map { Unmanaged<CFString>.fromOpaque($0).takeUnretainedValue() as String } ?? ""
+  }
+}
+
+/// Types text the way a person does: one key press per character through the HID tap, in a
+/// layout that has the character, so the app gets real key events and its input system makes the
+/// text. A line break is Return. The layout the user had comes back at the end.
+func type(_ text: String) {
+  let front = frontApp()
+  guard front == bundleID else { fail("Cyrano is not in front (\(front)); not typing") }
+  guard NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.SecurityAgent")
+    .isEmpty
+  else { fail("a password prompt is open; not typing") }
+  let layouts = KeyboardLayout.enabled()
+  let original = KeyboardLayout.current
+  // The user's layout comes back however typing ends: fail() exits without running a defer.
+  func restore() {
+    TISSelectInputSource(original)
+    Thread.sleep(forTimeInterval: 0.3)
+  }
+  func stop(_ message: String) -> Never {
+    restore()
+    fail(message)
+  }
+  defer { restore() }
+  var active = layouts.first { $0.id == KeyboardLayout(original)?.id }
+  for (index, char) in text.enumerated() {
+    // The user may click another app while this types: every key checks where it goes.
+    let now = frontApp()
+    guard now == bundleID else {
+      stop("\(now) came in front after \(index) characters; stopped typing")
+    }
+    if char.isNewline {
+      post(36, shift: false)
+      continue
+    }
+    if active?.keys[char] == nil {
+      guard let layout = layouts.first(where: { $0.keys[char] != nil }) else {
+        stop("no enabled layout types \(char)")
+      }
+      TISSelectInputSource(layout.source)
+      Thread.sleep(forTimeInterval: 0.3)
+      active = layout
+    }
+    if let key = active?.keys[char] { post(key.code, shift: key.shift) }
+  }
+}
+
+/// The app that owns the frontmost window, asked from the window server each time: NSWorkspace
+/// keeps an old answer in a process without a run loop.
+func frontApp() -> String {
+  let list = CGWindowListCopyWindowInfo([.optionOnScreenOnly, .excludeDesktopElements], kCGNullWindowID)
+    as? [[String: Any]] ?? []
+  let window = list.first { ($0[kCGWindowLayer as String] as? Int) == 0 }
+  guard let pid = window?[kCGWindowOwnerPID as String] as? pid_t,
+    let app = NSRunningApplication(processIdentifier: pid)
+  else { return "nothing" }
+  return app.bundleIdentifier ?? app.localizedName ?? "pid \(pid)"
+}
+
+func post(_ code: CGKeyCode, shift: Bool) {
+  let source = CGEventSource(stateID: .hidSystemState)
+  if shift { CGEvent(keyboardEventSource: source, virtualKey: 56, keyDown: true)?.post(tap: .cghidEventTap) }
+  for isDown in [true, false] {
+    let event = CGEvent(keyboardEventSource: source, virtualKey: code, keyDown: isDown)
+    // Always set: an event left without flags takes them from the system's modifier state, where
+    // ⌘ of an earlier ⌘↩ may linger, and "й" (the Q key) arrived as ⌘Q (2026-11-21).
+    event?.flags = shift ? .maskShift : []
+    event?.post(tap: .cghidEventTap)
+    Thread.sleep(forTimeInterval: 0.03)
+  }
+  if shift { CGEvent(keyboardEventSource: source, virtualKey: 56, keyDown: false)?.post(tap: .cghidEventTap) }
+  Thread.sleep(forTimeInterval: 0.04)
 }
 
 func printMenu() {
@@ -318,9 +451,11 @@ case "appmenu":
   else { fail("no app menu item \(arguments[1])") }
   perform(item, "AXPress")
   print("chose \(arguments[1])")
-case "set":
-  // "@2" is the second field from the top.
-  let fields = elements().filter { ["AXTextField", "AXTextArea"].contains(role($0)) }
+case "click":
+  // "@2" is the second field from the top. A pop-up button (Level, Tone) opens its menu on a click.
+  let fields = elements().filter {
+    ["AXTextField", "AXTextArea", "AXMenuButton", "AXPopUpButton"].contains(role($0))
+  }
   let field =
     arguments[1].hasPrefix("@")
     ? Int(arguments[1].dropFirst()).flatMap { fields.indices.contains($0 - 1) ? fields[$0 - 1] : nil }
@@ -328,9 +463,34 @@ case "set":
       (string($0, "AXPlaceholderValue") + label($0)).contains(arguments[1])
     }
   guard let field else { fail("no field \(arguments[1])") }
-  AXUIElementSetAttributeValue(field, "AXFocused" as CFString, kCFBooleanTrue)
-  AXUIElementSetAttributeValue(field, "AXValue" as CFString, arguments[2] as CFString)
-  print("set \(arguments[1]) to \(string(field, "AXValue"))")
+  click(field, count: 1)
+  Thread.sleep(forTimeInterval: 0.3)
+  print("clicked into \(arguments[1])")
+case "type":
+  type(arguments.dropFirst().joined(separator: " "))
+  print("typed \(arguments.dropFirst().joined(separator: " "))")
+case "dock":
+  // The Dock's own element tree has an AXDockItem per icon.
+  guard let dock = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.dock")
+    .first
+  else { fail("the Dock is not running") }
+  let icon = all(AXUIElementCreateApplication(dock.processIdentifier)).first {
+    role($0) == "AXDockItem" && label($0) == "Cyrano"
+  }
+  guard let icon else {
+    print("no Cyrano in the Dock")
+    exit(arguments.dropFirst().first == nil ? 0 : 1)
+  }
+  if arguments.dropFirst().first == "click" {
+    click(icon, count: 1)
+    print("clicked Cyrano in the Dock")
+  } else if arguments.dropFirst().first == "press" {
+    // What VoiceOver does on a Dock item.
+    perform(icon, "AXPress")
+    print("pressed Cyrano in the Dock")
+  } else {
+    print("Cyrano is in the Dock")
+  }
 case "rows":
   for row in elements() where role(row) == "AXRow" {
     let cells = all(row).filter { role($0) == "AXStaticText" || role($0) == "AXTextField" }
@@ -358,5 +518,5 @@ case "key":
 case "announcements":
   listenToAnnouncements(for: Double(arguments.dropFirst().first ?? "30") ?? 30)
 default:
-  fail("usage: ax windows|close|tree|focused|wait|press|select|menu|rightclick|pick|dismiss|appmenu|set|rows|selectrow|doubleclick|key|announcements …")
+  fail("usage: ax windows|close|tree|focused|wait|press|select|menu|rightclick|pick|dismiss|appmenu|click|type|dock|rows|selectrow|doubleclick|key|announcements …")
 }
